@@ -1,7 +1,7 @@
 // src/components/Experience.js
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const initialExperiences = [
   {
@@ -15,28 +15,58 @@ const initialExperiences = [
 const Experience = () => {
   const [experiences, setExperiences] = useState(initialExperiences);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [newExp, setNewExp] = useState({ title: '', description: '', image: null });
+  const [newExp, setNewExp] = useState({ title: '', description: '' });
+  const [toastMessage, setToastMessage] = useState('');
 
   const handleChange = e => {
-    const { name, value, files } = e.target;
-    if (name === 'image') {
-      setNewExp(prev => ({ ...prev, image: files[0] }));
-    } else {
-      setNewExp(prev => ({ ...prev, [name]: value }));
-    }
+    const { name, value } = e.target;
+    setNewExp(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
-    const entry = {
-      id: experiences.length ? Math.max(...experiences.map(x => x.id)) + 1 : 1,
-      title: newExp.title,
-      description: newExp.description,
-      imageUrl: newExp.image ? URL.createObjectURL(newExp.image) : '',
-    };
-    setExperiences([entry, ...experiences]);
-    setNewExp({ title: '', description: '', image: null });
-    setIsFormOpen(false);
+
+    // Check if title is empty
+    if (!newExp.title) {
+      setToastMessage('Title is required! 🚨');
+      setTimeout(() => setToastMessage(''), 3000); // Hide after 3s
+      return;
+    }
+
+    try {
+      const payload = {
+        title: newExp.title,
+        description: newExp.description || '', // Optional description
+      };
+
+      const response = await fetch('http://localhost:9000/api/experience', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save experience');
+      }
+
+      const savedExperience = await response.json();
+
+      setExperiences([savedExperience, ...experiences]);
+      setNewExp({ title: '', description: '' });
+      setIsFormOpen(false);
+
+      // ✅ Show toast for success
+      setToastMessage('Experience added! 🎉');
+      setTimeout(() => setToastMessage(''), 3000); // Hide after 3s
+
+    } catch (error) {
+      console.error(error);
+      // Only toast message for failed requests
+      setToastMessage('Error saving experience! 🚨');
+      setTimeout(() => setToastMessage(''), 3000); // Hide after 3s
+    }
   };
 
   return (
@@ -78,20 +108,11 @@ const Experience = () => {
           />
           <textarea
             name="description"
-            placeholder="Description"
-            rows={3}
+            placeholder="Description (optional)"
             value={newExp.description}
             onChange={handleChange}
             style={styles.textarea}
-            required
-          />
-          <input
-            type="file"
-            name="image"
-            accept="image/*"
-            onChange={handleChange}
-            style={styles.input}
-            required
+            rows="3"
           />
           <div style={styles.formActions}>
             <button type="submit" style={styles.submitButton}>
@@ -123,15 +144,47 @@ const Experience = () => {
               <img src={exp.imageUrl} alt="" style={styles.logo} />
             )}
             <h3 style={styles.title}>{exp.title}</h3>
-            <p style={styles.description}>{exp.description}</p>
+            {exp.description && <p style={styles.description}>{exp.description}</p>}
           </motion.div>
         ))}
       </div>
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toastMessage && (
+          <Toast message={toastMessage} />
+        )}
+      </AnimatePresence>
     </section>
   );
 };
 
 export default Experience;
+
+// Toast Component
+const Toast = ({ message }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 50 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: 50 }}
+    transition={{ duration: 0.4 }}
+    style={{
+      position: 'fixed',
+      bottom: '30px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      background: message.includes('Error') ? '#dc3545' : '#28a745', // red for error, green for success
+      color: '#fff',
+      padding: '12px 24px',
+      borderRadius: '6px',
+      boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
+      fontSize: '1rem',
+      zIndex: 1000,
+    }}
+  >
+    {message}
+  </motion.div>
+);
 
 // Styles
 const styles = {
@@ -193,7 +246,7 @@ const styles = {
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+    gridTemplateColumns: 'repeat(2, 1fr)', // 2 columns for grid
     gap: '20px',
   },
   card: {

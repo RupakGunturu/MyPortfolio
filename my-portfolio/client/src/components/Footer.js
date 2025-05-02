@@ -1,61 +1,47 @@
 import React from 'react';
+import './Footer.css';    // ← our custom CSS
+import { FaLinkedin, FaGithub, FaTwitter } from 'react-icons/fa';
 
-const Footer = () => {
+export default function Footer() {
   return (
-    <footer style={styles.footer}>
-      <div style={styles.socialIcons}>
-        <a href="https://linkedin.com" style={styles.icon} aria-label="LinkedIn">🔗</a>
-        <a href="https://github.com" style={styles.icon} aria-label="GitHub">🐱</a>
-        <a href="https://twitter.com" style={styles.icon} aria-label="Twitter">🐦</a>
+    <footer className="footer">
+      <div className="footer__inner">
+        {/* Brand */}
+        <div className="footer__brand">
+          <h1>Your Name</h1>
+          <p>Full-Stack Developer &amp; Designer</p>
+        </div>
+
+        {/* Nav Links */}
+        <ul className="footer__nav">
+          {['about', 'projects', 'contact'].map((sec) => (
+            <li key={sec}>
+              <a href={`#${sec}`} className="footer__link">
+                {sec.charAt(0).toUpperCase() + sec.slice(1)}
+                <span className="footer__underline" />
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        {/* Social Icons */}
+        <div className="footer__social">
+          {[FaLinkedin, FaGithub, FaTwitter].map((Icon, i) => (
+            <a
+              key={i}
+              href="/"
+              className="footer__social-btn"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Icon />
+            </a>
+          ))}
+        </div>
       </div>
-      <ul style={styles.footerLinks}>
-        <li><a href="#privacy" style={styles.footerLink}>Privacy Policy</a></li>
-        <li><a href="#terms" style={styles.footerLink}>Terms of Service</a></li>
-        <li><a href="#contact" style={styles.footerLink}>Contact</a></li>
-      </ul>
-      <p style={styles.copyright}>
-        © {new Date().getFullYear()} Mortal Prime. All rights reserved.
-      </p>
+      <div className="footer__copyright">
+        © {new Date().getFullYear()} Your Name. All rights reserved.
+      </div>
     </footer>
-  );
-};
-
-export default Footer;
-
-const styles = {
-  footer: {
-    backgroundColor: '#0F172A',
-    color: '#fff',
-    textAlign: 'center',
-    padding: '2rem 1rem',
-    marginTop: 'auto',
-  },
-  socialIcons: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '1rem',
-    marginBottom: '1rem',
-  },
-  icon: {
-    fontSize: '1.5rem',
-    textDecoration: 'none',
-    color: '#fff',
-    transition: 'color 0.3s',
-  },
-  footerLinks: {
-    listStyle: 'none',
-    padding: 0,
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '1.5rem',
-    marginBottom: '1rem',
-  },
-  footerLink: {
-    textDecoration: 'none',
-    color: '#fff',
-    transition: 'color 0.3s',
-  },
-  copyright: {
-    fontSize: '0.9rem',
-  },
-};
+);
+}

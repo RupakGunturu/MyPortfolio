@@ -9,7 +9,7 @@ const Navbar = () => {
 
   return (
     <nav style={styles.navbar}>
-      <div style={styles.brand}>Mortal Prime</div>
+      <div style={styles.brand}>My-Portfolio..</div>
       <div style={styles.hamburger} onClick={toggleMobileMenu}>
         ☰
       </div>
