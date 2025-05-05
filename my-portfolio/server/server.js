@@ -41,7 +41,6 @@ const experienceSchema = new mongoose.Schema({
 });
 const Experience = mongoose.model("Experience", experienceSchema);
 
-// Example (Mongoose schema)
 const skillSchema = new mongoose.Schema({
   title: String,
   level: {
@@ -51,6 +50,14 @@ const skillSchema = new mongoose.Schema({
   }
 });
 const Skill = mongoose.model("Skill", skillSchema);
+
+const contactSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  message: { type: String, required: true },
+}, { timestamps: true });
+
+const Contact = mongoose.model("Contact", contactSchema);
 
 // ─── Multer setup ─────────────────────────────────────────────────────────────
 const upload = multer({
@@ -67,10 +74,9 @@ const certImages = [
 ];
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
-// ─── Routes ───────────────────────────────────────────────────────────────────
 app.get("/", (req, res) => res.send("✅ Server is running"));
 
-// Modified skill route
+// Skills
 app.post('/api/skill', async (req, res) => {
   try {
     const newSkill = new Skill({
@@ -84,9 +90,7 @@ app.post('/api/skill', async (req, res) => {
   }
 });
 
-// Keep the rest of your routes as they are
 app.get("/api/skill", async (req, res) => {
-
   try {
     const skills = await Skill.find();
     res.json(skills);
@@ -96,6 +100,7 @@ app.get("/api/skill", async (req, res) => {
   }
 });
 
+// User
 app.get("/api/user", async (req, res) => {
   try {
     const user = await User.findOne();
@@ -106,6 +111,7 @@ app.get("/api/user", async (req, res) => {
   }
 });
 
+// Experience
 app.get("/api/experience", async (req, res) => {
   try {
     const ex = await Experience.find();
@@ -116,6 +122,7 @@ app.get("/api/experience", async (req, res) => {
   }
 });
 
+// Certificates
 app.post("/api/certificates", upload.single("certificate"), async (req, res) => {
   try {
     const { title, issuer, date } = req.body;
@@ -219,6 +226,18 @@ app.delete("/api/certificates/:id", async (req, res) => {
   } catch (e) {
     console.error("DELETE /api/certificates error:", e);
     res.status(500).json({ error: e.message });
+  }
+});
+
+// Contact Form Route
+app.post("/api/contact", async (req, res) => {
+  try {
+    console.log("Received contact submission:", req.body); // Debug line
+    const contact = await Contact.create(req.body);
+    res.status(201).json(contact);
+  } catch (error) {
+    console.error("POST /api/contact error:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 

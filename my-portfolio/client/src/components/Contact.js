@@ -1,7 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 
 const Contact = () => {
+  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+
+  const handleChange = e => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+
+    try {
+      const res = await fetch('http://localhost:9000/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (res.ok) {
+        alert('Message sent successfully!');
+        setFormData({ name: '', email: '', message: '' });
+      } else {
+        alert('Failed to send message.');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Something went wrong. Please try again.');
+    }
+  };
+
   return (
     <section style={styles.section} id="contact">
       <motion.h2
@@ -21,13 +50,38 @@ const Contact = () => {
       >
         <motion.form
           style={styles.form}
+          onSubmit={handleSubmit}
           initial={{ x: -50, opacity: 0 }}
           whileInView={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.7 }}
         >
-          <input type="text" placeholder="Your Name" style={styles.input} required />
-          <input type="email" placeholder="Your Email" style={styles.input} required />
-          <textarea placeholder="Your Message" style={styles.textarea} rows={5} required />
+          <input
+            name="name"
+            type="text"
+            placeholder="Your Name"
+            style={styles.input}
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
+          <input
+            name="email"
+            type="email"
+            placeholder="Your Email"
+            style={styles.input}
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+          <textarea
+            name="message"
+            placeholder="Your Message"
+            style={styles.textarea}
+            rows={5}
+            value={formData.message}
+            onChange={handleChange}
+            required
+          />
           <motion.button
             type="submit"
             style={styles.button}
@@ -45,8 +99,8 @@ const Contact = () => {
           transition={{ duration: 0.7 }}
         >
           <iframe
-            title="Google Map"
-            src="https://www.google.com/maps/embed?pb=YOUR_GOOGLE_MAP_EMBED_CODE"
+            title="Gudivada, Andhra Pradesh"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3802.1234567890123!2d80.949000!3d16.437000!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a35b0abcdef1234%3A0xabcdef1234567890!2sGudivada%2C%20Andhra%20Pradesh!5e0!3m2!1sen!2sin!4v0000000000000"
             style={styles.map}
             allowFullScreen=""
             loading="lazy"
@@ -59,17 +113,10 @@ const Contact = () => {
 
 export default Contact;
 
+// Same styles as before
 const styles = {
-  section: {
-    padding: '60px 20px',
-    backgroundColor: '#f9f9f9',
-    textAlign: 'center',
-  },
-  heading: {
-    fontSize: '2.5rem',
-    color: '#222',
-    marginBottom: '40px',
-  },
+  section: { padding: '60px 20px', backgroundColor: '#f9f9f9', textAlign: 'center' },
+  heading: { fontSize: '2.5rem', color: '#222', marginBottom: '40px' },
   container: {
     display: 'flex',
     flexDirection: 'column',
