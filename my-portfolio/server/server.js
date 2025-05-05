@@ -17,6 +17,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Logging middleware for debugging
+app.use((req, res, next) => {
+  console.log(`→ ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 // ─── Schemas & Models ─────────────────────────────────────────────────────────
 const certificateSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -56,8 +62,13 @@ const contactSchema = new mongoose.Schema({
   email: { type: String, required: true },
   message: { type: String, required: true },
 }, { timestamps: true });
-
 const Contact = mongoose.model("Contact", contactSchema);
+
+// ─── About Schema & Model ────────────────────────────────────────────────────
+const aboutSchema = new mongoose.Schema({
+  data: { type: Object, default: {} }
+});
+const About = mongoose.model("About", aboutSchema);
 
 // ─── Multer setup ─────────────────────────────────────────────────────────────
 const upload = multer({
@@ -229,15 +240,54 @@ app.delete("/api/certificates/:id", async (req, res) => {
   }
 });
 
-// Contact Form Route
+// Contact Form
 app.post("/api/contact", async (req, res) => {
   try {
-    console.log("Received contact submission:", req.body); // Debug line
+    console.log("Received contact submission:", req.body);
     const contact = await Contact.create(req.body);
     res.status(201).json(contact);
   } catch (error) {
     console.error("POST /api/contact error:", error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// ─── About Routes ─────────────────────────────────────────────────────────────
+app.get('/api/about', async (req, res) => {
+  try {
+    const doc = await About.findOne({});
+    res.json(doc?.data || {});
+  } catch (err) {
+    console.error('GET /api/about error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/about', async (req, res) => {
+  try {
+    const exists = await About.findOne({});
+    if (exists) {
+      return res.status(400).json({ message: "About already exists. Use PUT to update." });
+    }
+    const created = await About.create({ data: req.body });
+    res.status(201).json(created.data);
+  } catch (err) {
+    console.error('POST /api/about error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/about', async (req, res) => {
+  try {
+    const updated = await About.findOneAndUpdate(
+      {},
+      { data: req.body },
+      { upsert: true, new: true }
+    );
+    res.json(updated.data);
+  } catch (err) {
+    console.error('PUT /api/about error:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -247,9 +297,7 @@ mongoose.connect(process.env.MONGO_URI, {
   useUnifiedTopology: true
 }).then(() => {
   console.log("✅ MongoDB connected");
-  app.listen(PORT, () => {
-    console.log(`🚀 Listening on http://localhost:${PORT}`);
-  });
+  app.listen(PORT, () => console.log(`🚀 Listening on http://localhost:${PORT}`));
 }).catch(err => {
   console.error("❌ MongoDB connection error:", err);
   process.exit(1);
