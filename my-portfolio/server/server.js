@@ -1,4 +1,3 @@
-// server.js
 import express from "express";
 import mongoose from "mongoose";
 import multer from "multer";
@@ -6,8 +5,10 @@ import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 import { GridFSBucket } from "mongodb";
+import fs from "fs";
 
 dotenv.config();
+
 const app = express();
 const __dirname = path.resolve();
 const PORT = process.env.PORT || 9000;
@@ -16,12 +17,50 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Logging middleware
 app.use((req, res, next) => {
   console.log(`→ ${req.method} ${req.originalUrl}`);
   next();
 });
 
-// Schemas & Models
+// -------------------- Multer Setup --------------------
+
+// Multer for certificates — memory storage for GridFS
+const multerMemory = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }
+});
+
+// Multer for user image uploads — disk storage
+const uploadUserImage = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      const uploadDir = path.join(__dirname, "uploads");
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`);
+    }
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'), false);
+    }
+  }
+});
+
+// Serve uploaded user images statically
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// -------------------- Schemas & Models --------------------
+
 const certificateSchema = new mongoose.Schema({
   title: { type: String, required: true },
   issuer: { type: String, required: true },
@@ -67,13 +106,8 @@ const aboutSchema = new mongoose.Schema({
 });
 const About = mongoose.model("About", aboutSchema);
 
-// Multer setup
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }
-});
+// -------------------- Certificate Images for Random Assignment --------------------
 
-// Certificate Images
 const certImages = [
   'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTiLFZBG2PYmWOT81iUFfesPYTJVg7rNe2YIM9FXjX-Vlj_FkLH54MBzc9eLIBMQbuUMIo&usqp=CAU',
   'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_Nh9l0oOTzpzuUsqi6jxT3txXjD2bTUagBascKyzzWFMvyuW7Z0QOT650oDLDIclHmDQ&usqp=CAU',
@@ -81,10 +115,12 @@ const certImages = [
   'https://www.deliveryhero.com/wp-content/uploads/2021/04/DH_Blog_Header_WomenInTech_2000x1100px_2_Blue-1200x660.png'
 ];
 
-// ─── Routes ─────────────────────────────────────────────
+// -------------------- Routes --------------------
+
+// Basic test route
 app.get("/", (req, res) => res.send("✅ Server is running"));
 
-// Skills
+// ---- Skills ----
 app.post('/api/skill', async (req, res) => {
   try {
     const newSkill = new Skill({
@@ -107,7 +143,9 @@ app.get("/api/skill", async (req, res) => {
   }
 });
 
-// User
+// ---- User ----
+
+// Get user (single)
 app.get("/api/user", async (req, res) => {
   try {
     const user = await User.findOne();
@@ -117,35 +155,46 @@ app.get("/api/user", async (req, res) => {
   }
 });
 
-app.put("/api/user", upload.single("image"), async (req, res) => {
+// Update user with optional user image upload (disk)
+app.put("/api/user", uploadUserImage.single("image"), async (req, res) => {
   try {
-    const { name, bio } = req.body;
-    let imageUrl = undefined;
+    console.log("Request body:", req.body);
+    console.log("Uploaded file:", req.file);
 
-    // If image is provided, simulate storing the image (you can extend this to store in GridFS)
+    const { name, bio, imageUrl } = req.body;
+    let finalImageUrl = imageUrl;
+
     if (req.file) {
-      imageUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+      finalImageUrl = `/uploads/${req.file.filename}`;
+      console.log("New image URL:", finalImageUrl);
     }
 
     const updateData = {
-      ...(name && { name }),
-      ...(bio && { bio }),
-      ...(imageUrl && { imageUrl })
+      ...(name !== undefined && { name }),
+      ...(bio !== undefined && { bio }),
+      ...(finalImageUrl !== undefined && { imageUrl: finalImageUrl }),
     };
+
+    console.log("Update data:", updateData);
 
     const updated = await User.findOneAndUpdate({}, updateData, {
       upsert: true,
-      new: true
+      new: true,
+      setDefaultsOnInsert: true
     });
 
+    console.log("Updated user:", updated);
     res.json(updated);
   } catch (err) {
     console.error("PUT /api/user error:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ 
+      error: err.message,
+      details: "Image upload failed. Please check server logs."
+    });
   }
 });
 
-// Experience
+// ---- Experience ----
 app.get("/api/experience", async (req, res) => {
   try {
     const ex = await Experience.find();
@@ -155,8 +204,10 @@ app.get("/api/experience", async (req, res) => {
   }
 });
 
-// Certificates
-app.post("/api/certificates", upload.single("certificate"), async (req, res) => {
+// ---- Certificates ----
+
+// Upload certificate with file saved in GridFS
+app.post("/api/certificates", multerMemory.single("certificate"), async (req, res) => {
   try {
     const { title, issuer, date } = req.body;
     if (!title || !issuer || !date) {
@@ -188,6 +239,7 @@ app.post("/api/certificates", upload.single("certificate"), async (req, res) => 
       await streamFinished;
     }
 
+    // Assign random image URL to certificate
     const randomImage = certImages[Math.floor(Math.random() * certImages.length)];
 
     const newCert = await Certificate.create({
@@ -204,10 +256,12 @@ app.post("/api/certificates", upload.single("certificate"), async (req, res) => 
       fileUrl: fileId ? `/api/certificates/file/${fileId}` : null
     });
   } catch (error) {
+    console.error("POST /api/certificates error:", error);
     res.status(500).json({ error: error.message });
   }
 });
 
+// List all certificates
 app.get("/api/certificates", async (req, res) => {
   try {
     const list = await Certificate.find().sort({ createdAt: -1 });
@@ -223,6 +277,7 @@ app.get("/api/certificates", async (req, res) => {
   }
 });
 
+// Serve certificate PDF from GridFS
 app.get("/api/certificates/file/:id", (req, res) => {
   try {
     const db = mongoose.connection.db;
@@ -242,6 +297,7 @@ app.get("/api/certificates/file/:id", (req, res) => {
   }
 });
 
+// Delete a certificate and its file in GridFS
 app.delete("/api/certificates/:id", async (req, res) => {
   try {
     const cert = await Certificate.findByIdAndDelete(req.params.id);
@@ -259,7 +315,7 @@ app.delete("/api/certificates/:id", async (req, res) => {
   }
 });
 
-// Contact Form
+// ---- Contact Form ----
 app.post("/api/contact", async (req, res) => {
   try {
     const contact = await Contact.create(req.body);
@@ -269,7 +325,7 @@ app.post("/api/contact", async (req, res) => {
   }
 });
 
-// About
+// ---- About ----
 app.get('/api/about', async (req, res) => {
   try {
     const doc = await About.findOne({});
@@ -283,35 +339,36 @@ app.post('/api/about', async (req, res) => {
   try {
     const exists = await About.findOne({});
     if (exists) {
-      return res.status(400).json({ message: "About already exists. Use PUT to update." });
+      exists.data = req.body;
+      await exists.save();
+      return res.json(exists);
     }
-    const created = await About.create({ data: req.body });
-    res.status(201).json(created.data);
+    const about = await About.create({ data: req.body });
+    res.status(201).json(about);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.put('/api/about', async (req, res) => {
-  try {
-    const updated = await About.findOneAndUpdate(
-      {},
-      { data: req.body },
-      { upsert: true, new: true }
-    );
-    res.json(updated.data);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: err.message 
+  });
 });
 
-// ─── Start ─────────────────────────────────────────────────
+// -------------------- Connect to MongoDB and Start Server --------------------
+
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(() => {
   console.log("✅ MongoDB connected");
-  app.listen(PORT, () => console.log(`🚀 Listening on http://localhost:${PORT}`));
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  });
 }).catch(err => {
   console.error("❌ MongoDB connection error:", err);
   process.exit(1);
