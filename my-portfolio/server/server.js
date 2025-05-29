@@ -12,18 +12,16 @@ const app = express();
 const __dirname = path.resolve();
 const PORT = process.env.PORT || 9000;
 
-// ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Logging middleware for debugging
 app.use((req, res, next) => {
   console.log(`→ ${req.method} ${req.originalUrl}`);
   next();
 });
 
-// ─── Schemas & Models ─────────────────────────────────────────────────────────
+// Schemas & Models
 const certificateSchema = new mongoose.Schema({
   title: { type: String, required: true },
   issuer: { type: String, required: true },
@@ -64,19 +62,18 @@ const contactSchema = new mongoose.Schema({
 }, { timestamps: true });
 const Contact = mongoose.model("Contact", contactSchema);
 
-// ─── About Schema & Model ────────────────────────────────────────────────────
 const aboutSchema = new mongoose.Schema({
   data: { type: Object, default: {} }
 });
 const About = mongoose.model("About", aboutSchema);
 
-// ─── Multer setup ─────────────────────────────────────────────────────────────
+// Multer setup
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 }
 });
 
-// ─── Cert Images ──────────────────────────────────────────────────────────────
+// Certificate Images
 const certImages = [
   'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTiLFZBG2PYmWOT81iUFfesPYTJVg7rNe2YIM9FXjX-Vlj_FkLH54MBzc9eLIBMQbuUMIo&usqp=CAU',
   'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_Nh9l0oOTzpzuUsqi6jxT3txXjD2bTUagBascKyzzWFMvyuW7Z0QOT650oDLDIclHmDQ&usqp=CAU',
@@ -84,7 +81,7 @@ const certImages = [
   'https://www.deliveryhero.com/wp-content/uploads/2021/04/DH_Blog_Header_WomenInTech_2000x1100px_2_Blue-1200x660.png'
 ];
 
-// ─── Routes ───────────────────────────────────────────────────────────────────
+// ─── Routes ─────────────────────────────────────────────
 app.get("/", (req, res) => res.send("✅ Server is running"));
 
 // Skills
@@ -106,7 +103,6 @@ app.get("/api/skill", async (req, res) => {
     const skills = await Skill.find();
     res.json(skills);
   } catch (e) {
-    console.error("GET /api/skill error:", e);
     res.status(500).json({ error: e.message });
   }
 });
@@ -117,8 +113,35 @@ app.get("/api/user", async (req, res) => {
     const user = await User.findOne();
     res.json(user || { name: "", bio: "", imageUrl: "" });
   } catch (e) {
-    console.error("GET /api/user error:", e);
     res.status(500).json({ error: e.message });
+  }
+});
+
+app.put("/api/user", upload.single("image"), async (req, res) => {
+  try {
+    const { name, bio } = req.body;
+    let imageUrl = undefined;
+
+    // If image is provided, simulate storing the image (you can extend this to store in GridFS)
+    if (req.file) {
+      imageUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+    }
+
+    const updateData = {
+      ...(name && { name }),
+      ...(bio && { bio }),
+      ...(imageUrl && { imageUrl })
+    };
+
+    const updated = await User.findOneAndUpdate({}, updateData, {
+      upsert: true,
+      new: true
+    });
+
+    res.json(updated);
+  } catch (err) {
+    console.error("PUT /api/user error:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -128,7 +151,6 @@ app.get("/api/experience", async (req, res) => {
     const ex = await Experience.find();
     res.json(ex);
   } catch (e) {
-    console.error("GET /api/experience error:", e);
     res.status(500).json({ error: e.message });
   }
 });
@@ -182,7 +204,6 @@ app.post("/api/certificates", upload.single("certificate"), async (req, res) => 
       fileUrl: fileId ? `/api/certificates/file/${fileId}` : null
     });
   } catch (error) {
-    console.error("POST /api/certificates error:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -198,7 +219,6 @@ app.get("/api/certificates", async (req, res) => {
       }))
     );
   } catch (e) {
-    console.error("GET /api/certificates error:", e);
     res.status(500).json({ error: e.message });
   }
 });
@@ -235,7 +255,6 @@ app.delete("/api/certificates/:id", async (req, res) => {
 
     res.json({ message: "Deleted" });
   } catch (e) {
-    console.error("DELETE /api/certificates error:", e);
     res.status(500).json({ error: e.message });
   }
 });
@@ -243,22 +262,19 @@ app.delete("/api/certificates/:id", async (req, res) => {
 // Contact Form
 app.post("/api/contact", async (req, res) => {
   try {
-    console.log("Received contact submission:", req.body);
     const contact = await Contact.create(req.body);
     res.status(201).json(contact);
   } catch (error) {
-    console.error("POST /api/contact error:", error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// ─── About Routes ─────────────────────────────────────────────────────────────
+// About
 app.get('/api/about', async (req, res) => {
   try {
     const doc = await About.findOne({});
     res.json(doc?.data || {});
   } catch (err) {
-    console.error('GET /api/about error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -272,7 +288,6 @@ app.post('/api/about', async (req, res) => {
     const created = await About.create({ data: req.body });
     res.status(201).json(created.data);
   } catch (err) {
-    console.error('POST /api/about error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -286,12 +301,11 @@ app.put('/api/about', async (req, res) => {
     );
     res.json(updated.data);
   } catch (err) {
-    console.error('PUT /api/about error:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ─── Start up ─────────────────────────────────────────────────────────────────
+// ─── Start ─────────────────────────────────────────────────
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true

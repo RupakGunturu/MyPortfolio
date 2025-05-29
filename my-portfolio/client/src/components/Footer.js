@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="footer__inner">
         {/* Brand */}
         <div className="footer__brand">
-          <h1>Your Name</h1>
+          <h1>Rupak Gunturu</h1>
           <p>Full-Stack Developer &amp; Designer</p>
         </div>
 

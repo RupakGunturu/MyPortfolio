@@ -67,7 +67,7 @@ const About = () => {
         style={{ maxWidth: '800px', margin: '0 auto' }}
       >
         <LayoutGroup>
-          {/* Header Section */}
+          {/* Header Section - Improved visibility */}
           <motion.div
             layout
             style={{
@@ -102,9 +102,11 @@ const About = () => {
                 fontSize: '3rem',
                 color: 'white',
                 margin: 0,
-                textShadow: '0 4px 8px rgba(0,0,0,0.15)',
-                fontWeight: '700',
-                letterSpacing: '-0.03em'
+                textShadow: '0 4px 8px rgba(0,0,0,0.3)',
+                fontWeight: '800',
+                letterSpacing: '-0.03em',
+                position: 'relative',
+                zIndex: 2
               }}
             >
               About Me
@@ -285,9 +287,10 @@ const About = () => {
             </AnimatePresence>
           </motion.div>
 
-          {/* Content Cards Section */}
+          {/* Content Cards Section - Now in 2 columns */}
           <div style={{ 
             display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
             gap: '24px',
             position: 'relative',
             zIndex: 1

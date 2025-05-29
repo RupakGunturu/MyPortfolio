@@ -262,271 +262,184 @@ export default function Certificates() {
         </div>
       )}
          
-      <style jsx>{`
-        .certificates-container {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 20px;
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-        }
-        
-        h2 {
-          font-size: 24px;
-          color: #333;
-          margin: 0;
-        }
-        
-        .add-btn {
-          background: #4CAF50;
-          color: white;
-          border: none;
-          padding: 10px 15px;
-          border-radius: 5px;
-          cursor: pointer;
-          font-size: 14px;
-          transition: all 0.2s;
-        }
-        
-        .add-btn.cancel {
-          background: #f44336;
-        }
-        
-        .add-btn:hover {
-          opacity: 0.9;
-          transform: translateY(-2px);
-        }
-        
-        .cert-form {
-          background: #f9f9f9;
-          padding: 20px;
-          border-radius: 8px;
-          margin-bottom: 30px;
-          overflow: hidden;
-        }
-        
-        .form-group {
-          margin-bottom: 15px;
-        }
-        
-        .form-group label {
-          display: block;
-          margin-bottom: 5px;
-          font-weight: 500;
-          color: #444;
-        }
-        
-        .form-group input {
-          width: 100%;
-          padding: 10px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          font-size: 14px;
-        }
-        
-        .image-preview {
-          margin-top: 10px;
-        }
-        
-        .image-preview img {
-          max-width: 100%;
-          max-height: 150px;
-          border-radius: 4px;
-          border: 1px solid #ddd;
-        }
-        
-        .submit-btn {
-          background: #2196F3;
-          color: white;
-          border: none;
-          padding: 10px 20px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 14px;
-          margin-top: 10px;
-          transition: all 0.2s;
-        }
-        
-        .submit-btn:hover {
-          background: #0b7dda;
-        }
-        
-        .error {
-          color: #f44336;
-          margin-top: 10px;
-          font-size: 14px;
-          padding: 8px;
-          background: rgba(244, 67, 54, 0.1);
-          border-radius: 4px;
-        }
-        
-        .empty-state {
-          text-align: center;
-          padding: 50px 20px;
-          color: #777;
-          background: #f9f9f9;
-          border-radius: 8px;
-        }
-        
-        .empty-icon {
-          font-size: 50px;
-          margin-bottom: 15px;
-          opacity: 0.5;
-        }
-        
-        .certificates-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 20px;
-        }
-        
-        .cert-card {
-          background: white;
-          border-radius: 8px;
-          overflow: hidden;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-          position: relative;
-          transition: transform 0.2s;
-        }
-        
-        .cert-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        
-        .cert-image {
-          height: 180px;
-          background: #f5f5f5;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-        }
-        
-        .cert-image img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        
-        .image-placeholder {
-          font-size: 60px;
-          opacity: 0.3;
-        }
-        
-        .cert-details {
-          padding: 15px;
-        }
-        
-        .cert-details h3 {
-          margin: 0 0 5px;
-          font-size: 18px;
-          color: #333;
-        }
-        
-        .issuer {
-          color: #666;
-          font-size: 14px;
-          margin: 5px 0;
-        }
-        
-        .date {
-          color: #888;
-          font-size: 13px;
-          margin: 5px 0 10px;
-        }
-        
-        .pdf-btn {
-          background: none;
-          border: none;
-          color: #2196F3;
-          padding: 5px 0;
-          cursor: pointer;
-          font-size: 14px;
-          display: flex;
-          align-items: center;
-          transition: color 0.2s;
-        }
-        
-        .pdf-btn:hover {
-          color: #0b7dda;
-          text-decoration: underline;
-        }
-        
-        .press-indicator {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          background: rgba(0,0,0,0.7);
-          color: white;
-          padding: 10px;
-          text-align: center;
-          font-size: 12px;
-        }
-        
-        .press-bar {
-          height: 3px;
-          background: white;
-          width: 0%;
-          margin-bottom: 5px;
-          animation: press 2s linear forwards;
-        }
-        
-        @keyframes press {
-          to { width: 100%; }
-        }
-        
-        .delete-confirm {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(244, 67, 54, 0.9);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          padding: 15px;
-          text-align: center;
-        }
-        
-        .delete-confirm p {
-          margin-bottom: 15px;
-        }
-        
-        .delete-actions {
-          display: flex;
-          gap: 10px;
-        }
-        
-        .delete-actions button {
-          padding: 5px 15px;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        
-        .delete-actions button:first-child {
-          background: white;
-          color: #333;
-        }
-        
-        .delete-btn {
-          background: white;
-          color: #f44336;
-          font-weight: bold;
-        }
-      `}</style>
+         <style jsx>{`
+  .certificates-container {
+    max-width: 1440px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+  }
+
+  h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(45deg, #2563eb, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+  }
+
+  .add-btn {
+    background: linear-gradient(45deg, #3b82f6, #60a5fa);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .add-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+  }
+
+  .add-btn.cancel {
+    background: linear-gradient(45deg, #ef4444, #f87171);
+  }
+
+  .cert-form {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border-radius: 1rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+  }
+
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #1e293b;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.8);
+  }
+
+  .form-group input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .certificates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem 0;
+  }
+
+  .cert-card {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.3s ease;
+    will-change: transform;
+    border: 1px solid rgba(226, 232, 240, 0.6);
+  }
+
+  .cert-card:hover {
+    transform: translateY(-0.5rem);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  }
+
+  .cert-image {
+    height: 200px;
+    background: #f8fafc;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cert-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .cert-card:hover .cert-image img {
+    transform: scale(1.05);
+  }
+
+  .cert-details {
+    padding: 1.25rem;
+    background: white;
+  }
+
+  .cert-details h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .issuer {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin: 0.25rem 0;
+  }
+
+  .date {
+    color: #94a3b8;
+    font-size: 0.875rem;
+    margin: 0.5rem 0;
+  }
+
+  .pdf-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #3b82f6;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .pdf-btn:hover {
+    color: #2563eb;
+    transform: translateX(2px);
+  }
+
+  .delete-confirm {
+    background: rgba(239, 68, 68, 0.95);
+    backdrop-filter: blur(4px);
+  }
+
+  @keyframes press-bar {
+    0% { width: 0%; opacity: 0.5; }
+    100% { width: 100%; opacity: 1; }
+  }
+
+  .press-bar {
+    animation: press-bar 2s linear forwards;
+  }
+`}</style>
+
     </div>
   );
 }
