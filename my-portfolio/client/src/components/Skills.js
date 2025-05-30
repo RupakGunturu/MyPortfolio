@@ -5,6 +5,7 @@ const Skill = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [newSkill, setNewSkill] = useState({ title: '', level: 'intermediate' });
   const [toastMessage, setToastMessage] = useState('');
+  const [isDeleting, setIsDeleting] = useState(null);
 
   // Fetch skills from backend
   useEffect(() => {
@@ -15,12 +16,16 @@ const Skill = () => {
         setSkills(data);
       } catch (err) {
         console.error('Failed to fetch skills:', err);
-        setToastMessage('Failed to load skills 🚨');
-        setTimeout(() => setToastMessage(''), 3000);
+        showToast('Failed to load skills 🚨');
       }
     };
     fetchSkills();
   }, []);
+
+  const showToast = (message) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(''), 3000);
+  };
 
   const handleChange = e => {
     setNewSkill(prev => ({
@@ -32,8 +37,7 @@ const Skill = () => {
   const handleSubmit = async e => {
     e.preventDefault();
     if (!newSkill.title.trim()) {
-      setToastMessage('Skill name is required! 🚨');
-      setTimeout(() => setToastMessage(''), 3000);
+      showToast('Skill name is required! 🚨');
       return;
     }
 
@@ -50,12 +54,29 @@ const Skill = () => {
       setSkills(prev => [savedSkill, ...prev]);
       setNewSkill({ title: '', level: 'intermediate' });
       setIsFormOpen(false);
-      setToastMessage('Skill added! 🎉');
-      setTimeout(() => setToastMessage(''), 3000);
+      showToast('Skill added! 🎉');
     } catch (err) {
       console.error('Save error:', err);
-      setToastMessage('Error saving skill! 🚨');
-      setTimeout(() => setToastMessage(''), 3000);
+      showToast('Error saving skill! 🚨');
+    }
+  };
+
+  const handleDelete = async (skillId) => {
+    setIsDeleting(skillId);
+    try {
+      const response = await fetch(`http://localhost:9000/api/skill/${skillId}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) throw new Error('Failed to delete skill');
+      
+      setSkills(prev => prev.filter(skill => skill._id !== skillId));
+      showToast('Skill deleted! 🗑️');
+    } catch (err) {
+      console.error('Delete error:', err);
+      showToast('Error deleting skill! 🚨');
+    } finally {
+      setIsDeleting(null);
     }
   };
 
@@ -143,12 +164,28 @@ const Skill = () => {
             <div style={styles.cardContent}>
               <div style={styles.skillHeader}>
                 <h3 style={styles.title}>{skill.title}</h3>
-                <span style={{
-                  ...styles.levelTag,
-                  backgroundColor: getProgressColor(skill.level)
-                }}>
-                  {skill.level}
-                </span>
+                <div style={styles.actions}>
+                  <span style={{
+                    ...styles.levelTag,
+                    backgroundColor: getProgressColor(skill.level)
+                  }}>
+                    {skill.level}
+                  </span>
+                  <button 
+                    onClick={() => handleDelete(skill._id)}
+                    style={styles.deleteButton}
+                    disabled={isDeleting === skill._id}
+                    aria-label={`Delete ${skill.title}`}
+                  >
+                    {isDeleting === skill._id ? (
+                      <span style={styles.spinner}></span>
+                    ) : (
+                      <svg style={styles.trashIcon} viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
               <div style={styles.skillLevel}>
                 <div 
@@ -175,7 +212,7 @@ const Skill = () => {
   );
 };
 
-// Original CSS styles preserved
+// Updated styles with delete button
 const styles = {
   section: {
     padding: '2rem 1.5rem',
@@ -236,6 +273,7 @@ const styles = {
     boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
     border: '1px solid #f3f4f6',
+    position: 'relative',
     ':hover': {
       transform: 'translateY(-2px)',
       boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
@@ -258,6 +296,11 @@ const styles = {
     alignItems: 'center',
     marginBottom: '0.5rem',
   },
+  actions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+  },
   levelTag: {
     fontSize: '0.75rem',
     fontWeight: '600',
@@ -265,6 +308,37 @@ const styles = {
     padding: '0.25rem 0.5rem',
     borderRadius: '0.375rem',
     color: '#fff',
+  },
+  deleteButton: {
+    background: 'transparent',
+    border: 'none',
+    padding: '0.25rem',
+    borderRadius: '0.25rem',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s ease',
+    ':hover': {
+      background: 'rgba(239, 68, 68, 0.1)',
+    },
+    ':disabled': {
+      opacity: 0.7,
+      cursor: 'not-allowed',
+    },
+  },
+  trashIcon: {
+    width: '1.25rem',
+    height: '1.25rem',
+    color: '#ef4444',
+  },
+  spinner: {
+    width: '1rem',
+    height: '1rem',
+    border: '2px solid rgba(239, 68, 68, 0.3)',
+    borderTopColor: '#ef4444',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
   },
   skillLevel: {
     height: '8px',
@@ -337,6 +411,10 @@ const styles = {
     ':hover': {
       backgroundColor: '#f9fafb',
     },
+  },
+  '@keyframes spin': {
+    '0%': { transform: 'rotate(0deg)' },
+    '100%': { transform: 'rotate(360deg)' },
   },
 };
 

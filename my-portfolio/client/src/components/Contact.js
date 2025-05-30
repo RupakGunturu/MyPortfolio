@@ -11,7 +11,6 @@ const Contact = () => {
 
   const handleSubmit = async e => {
     e.preventDefault();
-
     try {
       const res = await fetch('http://localhost:9000/api/contact', {
         method: 'POST',
@@ -39,11 +38,20 @@ const Contact = () => {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        Contact Me
+        Let’s Work Together
       </motion.h2>
 
+      <motion.p
+        style={styles.description}
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
+      >
+        Have an idea or a project in mind? Let’s connect and make something awesome together.
+      </motion.p>
+
       <motion.div
-        style={styles.container}
+        style={styles.grid}
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
@@ -55,29 +63,32 @@ const Contact = () => {
           whileInView={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.7 }}
         >
+          <label style={styles.label}>Name</label>
           <input
             name="name"
             type="text"
-            placeholder="Your Name"
+            placeholder="Enter your full name"
             style={styles.input}
             value={formData.name}
             onChange={handleChange}
             required
           />
+          <label style={styles.label}>Email</label>
           <input
             name="email"
             type="email"
-            placeholder="Your Email"
+            placeholder="Enter your email address"
             style={styles.input}
             value={formData.email}
             onChange={handleChange}
             required
           />
+          <label style={styles.label}>Message</label>
           <textarea
             name="message"
-            placeholder="Your Message"
+            placeholder="Write your message here..."
             style={styles.textarea}
-            rows={5}
+            rows={6}
             value={formData.message}
             onChange={handleChange}
             required
@@ -113,64 +124,93 @@ const Contact = () => {
 
 export default Contact;
 
-// Same styles as before
 const styles = {
-  section: { padding: '60px 20px', backgroundColor: '#f9f9f9', textAlign: 'center' },
-  heading: { fontSize: '2.5rem', color: '#222', marginBottom: '40px' },
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
+  section: {
+    padding: '80px 20px',
+    background: 'linear-gradient(145deg, #f0f4f8, #dbeafe)',
+    minHeight: '100vh',
+    textAlign: 'center',
+  },
+  heading: {
+    fontSize: '3.5rem',
+    color: '#0f172a',
+    marginBottom: '10px',
+    fontWeight: '800',
+  },
+  description: {
+    fontSize: '1.2rem',
+    color: '#334155',
+    maxWidth: '760px',
+    margin: '0 auto 50px',
+    lineHeight: '1.8',
+  },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
     gap: '40px',
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: '0 20px',
+    maxWidth: '1200px',
+    margin: '0 auto',
   },
   form: {
-    width: '100%',
-    maxWidth: '500px',
-    backgroundColor: '#fff',
-    padding: '30px',
-    borderRadius: '15px',
-    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.1)',
+    background: '#ffffff',
+    borderRadius: '20px',
+    padding: '40px 30px',
+    boxShadow: '0 12px 35px rgba(0,0,0,0.1)',
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px',
+    gap: '18px',
+    textAlign: 'left',
+  },
+  label: {
+    fontSize: '1rem',
+    fontWeight: '600',
+    color: '#1e293b',
   },
   input: {
-    padding: '15px',
-    fontSize: '1em',
-    borderRadius: '8px',
-    border: '1px solid #ccc',
+    padding: '12px 18px',
+    fontSize: '1rem',
+    borderRadius: '10px',
+    border: '1px solid #cbd5e1',
     outline: 'none',
+    background: '#f9fafb',
   },
   textarea: {
-    padding: '15px',
-    fontSize: '1em',
-    borderRadius: '8px',
-    border: '1px solid #ccc',
-    resize: 'none',
+    padding: '12px 18px',
+    fontSize: '1rem',
+    borderRadius: '10px',
+    border: '1px solid #cbd5e1',
     outline: 'none',
+    background: '#f9fafb',
+    resize: 'vertical',
   },
   button: {
-    padding: '15px',
-    fontSize: '1em',
-    borderRadius: '8px',
-    backgroundColor: '#007BFF',
+    padding: '14px 24px',
+    fontSize: '1rem',
+    borderRadius: '12px',
+    backgroundColor: '#2563eb',
     color: '#fff',
     border: 'none',
     cursor: 'pointer',
-    fontWeight: 'bold',
+    fontWeight: '600',
+    transition: 'all 0.3s ease-in-out',
   },
   mapWrapper: {
     width: '100%',
-    maxWidth: '500px',
-    height: '300px',
-    borderRadius: '15px',
+    minHeight: '400px',
+    borderRadius: '20px',
     overflow: 'hidden',
-    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.1)',
+    boxShadow: '0 12px 35px rgba(0,0,0,0.1)',
   },
   map: {
     width: '100%',
     height: '100%',
     border: 'none',
+  },
+  // Responsive style fallback
+  '@media screen and (max-width: 768px)': {
+    grid: {
+      gridTemplateColumns: '1fr',
+    },
   },
 };

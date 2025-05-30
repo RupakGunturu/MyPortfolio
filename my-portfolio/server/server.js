@@ -44,7 +44,7 @@ app.use((req, res, next) => {
 // Multer for certificates — memory storage for GridFS
 const multerMemory = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }
+  limits: { fileSize: 20 * 1024 * 1024 }
 });
 
 // Multer for user image uploads — disk storage
@@ -154,6 +154,23 @@ app.get("/api/skill", async (req, res) => {
     res.json(skills);
   } catch (e) {
     res.status(500).json({ error: e.message });
+  }
+});
+
+// DELETE a skill
+router.delete('/api/skill/:id', async (req, res) => {
+  console.log('DELETE request to /api/skill/:id', req.params.id);  // log it
+  try {
+    const deletedSkill = await Skill.findByIdAndDelete(req.params.id);
+    if (!deletedSkill) {
+      console.log('Skill not found');
+      return res.status(404).json({ message: 'Skill not found' });
+    }
+    console.log('Deleted skill:', deletedSkill);
+    res.status(200).json({ message: 'Deleted' });
+  } catch (err) {
+    console.error('Error during deletion:', err);
+    res.status(500).json({ message: 'Error deleting skill' });
   }
 });
 
