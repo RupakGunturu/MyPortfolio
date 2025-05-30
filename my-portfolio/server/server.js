@@ -17,6 +17,22 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Ensure required directories exist
+[path.join(__dirname, "uploads"), path.join(__dirname, "images")].forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    console.log(`Created directory: ${dir}`);
+  }
+});
+
+// Serve uploaded user images statically
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// Serve images folder statically with 404 handling
+app.use("/images", express.static(path.join(__dirname, "images")), (req, res) => {
+  res.status(404).end();
+});
+
 // Logging middleware
 app.use((req, res, next) => {
   console.log(`→ ${req.method} ${req.originalUrl}`);
@@ -56,9 +72,6 @@ const uploadUserImage = multer({
   }
 });
 
-// Serve uploaded user images statically
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
 // -------------------- Schemas & Models --------------------
 
 const certificateSchema = new mongoose.Schema({
@@ -70,13 +83,6 @@ const certificateSchema = new mongoose.Schema({
   imageUrl: String
 }, { timestamps: true });
 const Certificate = mongoose.model("Certificate", certificateSchema);
-
-const userSchema = new mongoose.Schema({
-  name: { type: String, default: "" },
-  bio: { type: String, default: "" },
-  imageUrl: { type: String, default: "" },
-});
-const User = mongoose.model("User", userSchema);
 
 const experienceSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -105,6 +111,14 @@ const aboutSchema = new mongoose.Schema({
   data: { type: Object, default: {} }
 });
 const About = mongoose.model("About", aboutSchema);
+
+const userSchema = new mongoose.Schema({
+  name: { type: String, default: "" },
+  bio: { type: String, default: "" },
+  imageUrl: { type: String, default: "" },
+  techStackMessage: { type: String, default: "Currently working with React & Next.js" }
+});
+const User = mongoose.model("User", userSchema);
 
 // -------------------- Certificate Images for Random Assignment --------------------
 
@@ -149,7 +163,7 @@ app.get("/api/skill", async (req, res) => {
 app.get("/api/user", async (req, res) => {
   try {
     const user = await User.findOne();
-    res.json(user || { name: "", bio: "", imageUrl: "" });
+    res.json(user || { name: "", bio: "", imageUrl: "", techStackMessage: "Currently working with React & Next.js" });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -161,10 +175,11 @@ app.put("/api/user", uploadUserImage.single("image"), async (req, res) => {
     console.log("Request body:", req.body);
     console.log("Uploaded file:", req.file);
 
-    const { name, bio, imageUrl } = req.body;
-    let finalImageUrl = imageUrl;
+    const { name, bio, techStackMessage } = req.body;
+    let finalImageUrl;
 
     if (req.file) {
+      // Save relative path to serve static image
       finalImageUrl = `/uploads/${req.file.filename}`;
       console.log("New image URL:", finalImageUrl);
     }
@@ -172,6 +187,7 @@ app.put("/api/user", uploadUserImage.single("image"), async (req, res) => {
     const updateData = {
       ...(name !== undefined && { name }),
       ...(bio !== undefined && { bio }),
+      ...(techStackMessage !== undefined && { techStackMessage }),
       ...(finalImageUrl !== undefined && { imageUrl: finalImageUrl }),
     };
 
@@ -290,86 +306,73 @@ app.get("/api/certificates/file/:id", (req, res) => {
         "Content-Disposition": `inline; filename="${file.filename}"`
       });
     });
-    stream.on("error", () => res.status(404).send("File not found"));
+    stream.on("error", err => {
+      console.error("GridFS stream error:", err);
+      res.status(404).send("File not found");
+    });
     stream.pipe(res);
-  } catch (e) {
-    res.status(400).json({ error: "Invalid file id" });
-  }
-});
-
-// Delete a certificate and its file in GridFS
-app.delete("/api/certificates/:id", async (req, res) => {
-  try {
-    const cert = await Certificate.findByIdAndDelete(req.params.id);
-    if (!cert) return res.status(404).json({ error: "Not found" });
-
-    if (cert.fileId) {
-      const db = mongoose.connection.db;
-      const bucket = new GridFSBucket(db, { bucketName: "certificates" });
-      await bucket.delete(cert.fileId);
-    }
-
-    res.json({ message: "Deleted" });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
-// ---- Contact Form ----
+// ---- Contact ----
 app.post("/api/contact", async (req, res) => {
   try {
-    const contact = await Contact.create(req.body);
-    res.status(201).json(contact);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    const newContact = new Contact(req.body);
+    await newContact.save();
+    res.status(201).json(newContact);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.get("/api/contact", async (req, res) => {
+  try {
+    const contacts = await Contact.find().sort({ createdAt: -1 });
+    res.json(contacts);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
 // ---- About ----
-app.get('/api/about', async (req, res) => {
+
+// Get about data (singleton)
+app.get("/api/about", async (req, res) => {
   try {
-    const doc = await About.findOne({});
-    res.json(doc?.data || {});
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const about = await About.findOne();
+    res.json(about ? about.data : {});
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
-app.post('/api/about', async (req, res) => {
+// Update about data (singleton)
+app.put("/api/about", async (req, res) => {
   try {
-    const exists = await About.findOne({});
-    if (exists) {
-      exists.data = req.body;
-      await exists.save();
-      return res.json(exists);
-    }
-    const about = await About.create({ data: req.body });
-    res.status(201).json(about);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const data = req.body;
+    const updated = await About.findOneAndUpdate({}, { data }, { upsert: true, new: true });
+    res.json(updated.data);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({ 
-    error: 'Internal server error',
-    message: err.message 
-  });
+// -------------------- Catch-all 404 --------------------
+app.use((req, res) => {
+  res.status(404).send(`404 Not Found: ${req.originalUrl}`);
 });
 
-// -------------------- Connect to MongoDB and Start Server --------------------
+// -------------------- Connect to MongoDB & Start Server --------------------
 
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => {
-  console.log("✅ MongoDB connected");
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("✅ Connected to MongoDB");
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  })
+  .catch((e) => {
+    console.error("❌ MongoDB connection error:", e);
+    process.exit(1);
   });
-}).catch(err => {
-  console.error("❌ MongoDB connection error:", err);
-  process.exit(1);
-});
