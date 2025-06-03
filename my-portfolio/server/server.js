@@ -90,6 +90,7 @@ const experienceSchema = new mongoose.Schema({
 });
 const Experience = mongoose.model("Experience", experienceSchema);
 
+
 const skillSchema = new mongoose.Schema({
   title: String,
   level: {
@@ -157,22 +158,21 @@ app.get("/api/skill", async (req, res) => {
   }
 });
 
-// DELETE a skill
-router.delete('/api/skill/:id', async (req, res) => {
-  console.log('DELETE request to /api/skill/:id', req.params.id);  // log it
+app.delete('/api/skill/:id', async (req, res) => {
+  console.log('DELETE request to /api/skill/:id', req.params.id);
+
   try {
     const deletedSkill = await Skill.findByIdAndDelete(req.params.id);
     if (!deletedSkill) {
-      console.log('Skill not found');
       return res.status(404).json({ message: 'Skill not found' });
     }
-    console.log('Deleted skill:', deletedSkill);
-    res.status(200).json({ message: 'Deleted' });
+    res.status(200).json({ message: 'Deleted', skill: deletedSkill });
   } catch (err) {
     console.error('Error during deletion:', err);
     res.status(500).json({ message: 'Error deleting skill' });
   }
 });
+
 
 // ---- User ----
 
@@ -228,14 +228,66 @@ app.put("/api/user", uploadUserImage.single("image"), async (req, res) => {
 });
 
 // ---- Experience ----
-app.get("/api/experience", async (req, res) => {
+app.get("/api/experience/:id", async (req, res) => {
   try {
-    const ex = await Experience.find();
-    res.json(ex);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+    const exp = await Experience.findById(req.params.id);
+    if (!exp) return res.status(404).json({ error: "Not found" });
+    res.json(exp);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
+
+
+// Create a new experience
+app.post("/api/experience", async (req, res) => {
+  try {
+    const { title, description } = req.body;
+    if (!title) {
+      return res.status(400).json({ error: "Title is required" });
+    }
+    const newExp = new Experience({ title, description: description || "" });
+    await newExp.save();
+    res.status(201).json(newExp);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update an experience by ID
+app.put("/api/experience/:id", async (req, res) => {
+  try {
+    const { title, description } = req.body;
+    if (!title) {
+      return res.status(400).json({ error: "Title is required" });
+    }
+    const updated = await Experience.findByIdAndUpdate(
+      req.params.id,
+      { title, description: description || "" },
+      { new: true, runValidators: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ error: "Experience not found" });
+    }
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete an experience by ID
+app.delete("/api/experience/:id", async (req, res) => {
+  try {
+    const deleted = await Experience.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ message: "Experience not found" });
+    }
+    res.json({ message: "Deleted", deleted });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // ---- Certificates ----
 

@@ -13,7 +13,8 @@ const Skill = () => {
       try {
         const response = await fetch('http://localhost:9000/api/skill');
         const data = await response.json();
-        setSkills(data);
+        console.log('Fetched skills:', data); // Debug log
+        setSkills(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error('Failed to fetch skills:', err);
         showToast('Failed to load skills 🚨');
@@ -22,10 +23,30 @@ const Skill = () => {
     fetchSkills();
   }, []);
 
+
   const showToast = (message) => {
     setToastMessage(message);
     setTimeout(() => setToastMessage(''), 3000);
   };
+
+  // Temporary debug component
+const DebugData = () => (
+  <div style={{
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    background: 'white',
+    padding: '10px',
+    zIndex: 1000,
+    border: '1px solid red'
+  }}>
+    <h4>Debug Data:</h4>
+    <pre>{JSON.stringify(skills, null, 2)}</pre>
+  </div>
+);
+
+// Then add this right before your closing </section> tag:
+<DebugData />
 
   const handleChange = e => {
     setNewSkill(prev => ({
@@ -100,6 +121,20 @@ const Skill = () => {
     };
     return colors[level] || '#3b82f6';
   };
+  const Skill = ({ skills }) => {
+  console.log("Skills data:", skills); // Check what `skills` contains
+
+  // Safeguard against non-array values
+  const safeSkills = Array.isArray(skills) ? skills : [];
+
+  return (
+    <div>
+      {safeSkills.map((skill, index) => (
+        <span key={index}>{skill}</span>
+      ))}
+    </div>
+  );
+};
 
   return (
     <section style={styles.section}>
@@ -158,52 +193,56 @@ const Skill = () => {
         </form>
       )}
 
-      <div style={styles.grid}>
-        {skills.map(skill => (
-          <div key={skill._id} style={styles.card}>
-            <div style={styles.cardContent}>
-              <div style={styles.skillHeader}>
-                <h3 style={styles.title}>{skill.title}</h3>
-                <div style={styles.actions}>
-                  <span style={{
-                    ...styles.levelTag,
-                    backgroundColor: getProgressColor(skill.level)
-                  }}>
-                    {skill.level}
-                  </span>
-                  <button 
-                    onClick={() => handleDelete(skill._id)}
-                    style={styles.deleteButton}
-                    disabled={isDeleting === skill._id}
-                    aria-label={`Delete ${skill.title}`}
-                  >
-                    {isDeleting === skill._id ? (
-                      <span style={styles.spinner}></span>
-                    ) : (
-                      <svg style={styles.trashIcon} viewBox="0 0 24 24">
-                        <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
-                      </svg>
-                    )}
-                  </button>
+     <div style={styles.grid}>
+        {skills.length > 0 ? (
+          skills.map(skill => (
+            <div key={skill._id} style={styles.card}>
+              <div style={styles.cardContent}>
+                <div style={styles.skillHeader}>
+                  <h3 style={styles.title}>{skill.title}</h3>
+                  <div style={styles.actions}>
+                    <span style={{
+                      ...styles.levelTag,
+                      backgroundColor: getProgressColor(skill.level)
+                    }}>
+                      {skill.level}
+                    </span>
+                    <button 
+                      onClick={() => handleDelete(skill._id)}
+                      style={styles.deleteButton}
+                      disabled={isDeleting === skill._id}
+                    >
+                      {isDeleting === skill._id ? (
+                        <span style={styles.spinner}></span>
+                      ) : (
+                        <svg style={styles.trashIcon} viewBox="0 0 24 24">
+                          <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div style={styles.skillLevel}>
+                  <div 
+                    style={{
+                      width: `${getProgressWidth(skill.level)}%`,
+                      backgroundColor: getProgressColor(skill.level),
+                      height: '100%',
+                      borderRadius: '4px'
+                    }}
+                  />
                 </div>
               </div>
-              <div style={styles.skillLevel}>
-                <div 
-                  style={{
-                    width: `${getProgressWidth(skill.level)}%`,
-                    backgroundColor: getProgressColor(skill.level),
-                    height: '100%',
-                    borderRadius: '4px',
-                    transition: 'all 0.3s ease'
-                  }}
-                />
-              </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <p style={{ gridColumn: '1/-1', textAlign: 'center' }}>
+            No skills found. Add your first skill!
+          </p>
+        )}
       </div>
 
-      {toastMessage && (
+{toastMessage && (
         <div style={toastStyles}>
           {toastMessage}
         </div>
