@@ -324,6 +324,40 @@ app.post("/api/certificates", multerMemory.single("certificate"), async (req, re
       await streamFinished;
     }
 
+    // Example using Express and Mongoose
+app.delete('/api/certificate/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const db = mongoose.connection.db;
+    const bucket = new GridFSBucket(db, { bucketName: 'certificates' });
+
+    // 1) Find the certificate document by ID
+    const cert = await Certificate.findById(id);
+    if (!cert) {
+      return res.status(404).json({ message: 'Certificate not found' });
+    }
+
+    // 2) If there is a GridFS file associated (cert.fileId), delete it
+    if (cert.fileId) {
+      try {
+        // Convert fileId to ObjectId (in case it’s stored as a string)
+        await bucket.delete(new mongoose.Types.ObjectId(cert.fileId));
+      } catch (err) {
+        console.error('Error deleting file from GridFS:', err);
+        // We continue to delete the document even if the file deletion fails
+      }
+    }
+
+    // 3) Delete the certificate document itself
+    await Certificate.findByIdAndDelete(id);
+
+    return res.json({ message: 'Certificate (and file) deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting certificate:', error);
+    return res.status(500).json({ message: 'Failed to delete certificate' });
+  }
+});
+
     // Assign random image URL to certificate
     const randomImage = certImages[Math.floor(Math.random() * certImages.length)];
 

@@ -1,17 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import './Project.css';
 
-// 5 random certificate image URLs
-const imageUrls = [
-  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTiLFZBG2PYmWOT81iUFfesPYTJVg7rNe2YIM9FXjX-Vlj_FkLH54MBzc9eLIBMQbuUMIo&usqp=CAU",
-  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_Nh9l0oOTzpzuUsqi6jxT3txXjD2bTUagBascKyzzWFMvyuW7Z0QOT650oDLDIclHmDQ&usqp=CAU",
-  "https://miro.medium.com/v2/resize:fit:1358/0*2ApW5OWboyV571oB.png",
-  "https://www.deliveryhero.com/wp-content/uploads/2021/04/DH_Blog_Header_WomenInTech_2000x1100px_2_Blue-1200x660.png",
-  "https://cdn-talent-wp.arc.dev/wp-content/uploads/2022/03/best-programming-languages-1128x635.jpg"
-];
-
-export default function Certificates() {
+function Certificates() {
   const [certs, setCerts] = useState([]);
   const [form, setForm] = useState({
     title: '',
@@ -21,10 +13,7 @@ export default function Certificates() {
   });
   const [error, setError] = useState('');
   const [isFormVisible, setIsFormVisible] = useState(false);
-  const [pressedCert, setPressedCert] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
-
-  const pressTimer = useRef(null);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -34,11 +23,7 @@ export default function Certificates() {
   const fetchCertificates = async () => {
     try {
       const response = await axios.get('/api/certificates');
-      const withImages = response.data.map(cert => ({
-        ...cert,
-        image: imageUrls[Math.floor(Math.random() * imageUrls.length)]
-      }));
-      setCerts(withImages);
+      setCerts(response.data);
     } catch (err) {
       console.error('Failed to fetch certificates:', err);
       setError('Failed to load certificates. Please try again.');
@@ -67,8 +52,9 @@ export default function Certificates() {
       formData.append('date', form.date);
 
       if (form.file) {
-        if (form.file.type !== 'application/pdf') {
-          throw new Error('Only PDF files are allowed');
+        // Accept both images and PDFs
+        if (!form.file.type.match(/image\/(jpeg|png|gif|jpg)|application\/pdf/)) {
+          throw new Error('Only images (JPEG, PNG, GIF) and PDF files are allowed');
         }
         formData.append('certificate', form.file);
       }
@@ -77,12 +63,7 @@ export default function Certificates() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      const newCert = {
-        ...response.data,
-        image: imageUrls[Math.floor(Math.random() * imageUrls.length)],
-      };
-
-      setCerts(prev => [newCert, ...prev]);
+      setCerts(prev => [response.data, ...prev]);
       resetForm();
       setIsFormVisible(false);
     } catch (err) {
@@ -96,28 +77,28 @@ export default function Certificates() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const startPressTimer = id => {
-    setPressedCert(id);
-    pressTimer.current = setTimeout(() => setDeletingId(id), 2000);
+  const confirmDelete = (id) => {
+    setDeletingId(id);
   };
 
-  const cancelPressTimer = () => {
-    if (pressTimer.current) clearTimeout(pressTimer.current);
-    setPressedCert(null);
+  const cancelDelete = () => {
+    setDeletingId(null);
   };
 
-  const deleteCertificate = async id => {
-    try {
-      await axios.delete(`/api/certificates/${id}`);
-      setCerts(prev => prev.filter(cert => cert._id !== id));
-      setDeletingId(null);
-    } catch (err) {
-      console.error('Delete failed:', err);
-      setError('Failed to delete certificate. Please try again.');
-    }
-  };
+const deleteCertificate = async id => {
+  console.log('Deleting certificate with id:', id);
+  try {
+    await axios.delete(`/api/certificates/${id}`);
+    setCerts(prev => prev.filter(cert => cert._id !== id));
+    setDeletingId(null);
+  } catch (err) {
+    console.error('Delete failed:', err.response || err);
+    setError('Failed to delete certificate. Please try again.');
+  }
+};
 
-  const openPdf = url => {
+
+  const openFile = (url) => {
     window.open(url, '_blank');
   };
 
@@ -168,22 +149,33 @@ export default function Certificates() {
                 value={form.date}
                 onChange={e => setForm({ ...form, date: e.target.value })}
                 required
+                className="modern-date"
               />
             </div>
 
             <div className="form-group">
-              <label>PDF Document (optional)</label>
+              <label>Upload Document (Image or PDF)</label>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="application/pdf"
+                accept="image/*,.pdf"
                 onChange={handleFileChange}
               />
+              <p className="file-hint">Supports JPG, PNG, GIF, or PDF files</p>
             </div>
 
-            <button type="submit" className="submit-btn">
-              Save Certificate
-            </button>
+            <div className="form-actions">
+              <button
+                type="button"
+                onClick={() => setIsFormVisible(false)}
+                className="cancel-btn"
+              >
+                Cancel
+              </button>
+              <button type="submit" className="submit-btn">
+                Save Certificate
+              </button>
+            </div>
             {error && <div className="error">{error}</div>}
           </motion.form>
         )}
@@ -203,17 +195,32 @@ export default function Certificates() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onTouchStart={() => startPressTimer(cert._id)}
-              onTouchEnd={cancelPressTimer}
-              onMouseDown={() => startPressTimer(cert._id)}
-              onMouseUp={cancelPressTimer}
-              onMouseLeave={cancelPressTimer}
+              whileHover={{ scale: 1.02 }}
             >
+              <button
+                className="delete-x-btn"
+                onClick={() => confirmDelete(cert._id)}
+                aria-label="Delete Certificate"
+                title="Delete Certificate"
+              >
+                ×
+              </button>
+
               <div className="cert-image">
-                <img
-                  src={cert.image} // ✅ This line is updated
-                  alt="Certificate"
-                />
+                {cert.fileUrl ? (
+                  <img
+                    src={cert.fileUrl}
+                    alt="Certificate"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "https://via.placeholder.com/300x200?text=Certificate+Preview";
+                    }}
+                  />
+                ) : (
+                  <div className="no-image-placeholder">
+                    <span>No Preview Available</span>
+                  </div>
+                )}
               </div>
 
               <div className="cert-details">
@@ -226,220 +233,32 @@ export default function Certificates() {
                     day: 'numeric'
                   })}
                 </p>
-                {cert.fileUrl && (
-                  <button
-                    onClick={() => openPdf(cert.fileUrl)}
-                    className="pdf-btn"
-                  >
-                    View PDF
-                  </button>
+
+                {deletingId === cert._id && (
+                  <div className="delete-confirm-overlay">
+                    <div className="delete-confirm-box">
+                      <p>Are you sure you want to delete this certificate?</p>
+                      <div className="confirm-actions">
+                        <button onClick={cancelDelete} className="cancel-btn">
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => deleteCertificate(cert._id)}
+                          className="confirm-delete-btn"
+                        >
+                          Yes, Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
-
-              {pressedCert === cert._id && (
-                <div className="press-indicator">
-                  <div className="press-bar" />
-                  <span>Hold to delete</span>
-                </div>
-              )}
-
-              {deletingId === cert._id && (
-                <div className="delete-confirm">
-                  <p>Delete this certificate?</p>
-                  <div className="delete-actions">
-                    <button onClick={() => setDeletingId(null)}>Cancel</button>
-                    <button
-                      onClick={() => deleteCertificate(cert._id)}
-                      className="delete-btn"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              )}
             </motion.div>
           ))}
         </div>
       )}
-         
-         <style jsx>{`
-  .certificates-container {
-    max-width: 1440px;
-    margin: 2rem auto;
-    padding: 0 1.5rem;
-    font-family: 'Inter', system-ui, sans-serif;
-  }
-
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2.5rem;
-  }
-
-  h2 {
-    font-size: 2rem;
-    font-weight: 700;
-    background: linear-gradient(45deg, #2563eb, #3b82f6);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin: 0;
-  }
-
-  .add-btn {
-    background: linear-gradient(45deg, #3b82f6, #60a5fa);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .add-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
-  }
-
-  .add-btn.cancel {
-    background: linear-gradient(45deg, #ef4444, #f87171);
-  }
-
-  .cert-form {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(12px);
-    border-radius: 1rem;
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
-  }
-
-  .form-group {
-    margin-bottom: 1.25rem;
-  }
-
-  .form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: #1e293b;
-  }
-
-  .form-group input {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    transition: all 0.2s ease;
-    background: rgba(255, 255, 255, 0.8);
-  }
-
-  .form-group input:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-
-  .certificates-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
-    padding: 1rem 0;
-  }
-
-  .cert-card {
-    background: white;
-    border-radius: 1rem;
-    overflow: hidden;
-    position: relative;
-    transition: transform 0.3s ease;
-    will-change: transform;
-    border: 1px solid rgba(226, 232, 240, 0.6);
-  }
-
-  .cert-card:hover {
-    transform: translateY(-0.5rem);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  }
-
-  .cert-image {
-    height: 200px;
-    background: #f8fafc;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .cert-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-  }
-
-  .cert-card:hover .cert-image img {
-    transform: scale(1.05);
-  }
-
-  .cert-details {
-    padding: 1.25rem;
-    background: white;
-  }
-
-  .cert-details h3 {
-    margin: 0 0 0.5rem;
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #1e293b;
-  }
-
-  .issuer {
-    color: #64748b;
-    font-size: 0.875rem;
-    margin: 0.25rem 0;
-  }
-
-  .date {
-    color: #94a3b8;
-    font-size: 0.875rem;
-    margin: 0.5rem 0;
-  }
-
-  .pdf-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #3b82f6;
-    font-weight: 500;
-    transition: all 0.2s ease;
-  }
-
-  .pdf-btn:hover {
-    color: #2563eb;
-    transform: translateX(2px);
-  }
-
-  .delete-confirm {
-    background: rgba(239, 68, 68, 0.95);
-    backdrop-filter: blur(4px);
-  }
-
-  @keyframes press-bar {
-    0% { width: 0%; opacity: 0.5; }
-    100% { width: 100%; opacity: 1; }
-  }
-
-  .press-bar {
-    animation: press-bar 2s linear forwards;
-  }
-`}</style>
-
     </div>
   );
 }
+
+export default Certificates;
