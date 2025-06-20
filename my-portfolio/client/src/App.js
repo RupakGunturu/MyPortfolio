@@ -3,13 +3,15 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Hero from './components/Hero';
 import About from './components/About';
-import Projects from './components/Project';
+import Certificate from './components/Certificate';
 import Experience from './components/Experiences';
 import Skills from './components/Skills';
 import Contact from './components/Contact';
+import ProjectCard from './components/ProjectCard';
+import './components/Certificate.css';
 
 // Admin password (should be moved to .env or handled securely in production)
-const ADMIN_PASSWORD = 'admin123';
+const ADMIN_PASSWORD = process.env.REACT_APP_ADMIN_PASSWORD || 'admin123';
 
 const App = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -64,12 +66,31 @@ const App = () => {
       <main style={styles.mainContent}>
         <Hero editingGlobal={mode === 'editContent'} />
         <About editingGlobal={mode === 'editContent'} />
-        <Projects />
+        <Certificate />
         <Experience />
         <Skills
           showFormOnLoad={mode === 'addSkill'}
           editingGlobal={mode === 'editContent'}
         />
+        
+        {/* New Project Section */}
+        <section id="projects" style={{ textAlign: 'center', padding: '50px 20px', background: '#f9fafb' }}>
+          <h2 style={{ fontSize: '2.5rem', marginBottom: '40px', color: '#1e293b' }}>My Projects</h2>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+            <ProjectCard
+              name="Sample Project"
+              link="https://example.com"
+              image="https://via.placeholder.com/350x200?text=Project+1"
+            />
+            <ProjectCard
+              name="Another Cool App"
+              link="https://example.com"
+              image="https://via.placeholder.com/350x200?text=Project+2"
+            />
+            {/* You can add more <ProjectCard /> components here */}
+          </div>
+        </section>
+
         <Contact />
       </main>
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import './Project.css';
+import './Certificate.css';
 
 function Certificates() {
   const [certs, setCerts] = useState([]);
@@ -56,7 +56,7 @@ function Certificates() {
         if (!form.file.type.match(/image\/(jpeg|png|gif|jpg)|application\/pdf/)) {
           throw new Error('Only images (JPEG, PNG, GIF) and PDF files are allowed');
         }
-        formData.append('certificate', form.file);
+        formData.append('file', form.file);
       }
 
       const response = await axios.post('/api/certificates', formData, {
@@ -85,18 +85,25 @@ function Certificates() {
     setDeletingId(null);
   };
 
-const deleteCertificate = async id => {
-  console.log('Deleting certificate with id:', id);
+const deleteCertificate = async (id) => {
+  console.log('Attempting to delete:', id);
   try {
-    await axios.delete(`/api/certificates/${id}`);
-    setCerts(prev => prev.filter(cert => cert._id !== id));
-    setDeletingId(null);
+    const response = await axios.delete(`/api/certificates/${id}`);
+    
+    if (response.data.success) {
+      setCerts(prev => prev.filter(cert => cert._id !== id));
+      setDeletingId(null);
+    } else {
+      throw new Error(response.data.message);
+    }
   } catch (err) {
-    console.error('Delete failed:', err.response || err);
-    setError('Failed to delete certificate. Please try again.');
+    console.error('Delete failed:', {
+      error: err,
+      response: err.response?.data
+    });
+    setError(err.response?.data?.message || 'Delete failed. Please try again.');
   }
 };
-
 
   const openFile = (url) => {
     window.open(url, '_blank');
@@ -198,18 +205,22 @@ const deleteCertificate = async id => {
               whileHover={{ scale: 1.02 }}
             >
               <button
-                className="delete-x-btn"
-                onClick={() => confirmDelete(cert._id)}
-                aria-label="Delete Certificate"
-                title="Delete Certificate"
-              >
-                ×
-              </button>
+  className="delete-x-btn"
+  onClick={(e) => {
+    e.stopPropagation(); // This prevents the event from reaching the card
+    confirmDelete(cert._id);
+  }}
+  aria-label="Delete Certificate"
+  title="Delete Certificate"
+>
+  ×
+</button>
+
 
               <div className="cert-image">
-                {cert.fileUrl ? (
+                {cert.url ? (
                   <img
-                    src={cert.fileUrl}
+                    src={cert.url}
                     alt="Certificate"
                     onError={(e) => {
                       e.target.onerror = null;

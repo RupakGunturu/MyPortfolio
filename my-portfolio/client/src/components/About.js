@@ -102,7 +102,7 @@ const About = () => {
                 fontSize: '3rem',
                 color: 'white',
                 margin: 0,
-                textShadow: '0 4px 8px rgba(0,0,0,0.3)',
+                textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)',
                 fontWeight: '800',
                 letterSpacing: '-0.03em',
                 position: 'relative',

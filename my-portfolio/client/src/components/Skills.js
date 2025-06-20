@@ -17,7 +17,7 @@ const Skill = () => {
         setSkills(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error('Failed to fetch skills:', err);
-        showToast('Failed to load skills 🚨');
+        showToast('🚫 Failed to load skills!');
       }
     };
     fetchSkills();
@@ -58,7 +58,7 @@ const DebugData = () => (
   const handleSubmit = async e => {
     e.preventDefault();
     if (!newSkill.title.trim()) {
-      showToast('Skill name is required! 🚨');
+      showToast('⚠️ Skill name is required!');
       return;
     }
 
@@ -75,10 +75,10 @@ const DebugData = () => (
       setSkills(prev => [savedSkill, ...prev]);
       setNewSkill({ title: '', level: 'intermediate' });
       setIsFormOpen(false);
-      showToast('Skill added! 🎉');
+      showToast('✅ Skill added!');
     } catch (err) {
       console.error('Save error:', err);
-      showToast('Error saving skill! 🚨');
+      showToast('❌ Error saving skill!');
     }
   };
 
@@ -92,10 +92,10 @@ const DebugData = () => (
       if (!response.ok) throw new Error('Failed to delete skill');
       
       setSkills(prev => prev.filter(skill => skill._id !== skillId));
-      showToast('Skill deleted! 🗑️');
+      showToast('🗑️ Skill deleted!');
     } catch (err) {
       console.error('Delete error:', err);
-      showToast('Error deleting skill! 🚨');
+      showToast('❌ Error deleting skill!');
     } finally {
       setIsDeleting(null);
     }

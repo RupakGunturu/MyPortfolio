@@ -72,17 +72,22 @@ const uploadUserImage = multer({
   }
 });
 
+// Multer for certificate uploads — use memory storage for GridFS
+const uploadCertificate = multerMemory;
+
 // -------------------- Schemas & Models --------------------
 
 const certificateSchema = new mongoose.Schema({
   title: { type: String, required: true },
   issuer: { type: String, required: true },
   date: { type: Date, required: true },
-  fileId: mongoose.ObjectId,
-  filename: String,
-  imageUrl: String
+  fileId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  filename: { type: String, required: true },
+  contentType: { type: String },
+  url: { type: String }
 }, { timestamps: true });
-const Certificate = mongoose.model("Certificate", certificateSchema);
+
+const Certificate = mongoose.model('Certificate', certificateSchema);
 
 const experienceSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -120,15 +125,6 @@ const userSchema = new mongoose.Schema({
   techStackMessage: { type: String, default: "Currently working with React & Next.js" }
 });
 const User = mongoose.model("User", userSchema);
-
-// -------------------- Certificate Images for Random Assignment --------------------
-
-const certImages = [
-  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTiLFZBG2PYmWOT81iUFfesPYTJVg7rNe2YIM9FXjX-Vlj_FkLH54MBzc9eLIBMQbuUMIo&usqp=CAU',
-  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_Nh9l0oOTzpzuUsqi6jxT3txXjD2bTUagBascKyzzWFMvyuW7Z0QOT650oDLDIclHmDQ&usqp=CAU',
-  'https://miro.medium.com/v2/resize:fit:1358/0*2ApW5OWboyV571oB.png',
-  'https://www.deliveryhero.com/wp-content/uploads/2021/04/DH_Blog_Header_WomenInTech_2000x1100px_2_Blue-1200x660.png'
-];
 
 // -------------------- Routes --------------------
 
@@ -292,150 +288,181 @@ app.delete("/api/experience/:id", async (req, res) => {
 // ---- Certificates ----
 
 // Upload certificate with file saved in GridFS
-app.post("/api/certificates", multerMemory.single("certificate"), async (req, res) => {
+app.post('/api/certificates', uploadCertificate.single('file'), async (req, res) => {
+  console.log('--- /api/certificates POST called ---');
+  console.log('req.body:', req.body);
+  console.log('req.file:', req.file);
   try {
     const { title, issuer, date } = req.body;
-    if (!title || !issuer || !date) {
-      return res.status(400).json({ error: "Missing title, issuer or date" });
-    }
+    const file = req.file;
 
-    const db = mongoose.connection.db;
-    const bucket = new GridFSBucket(db, { bucketName: "certificates" });
-
-    let fileId = null;
-    let filename = null;
-
-    if (req.file) {
-      const uploadStream = bucket.openUploadStream(
-        `${Date.now()}-${req.file.originalname}`,
-        { metadata: { title, issuer } }
-      );
-
-      const streamFinished = new Promise((resolve, reject) => {
-        uploadStream.on("finish", () => {
-          fileId = uploadStream.id;
-          filename = uploadStream.filename;
-          resolve();
-        });
-        uploadStream.on("error", reject);
+    if (!title || !issuer || !date || !file) {
+      console.error('Missing required fields:', { title, issuer, date, file });
+      return res.status(400).json({ 
+        error: 'Title, issuer, date, and file are all required',
+        debug: { title, issuer, date, file }
       });
-
-      uploadStream.end(req.file.buffer);
-      await streamFinished;
     }
 
-    // Example using Express and Mongoose
-app.delete('/api/certificate/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const db = mongoose.connection.db;
-    const bucket = new GridFSBucket(db, { bucketName: 'certificates' });
+    const bucket = new GridFSBucket(mongoose.connection.db, {
+      bucketName: 'certificates'
+    });
 
-    // 1) Find the certificate document by ID
-    const cert = await Certificate.findById(id);
-    if (!cert) {
-      return res.status(404).json({ message: 'Certificate not found' });
-    }
+    const filename = `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`;
+    const uploadStream = bucket.openUploadStream(filename, {
+      contentType: file.mimetype,
+      metadata: { title, issuer, date: new Date(date) }
+    });
 
-    // 2) If there is a GridFS file associated (cert.fileId), delete it
-    if (cert.fileId) {
+    uploadStream.on('error', (error) => {
+      console.error('GridFS upload error:', error);
+      return res.status(500).json({ error: 'File upload failed', debug: error.message });
+    });
+
+    uploadStream.on('finish', async () => {
       try {
-        // Convert fileId to ObjectId (in case it’s stored as a string)
-        await bucket.delete(new mongoose.Types.ObjectId(cert.fileId));
-      } catch (err) {
-        console.error('Error deleting file from GridFS:', err);
-        // We continue to delete the document even if the file deletion fails
+        const newCert = await Certificate.create({
+          title,
+          issuer,
+          date: new Date(date),
+          fileId: uploadStream.id,
+          filename: uploadStream.filename,
+          contentType: file.mimetype,
+          url: `/api/certificates/file/${uploadStream.id}`
+        });
+
+        res.status(201).json({
+          message: 'Certificate uploaded successfully',
+          certificate: {
+            _id: newCert._id,
+            title: newCert.title,
+            issuer: newCert.issuer,
+            date: newCert.date.toISOString().split('T')[0],
+            filename: newCert.filename,
+            url: newCert.url,
+            createdAt: newCert.createdAt
+          }
+        });
+      } catch (error) {
+        console.error('Database save error:', error);
+        res.status(500).json({ error: 'Failed to save certificate record', debug: error.message });
+      }
+    });
+
+    uploadStream.end(file.buffer);
+
+  } catch (error) {
+    console.error('Certificate upload error:', error);
+    res.status(500).json({ error: 'Internal server error', debug: error.message });
+  }
+});
+
+// Get all certificates
+app.get('/api/certificates', async (req, res) => {
+  try {
+    const certificates = await Certificate.find().sort({ createdAt: -1 });
+    
+    const result = certificates.map(cert => ({
+      _id: cert._id,
+      title: cert.title,
+      issuer: cert.issuer,
+      date: cert.date.toISOString().split('T')[0],
+      filename: cert.filename,
+      url: cert.url,
+      contentType: cert.contentType,
+      createdAt: cert.createdAt,
+      updatedAt: cert.updatedAt
+    }));
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error fetching certificates:', error);
+    res.status(500).json({ error: 'Failed to fetch certificates' });
+  }
+});
+
+// Download certificate file
+app.get('/api/certificates/file/:id', async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).send('Invalid file ID');
+    }
+
+    const fileId = new mongoose.Types.ObjectId(req.params.id);
+    const bucket = new GridFSBucket(mongoose.connection.db, {
+      bucketName: 'certificates'
+    });
+
+    // First check if file exists in GridFS
+    const files = await bucket.find({ _id: fileId }).toArray();
+    if (files.length === 0) {
+      return res.status(404).send('File not found');
+    }
+
+    const file = files[0];
+    const downloadStream = bucket.openDownloadStream(fileId);
+
+    // Set proper headers
+    res.set({
+      'Content-Type': file.contentType || 'application/octet-stream',
+      'Content-Disposition': `inline; filename="${file.filename}"`,
+      'Cache-Control': 'public, max-age=31536000' // Cache for 1 year
+    });
+
+    // Stream the file to the client
+    downloadStream.pipe(res);
+
+    downloadStream.on('error', (error) => {
+      console.error('Download stream error:', error);
+      res.status(500).send('Error streaming file');
+    });
+
+  } catch (error) {
+    console.error('Error retrieving file:', error);
+    res.status(500).send('Internal server error');
+  }
+});
+
+// Delete certificate
+app.delete('/api/certificates/:id', async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid ID format' });
+    }
+
+    const certificateId = new mongoose.Types.ObjectId(req.params.id);
+    
+    // Find the certificate to get the fileId
+    const certificate = await Certificate.findById(certificateId);
+    if (!certificate) {
+      return res.status(404).json({ error: 'Certificate not found' });
+    }
+
+    // Delete from GridFS if file exists
+    if (certificate.fileId) {
+      const bucket = new GridFSBucket(mongoose.connection.db, {
+        bucketName: 'certificates'
+      });
+      
+      try {
+        await bucket.delete(certificate.fileId);
+      } catch (error) {
+        console.log('No file to delete in GridFS');
       }
     }
 
-    // 3) Delete the certificate document itself
-    await Certificate.findByIdAndDelete(id);
+    // Delete the certificate record
+    await Certificate.deleteOne({ _id: certificateId });
 
-    return res.json({ message: 'Certificate (and file) deleted successfully' });
+    res.json({ 
+      success: true, 
+      message: 'Certificate deleted successfully',
+      deletedId: certificateId
+    });
+
   } catch (error) {
     console.error('Error deleting certificate:', error);
-    return res.status(500).json({ message: 'Failed to delete certificate' });
-  }
-});
-
-    // Assign random image URL to certificate
-    const randomImage = certImages[Math.floor(Math.random() * certImages.length)];
-
-    const newCert = await Certificate.create({
-      title,
-      issuer,
-      date: new Date(date),
-      fileId,
-      filename,
-      imageUrl: randomImage
-    });
-
-    res.status(201).json({
-      ...newCert.toObject(),
-      fileUrl: fileId ? `/api/certificates/file/${fileId}` : null
-    });
-  } catch (error) {
-    console.error("POST /api/certificates error:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// List all certificates
-app.get("/api/certificates", async (req, res) => {
-  try {
-    const list = await Certificate.find().sort({ createdAt: -1 });
-    res.json(
-      list.map(c => ({
-        ...c.toObject(),
-        date: c.date.toISOString().split("T")[0],
-        fileUrl: c.fileId ? `/api/certificates/file/${c.fileId}` : null
-      }))
-    );
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// Serve certificate PDF from GridFS
-app.get("/api/certificates/file/:id", (req, res) => {
-  try {
-    const db = mongoose.connection.db;
-    const bucket = new GridFSBucket(db, { bucketName: "certificates" });
-    const id = new mongoose.Types.ObjectId(req.params.id);
-    const stream = bucket.openDownloadStream(id);
-    stream.on("file", file => {
-      res.set({
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename="${file.filename}"`
-      });
-    });
-    stream.on("error", err => {
-      console.error("GridFS stream error:", err);
-      res.status(404).send("File not found");
-    });
-    stream.pipe(res);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// ---- Contact ----
-app.post("/api/contact", async (req, res) => {
-  try {
-    const newContact = new Contact(req.body);
-    await newContact.save();
-    res.status(201).json(newContact);
-  } catch (e) {
-    res.status(400).json({ error: e.message });
-  }
-});
-
-app.get("/api/contact", async (req, res) => {
-  try {
-    const contacts = await Contact.find().sort({ createdAt: -1 });
-    res.json(contacts);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: 'Error deleting certificate' });
   }
 });
 
@@ -459,6 +486,25 @@ app.put("/api/about", async (req, res) => {
     res.json(updated.data);
   } catch (e) {
     res.status(400).json({ error: e.message });
+  }
+});
+
+// ---- Contact ----
+app.post('/api/contact', async (req, res) => {
+  try {
+    const { name, email, message } = req.body;
+
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: 'Name, email, and message are required.' });
+    }
+
+    const newContact = new Contact({ name, email, message });
+    await newContact.save();
+
+    res.status(201).json({ success: true, message: 'Message received!', data: newContact });
+  } catch (error) {
+    console.error('Error saving contact message:', error);
+    res.status(500).json({ error: 'Failed to save message.' });
   }
 });
 

@@ -166,6 +166,7 @@ h2 {
 }
 
 .cert-card {
+  position: relative;
   background: white;
   border-radius: 1rem;
   box-shadow: 0 8px 15px rgba(0,0,0,0.07);
@@ -176,29 +177,34 @@ h2 {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.cert-card-header {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 10;
+}
+
 .cert-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 20px rgba(0,0,0,0.12);
 }
 
 .delete-x-btn {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  background: #ef4444;
+  background: #ff4444;
   color: white;
   border: none;
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  font-size: 20px;
-  line-height: 24px;
+  width: 25px;
+  height: 25px;
+  font-size: 16px;
   cursor: pointer;
-  font-weight: 700;
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
-  transition: background-color 0.2s ease;
-  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 5px;
 }
+
 .delete-x-btn:hover {
   background: #dc2626;
 }
