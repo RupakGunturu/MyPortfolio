@@ -156,7 +156,7 @@ const styles = {
     fontSize: '1rem',
   },
   mainContent: {
-    marginTop: '60px',
+    marginTop: 0,
     flex: 1,
   },
 };

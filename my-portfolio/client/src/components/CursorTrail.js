@@ -175,22 +175,7 @@ const CursorTrail = () => {
         }}
       />
       {/* Main cursor dot */}
-      <div
-        style={{
-          position: 'fixed',
-          width: '8px',
-          height: '8px',
-          background: 'black',
-          borderRadius: '50%',
-          pointerEvents: 'none',
-          zIndex: 10000,
-          mixBlendMode: 'difference',
-          transition: 'all 0.2s',
-          left: mousePosition.x - 4,
-          top: mousePosition.y - 4,
-          transform: isHovering ? 'scale(2)' : 'scale(1)',
-        }}
-      />
+      {/* Removed the black dot for a cleaner look */}
       {/* Hover indicator ring */}
       {isHovering && (
         <div
