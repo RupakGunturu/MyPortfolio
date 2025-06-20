@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import CursorTrail from './components/CursorTrail';
 import Hero from './components/Hero';
 import About from './components/About';
 import Certificate from './components/Certificate';
@@ -36,8 +37,9 @@ const App = () => {
   };
 
   return (
-    <div style={styles.appContainer}>
-      <div style={styles.headerWrapper}>
+    <>
+      <CursorTrail />
+      <div className="App">
         <Navbar />
         <button
           onClick={handleEditClick}
@@ -61,41 +63,39 @@ const App = () => {
             </button>
           </div>
         )}
+        <main style={styles.mainContent}>
+          <Hero editingGlobal={mode === 'editContent'} />
+          <About editingGlobal={mode === 'editContent'} />
+          <Certificate />
+          <Experience />
+          <Skills
+            showFormOnLoad={mode === 'addSkill'}
+            editingGlobal={mode === 'editContent'}
+          />
+          
+          {/* New Project Section */}
+          <section id="projects" style={{ textAlign: 'center', padding: '50px 20px', background: '#f9fafb' }}>
+            <h2 style={{ fontSize: '2.5rem', marginBottom: '40px', color: '#1e293b' }}>My Projects</h2>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+              <ProjectCard
+                name="Sample Project"
+                link="https://example.com"
+                image="https://via.placeholder.com/350x200?text=Project+1"
+              />
+              <ProjectCard
+                name="Another Cool App"
+                link="https://example.com"
+                image="https://via.placeholder.com/350x200?text=Project+2"
+              />
+              {/* You can add more <ProjectCard /> components here */}
+            </div>
+          </section>
+
+          <Contact />
+        </main>
+        <Footer />
       </div>
-
-      <main style={styles.mainContent}>
-        <Hero editingGlobal={mode === 'editContent'} />
-        <About editingGlobal={mode === 'editContent'} />
-        <Certificate />
-        <Experience />
-        <Skills
-          showFormOnLoad={mode === 'addSkill'}
-          editingGlobal={mode === 'editContent'}
-        />
-        
-        {/* New Project Section */}
-        <section id="projects" style={{ textAlign: 'center', padding: '50px 20px', background: '#f9fafb' }}>
-          <h2 style={{ fontSize: '2.5rem', marginBottom: '40px', color: '#1e293b' }}>My Projects</h2>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}>
-            <ProjectCard
-              name="Sample Project"
-              link="https://example.com"
-              image="https://via.placeholder.com/350x200?text=Project+1"
-            />
-            <ProjectCard
-              name="Another Cool App"
-              link="https://example.com"
-              image="https://via.placeholder.com/350x200?text=Project+2"
-            />
-            {/* You can add more <ProjectCard /> components here */}
-          </div>
-        </section>
-
-        <Contact />
-      </main>
-
-      <Footer />
-    </div>
+    </>
   );
 };
 

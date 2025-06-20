@@ -92,7 +92,7 @@ const DebugData = () => (
       if (!response.ok) throw new Error('Failed to delete skill');
       
       setSkills(prev => prev.filter(skill => skill._id !== skillId));
-      showToast('🗑️ Skill deleted!');
+      showToast('❌ Skill deleted!');
     } catch (err) {
       console.error('Delete error:', err);
       showToast('❌ Error deleting skill!');
