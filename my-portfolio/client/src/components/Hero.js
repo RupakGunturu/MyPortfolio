@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaGithub, FaLinkedin, FaArrowRight } from "react-icons/fa";
 import axios from "axios";
 import { Typewriter } from 'react-simple-typewriter';
+import { removeBackground } from "@imgly/background-removal";
 import "./Hero.css";
 
 const textContainerVariants = {
@@ -136,6 +137,7 @@ const Hero = () => {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [showMainContent, setShowMainContent] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [form, setForm] = useState({ 
     name: "", 
     bio: "", 
@@ -208,14 +210,36 @@ const Hero = () => {
     }
   };
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setForm(prev => ({ ...prev, imageUrl: file }));
-    
-    const previewUrl = URL.createObjectURL(file);
-    setProfile(prev => ({ ...prev, imageUrl: previewUrl }));
+    if (!file.type.startsWith('image/')) {
+        alert('Please select a PNG image file.');
+        return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+        const blob = await removeBackground(file);
+        const processedFile = new File([blob], file.name.replace(/\\.[^/.]+$/, "") + ".png", { type: 'image/png' });
+
+        setForm(prev => ({ ...prev, imageUrl: processedFile }));
+
+        const previewUrl = URL.createObjectURL(processedFile);
+        setProfile(prev => ({ ...prev, imageUrl: previewUrl }));
+
+    } catch (error) {
+        console.error("Failed to remove background:", error);
+        alert("Could not remove background. Please try another image.");
+        // Fallback to original image
+        setForm(prev => ({ ...prev, imageUrl: file }));
+        const previewUrl = URL.createObjectURL(file);
+        setProfile(prev => ({ ...prev, imageUrl: previewUrl }));
+    } finally {
+        setIsProcessing(false);
+    }
   };
 
   const handleTechStackUpdate = async (newMessage) => {
@@ -346,7 +370,7 @@ const Hero = () => {
                   zIndex: 2,
                   position: 'relative',
                   width: 'auto',
-                  height: 'clamp(450px, 80vh, 900px)',
+                  height: 'clamp(700px, 75vh, 1050px)',
                   objectFit: 'contain',
                 }}
                 onError={(e) => { e.target.src = "/images/profile-placeholder.png"; }}
@@ -411,28 +435,30 @@ const Hero = () => {
       {/* Edit Form Modal */}
       <AnimatePresence>
         {editing && (
-          <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setEditing(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.6)',
+              zIndex: 49,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '1rem',
+              overflowY: 'auto'
+            }}
+          >
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setEditing(false)}
-              style={{
-                position: 'fixed',
-                inset: 0,
-                background: 'rgba(0, 0, 0, 0.6)',
-                zIndex: 49,
-              }}
-            />
-            <motion.div
-              initial={{ opacity: 0, y: 30, scale: 0.95 }}
+              initial={{ opacity: 0, y: -30, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 30, scale: 0.95 }}
+              exit={{ opacity: 0, y: -30, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
               style={{
-                position: 'fixed',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
+                position: 'relative',
                 zIndex: 50,
               }}
             >
@@ -443,32 +469,162 @@ const Hero = () => {
                   borderRadius: '16px',
                   padding: '24px',
                   boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                  minWidth: 'clamp(300px, 90vw, 480px)',
+                  minWidth: 'clamp(280px, 80vw, 400px)',
+                  maxWidth: '400px',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '16px',
+                  position: 'relative', // Needed for loading overlay
                 }}
               >
-                <h2>Edit Profile</h2>
+                {isProcessing && (
+                  <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'rgba(255, 255, 255, 0.9)',
+                      zIndex: 10,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '16px',
+                      gap: '10px'
+                  }}>
+                      <div className="loading-spinner"></div>
+                      <p style={{ color: '#374151', fontWeight: 500 }}>
+                          Removing background...
+                      </p>
+                  </div>
+                )}
+                <h2 style={{ 
+                  fontSize: '1.5rem', 
+                  fontWeight: '600', 
+                  color: '#1e293b',
+                  margin: '0 0 8px 0',
+                  textAlign: 'center'
+                }}>
+                  Edit Profile
+                </h2>
                 <div className="form-group">
-                  <label className="nav-label">Name</label>
-                  <input className="form-input" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} placeholder="Your name" />
+                  <label className="nav-label" style={{ 
+                    fontSize: '0.9rem', 
+                    fontWeight: '500', 
+                    color: '#374151',
+                    marginBottom: '6px',
+                    display: 'block'
+                  }}>
+                    Name
+                  </label>
+                  <input 
+                    className="form-input" 
+                    value={form.name} 
+                    onChange={(e) => setForm({...form, name: e.target.value})} 
+                    placeholder="Your name"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '0.9rem',
+                      transition: 'all 0.2s ease',
+                      boxSizing: 'border-box'
+                    }}
+                  />
                 </div>
                 <div className="form-group">
-                  <label className="nav-label">Profile Image</label>
-                  <div className="file-upload-wrapper">
-                    <label className="file-upload-button">Choose New Image
-                      <input type="file" accept="image/*" onChange={handleImageUpload} className="file-input" />
+                  <label className="nav-label" style={{ 
+                    fontSize: '0.9rem', 
+                    fontWeight: '500', 
+                    color: '#374151',
+                    marginBottom: '6px',
+                    display: 'block'
+                  }}>
+                    Profile Image
+                  </label>
+                  <div className="file-upload-wrapper" style={{
+                    background: '#f9fafb',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    border: '2px dashed #d1d5db',
+                    textAlign: 'center',
+                    cursor: 'pointer'
+                  }}>
+                    <label className="file-upload-button" style={{
+                      color: '#374151',
+                      fontSize: '0.9rem',
+                      fontWeight: '500',
+                      cursor: 'pointer'
+                    }}>
+                      Choose New Image
+                      <input 
+                        type="file" 
+                        accept="image/png" 
+                        onChange={handleImageUpload} 
+                        className="file-input" 
+                        style={{ display: 'none' }}
+                      />
                     </label>
                   </div>
+                  <p style={{ 
+                    fontSize: '0.7rem', 
+                    color: '#6b7280', 
+                    marginTop: '8px',
+                    fontStyle: 'italic',
+                    lineHeight: '1.3',
+                    textAlign: 'center',
+                    background: 'rgba(59, 130, 246, 0.05)',
+                    padding: '6px 8px',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(59, 130, 246, 0.1)'
+                  }}>
+                    ("Kindly upload the image as a Removed background image to fully appreciate its visual appeal and enhance the overall aesthetic.")
+                  </p>
                 </div>
-                <div className="form-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-                  <button type="button" onClick={() => setEditing(false)} className="secondary-button">Cancel</button>
-                  <button type="submit" className="primary-button">Save Changes</button>
+                <div className="form-actions" style={{ 
+                  display: 'flex', 
+                  justifyContent: 'flex-end', 
+                  gap: '10px',
+                  marginTop: '8px'
+                }}>
+                  <button 
+                    type="button" 
+                    onClick={() => setEditing(false)} 
+                    className="secondary-button"
+                    style={{
+                      padding: '8px 16px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      background: '#ffffff',
+                      color: '#374151',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="primary-button"
+                    style={{
+                      padding: '8px 16px',
+                      border: 'none',
+                      borderRadius: '6px',
+                      background: '#3b82f6',
+                      color: '#ffffff',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    Save Changes
+                  </button>
                 </div>
               </form>
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
     </section>
