@@ -13,8 +13,10 @@ const fieldOptions = [
   'Social Links',
 ];
 
+const multiValueFields = ['Interests', 'Skills', 'Achievements', 'Hobbies', 'Social Links'];
+
 const About = () => {
-  const [selectedFields, setSelectedFields] = useState(['Name', 'Title', 'Bio']);
+  const [selectedFields, setSelectedFields] = useState(['Name', 'Title', 'Bio', 'Skills']);
   const [userData, setUserData] = useState({});
   const [showEditDropdown, setShowEditDropdown] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,7 +25,16 @@ const About = () => {
     fetch('/api/about')
       .then(res => res.json())
       .then(data => {
-        setUserData(data);
+        const processedData = { ...data };
+        multiValueFields.forEach(field => {
+          const value = processedData[field];
+          if (value && typeof value === 'string') {
+            processedData[field] = value.split(',').map(s => s.trim()).filter(Boolean);
+          } else if (!Array.isArray(value)) {
+            processedData[field] = [];
+          }
+        });
+        setUserData(processedData);
         setIsLoading(false);
       })
       .catch(err => console.error('Fetch error:', err));
@@ -38,10 +49,19 @@ const About = () => {
   };
 
   const handleEditField = async (field) => {
-    const newValue = prompt(`Edit ${field}:`, userData[field] || '');
+    const isMulti = multiValueFields.includes(field);
+    const currentValue = userData[field];
+    const promptDefault = isMulti && Array.isArray(currentValue)
+      ? currentValue.join(', ')
+      : currentValue || '';
+      
+    const newValue = prompt(`Edit ${field}:${isMulti ? ' (separate with commas)' : ''}`, promptDefault);
+    
     if (newValue !== null) {
-      const updatedData = { ...userData, [field]: newValue };
+      const finalValue = isMulti ? newValue.split(',').map(s => s.trim()).filter(Boolean) : newValue;
+      const updatedData = { ...userData, [field]: finalValue };
       setUserData(updatedData);
+
       try {
         await fetch('/api/about', {
           method: 'PUT',
@@ -117,8 +137,7 @@ const About = () => {
           <motion.div
             style={{ 
               position: 'relative', 
-              marginBottom: '40px',
-              zIndex: 1001
+              marginBottom: '40px'
             }}
             layout
           >
@@ -431,10 +450,43 @@ const About = () => {
                         animation: 'shimmer 2s infinite linear',
                         backgroundSize: '200% 100%'
                       }}>
-                        Loading...
+                        Loading content...
                       </span>
                     ) : (
-                      userData[field] || <span style={{ opacity: 0.5 }}>Not specified</span>
+                      (() => {
+                        const isMulti = multiValueFields.includes(field);
+                        const value = userData[field];
+
+                        if (isMulti && Array.isArray(value)) {
+                          return (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                              {value.length > 0 ? (
+                                value.map((item, i) => (
+                                  <motion.span
+                                    key={i}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: i * 0.1 }}
+                                    style={{
+                                      background: 'rgba(74,144,226,0.1)',
+                                      color: '#4A90E2',
+                                      padding: '6px 14px',
+                                      borderRadius: '12px',
+                                      fontSize: '0.95rem',
+                                      fontWeight: '500',
+                                    }}
+                                  >
+                                    {item}
+                                  </motion.span>
+                                ))
+                              ) : (
+                                <span style={{ opacity: 0.5 }}>Not specified</span>
+                              )}
+                            </div>
+                          );
+                        }
+                        return value || <span style={{ opacity: 0.5 }}>Not specified</span>;
+                      })()
                     )}
                   </motion.p>
                 </motion.div>

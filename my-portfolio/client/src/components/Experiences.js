@@ -180,10 +180,11 @@ const Experience = () => {
                 <motion.div
                   key={exp._id || index}
                   className="timeline-item"
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  exit={{ opacity: 0, x: -50 }}
+                  custom={index}
+                  initial={{ opacity: 0, y: 50, x: index % 2 === 0 ? -50 : 50 }}
+                  animate={{ opacity: 1, y: 0, x: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.2 }}
+                  whileHover={{ scale: 1.03 }}
                 >
                   <div className="timeline-icon">{getIconComponent(exp.iconType)}</div>
                   <div className="timeline-content">

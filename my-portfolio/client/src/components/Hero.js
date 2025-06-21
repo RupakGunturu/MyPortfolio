@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaGithub, FaLinkedin, FaArrowRight } from "react-icons/fa";
 import axios from "axios";
-import { Typewriter } from 'react-simple-typewriter';
 import { removeBackground } from "@imgly/background-removal";
 import "./Hero.css";
 
@@ -56,8 +55,11 @@ const TechPill = ({ techStackMessage, onUpdate }) => {
   };
 
   return (
-    <div 
+    <motion.div 
       className="tech-pill" 
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.7, type: 'spring', stiffness: 100 }}
       style={{ 
         background: 'rgba(17, 24, 39, 0.95)',
         backdropFilter: 'blur(10px)', 
@@ -80,50 +82,52 @@ const TechPill = ({ techStackMessage, onUpdate }) => {
           flexShrink: 0,
         }}
       />
-      {editMode ? (
-        <div className="tech-pill-edit" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <input
-            type="text"
-            value={message}
-            onChange={e => setMessage(e.target.value)}
-            className="tech-pill-input"
-            placeholder="Enter your tech stack"
-            style={{ 
-              background: 'transparent', 
-              border: 'none', 
-              color: 'white', 
-              outline: 'none',
-              fontSize: '0.8rem',
-              width: '200px'
-            }}
-          />
-          <button onClick={handleSave} className="tech-pill-save" style={{background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer'}}>Save</button>
-          <button onClick={() => setEditMode(false)} className="tech-pill-cancel" style={{background: 'transparent', color: 'white', border: 'none', cursor: 'pointer'}}>Cancel</button>
-        </div>
-      ) : (
-        <div className="tech-pill-content" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ color: 'white', fontSize: '0.8rem', whiteSpace: 'normal', textAlign: 'center' }}>
-            <Typewriter
-              words={[message || "Currently working with React & Next.js"]}
-              loop={false}
-              cursor
-              cursorStyle='_'
-              typeSpeed={50}
-              delaySpeed={1500}
-            />
-          </span>
-          <button 
-            onClick={() => setEditMode(true)} 
-            className="tech-pill-edit-button"
-            aria-label="Edit tech stack"
-            style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '0.8rem' }}
+      <AnimatePresence mode="wait">
+        {editMode ? (
+          <motion.div
+            key="edit"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="tech-pill-edit" 
+            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            ✏️
-          </button>
-        </div>
-      )}
-      
-    </div>
+            <input
+              type="text"
+              value={message}
+              onChange={e => setMessage(e.target.value)}
+              className="tech-pill-input"
+              placeholder="Enter your tech stack"
+            />
+            <button onClick={handleSave} className="tech-pill-save" style={{background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer'}}>Save</button>
+            <button onClick={() => setEditMode(false)} className="tech-pill-cancel" style={{background: 'transparent', color: 'white', border: 'none', cursor: 'pointer'}}>Cancel</button>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="view"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="tech-pill-content" 
+            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <span style={{ color: 'white', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+              {message || "Currently working with React & Next.js"}
+            </span>
+            <button 
+              onClick={() => setEditMode(true)} 
+              className="tech-pill-edit-button"
+              aria-label="Edit tech stack"
+              style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '0.8rem' }}
+            >
+              ✏️
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 
@@ -210,12 +214,61 @@ const Hero = () => {
     }
   };
 
+  const hasTransparentBackground = (file) => {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const image = new Image();
+            image.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = image.width;
+                canvas.height = image.height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    resolve(false);
+                    return;
+                }
+                ctx.drawImage(image, 0, 0);
+
+                // Check a few corner pixels for transparency
+                const corners = [
+                    ctx.getImageData(0, 0, 1, 1).data,
+                    ctx.getImageData(canvas.width - 1, 0, 1, 1).data,
+                    ctx.getImageData(0, canvas.height - 1, 1, 1).data,
+                    ctx.getImageData(canvas.width - 1, canvas.height - 1, 1, 1).data,
+                ];
+
+                const isTransparent = corners.some(corner => corner[3] === 0);
+                resolve(isTransparent);
+            };
+            image.onerror = () => resolve(false);
+            if (typeof reader.result === 'string') {
+                image.src = reader.result;
+            } else {
+                resolve(false);
+            }
+        };
+        reader.onerror = () => resolve(false);
+        reader.readAsDataURL(file);
+    });
+  };
+
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-        alert('Please select a PNG image file.');
+        alert('Please select an image file.');
+        return;
+    }
+
+    const isAlreadyTransparent = await hasTransparentBackground(file);
+
+    if (isAlreadyTransparent) {
+        console.log("Image has transparency, skipping background removal.");
+        setForm(prev => ({ ...prev, imageUrl: file }));
+        const previewUrl = URL.createObjectURL(file);
+        setProfile(prev => ({ ...prev, imageUrl: previewUrl }));
         return;
     }
 
@@ -349,13 +402,17 @@ const Hero = () => {
                     </motion.span>
                   ))}
                 </motion.span>
-                <motion.span style={{ color: '#3b82f6', marginLeft: '0.25em', display: 'flex' }}>
-                  {lastName.split('').map((char, index) => (
-                    <motion.span key={`ln-${index}`} variants={letterVariants} style={{ display: 'inline-block' }}>
-                      {char === ' ' ? '\u00A0' : char}
-                    </motion.span>
-                  ))}
-                </motion.span>
+                
+                <div style={{ position: 'relative' }}>
+                  <motion.span style={{ color: '#3b82f6', marginLeft: '0.25em', display: 'flex' }}>
+                    {lastName.split('').map((char, index) => (
+                      <motion.span key={`ln-${index}`} variants={letterVariants} style={{ display: 'inline-block' }}>
+                        {char === ' ' ? '\u00A0' : char}
+                      </motion.span>
+                    ))}
+                  </motion.span>
+                </div>
+
               </motion.div>
 
               {/* Foreground Image */}
@@ -419,18 +476,13 @@ const Hero = () => {
                   </a>
                 </div>
               </div>
-              {/* <div style={{ marginTop: '16px' }}>
+              <div style={{ transform: 'translate(11rem, 1.75rem)' }}>
                 <TechPill techStackMessage={profile.techStackMessage} onUpdate={handleTechStackUpdate} />
-              </div> */}
+              </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* TechPill on the bottom left */}
-      <div style={{ position: 'absolute', bottom: 32, left: 32, zIndex: 3 }}>
-        <TechPill techStackMessage={profile.techStackMessage} onUpdate={handleTechStackUpdate} />
-      </div>
 
       {/* Edit Form Modal */}
       <AnimatePresence>
@@ -577,7 +629,7 @@ const Hero = () => {
                     borderRadius: '6px',
                     border: '1px solid rgba(59, 130, 246, 0.1)'
                   }}>
-                    ("Kindly upload the image as a Removed background image to fully appreciate its visual appeal and enhance the overall aesthetic.")
+                    ("Kindly upload the image as a background image to fully appreciate its visual appeal and enhance the overall aesthetic.")
                   </p>
                 </div>
                 <div className="form-actions" style={{ 

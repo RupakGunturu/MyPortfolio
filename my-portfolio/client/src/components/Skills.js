@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
 
 const Skill = () => {
   const [skills, setSkills] = useState([]);
@@ -6,6 +7,8 @@ const Skill = () => {
   const [newSkill, setNewSkill] = useState({ title: '', level: 'intermediate' });
   const [toastMessage, setToastMessage] = useState('');
   const [isDeleting, setIsDeleting] = useState(null);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.2 });
 
   // Fetch skills from backend
   useEffect(() => {
@@ -193,10 +196,17 @@ const DebugData = () => (
         </form>
       )}
 
-     <div style={styles.grid}>
+     <div ref={ref} style={styles.grid}>
         {skills.length > 0 ? (
-          skills.map(skill => (
-            <div key={skill._id} style={styles.card}>
+          skills.map((skill, index) => (
+            <motion.div
+              key={skill._id}
+              style={styles.card}
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.4, delay: index * 0.05 }}
+              whileHover={{ y: -4, scale: 1.02, boxShadow: '0 10px 20px -5px rgba(0, 0, 0, 0.1)' }}
+            >
               <div style={styles.cardContent}>
                 <div style={styles.skillHeader}>
                   <h3 style={styles.title}>{skill.title}</h3>
@@ -233,7 +243,7 @@ const DebugData = () => (
                   />
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))
         ) : (
           <p style={{ gridColumn: '1/-1', textAlign: 'center' }}>
@@ -310,13 +320,9 @@ const styles = {
     borderRadius: '1rem',
     padding: '1.5rem',
     boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
     border: '1px solid #f3f4f6',
     position: 'relative',
-    ':hover': {
-      transform: 'translateY(-2px)',
-      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-    },
+    cursor: 'pointer',
   },
   cardContent: {
     display: 'flex',

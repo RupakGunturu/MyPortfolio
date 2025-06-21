@@ -308,18 +308,30 @@ textarea.form-input {
 }
 
 .tech-pill-input {
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid #00bfff;
-  color: white;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  color: #111827;
   outline: none;
-  padding: 4px;
-  min-width: 200px;
-  flex: 1;
+  font-size: 0.8rem;
+  width: 220px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+}
+
+.tech-pill-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.tech-pill-input::placeholder {
+  color: #9ca3af;
+  font-style: italic;
+  opacity: 1; /* Ensure full visibility */
 }
 
 .tech-pill-edit-button {
-  background: none;
+  background: transparent;
   border: none;
   color: #94a3b8;
   cursor: pointer;
