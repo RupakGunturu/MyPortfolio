@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './ProjectCard.css';
 
-const ProjectCard = () => {
+const ProjectCard = ({ viewOnly = false }) => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -250,12 +250,14 @@ const ProjectCard = () => {
       <div className="projects-container">
         <div className="projects-header">
           <h2 className={isVisible ? 'animate-in' : ''}>My Projects</h2>
-          <button 
-            className={`add-project-btn ${isVisible ? 'animate-in' : ''}`}
-            onClick={handleAddProject}
-          >
-            + Add Project
-          </button>
+          {!viewOnly && (
+            <button 
+              className={`add-project-btn ${isVisible ? 'animate-in' : ''}`}
+              onClick={handleAddProject}
+            >
+              + Add Project
+            </button>
+          )}
         </div>
         
         <div className="projects-grid">
@@ -295,12 +297,14 @@ const ProjectCard = () => {
       >
         View Project
                     </button>
-                    <button 
-                      className="edit-btn"
-                      onClick={() => handleEditProject(project)}
-                    >
-                      Edit
-                    </button>
+                    {!viewOnly && (
+                      <button 
+                        className="edit-btn"
+                        onClick={() => handleEditProject(project)}
+                      >
+                        Edit
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

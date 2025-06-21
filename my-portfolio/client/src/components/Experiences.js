@@ -4,7 +4,7 @@ import { FaBriefcase, FaCode, FaGraduationCap, FaEdit, FaSave, FaTimes } from 'r
 import axios from 'axios';
 import './Experiences.css';
 
-const Experience = () => {
+const Experience = ({ viewOnly = false }) => {
   const [experiences, setExperiences] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState([]);
@@ -148,15 +148,17 @@ const Experience = () => {
       >
         <div className="experience-header">
           <h2 className="experience-heading">My Journey</h2>
-          <motion.button
-            className="edit-button"
-            onClick={handleEditToggle}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            {isEditing ? <FaSave /> : <FaEdit />}
-            {isEditing ? ' Save' : ' Edit'}
-          </motion.button>
+          {!viewOnly && (
+            <motion.button
+              className="edit-button"
+              onClick={handleEditToggle}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {isEditing ? <FaSave /> : <FaEdit />}
+              {isEditing ? ' Save' : ' Edit'}
+            </motion.button>
+          )}
         </div>
 
         {error && (

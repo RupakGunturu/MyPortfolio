@@ -15,8 +15,8 @@ const fieldOptions = [
 
 const multiValueFields = ['Interests', 'Skills', 'Achievements', 'Hobbies', 'Social Links'];
 
-const About = () => {
-  const [selectedFields, setSelectedFields] = useState(['Name', 'Title', 'Bio', 'Skills']);
+const About = ({ viewOnly = false }) => {
+  const [selectedFields, setSelectedFields] = useState(['Name', 'Interests', 'Skills']);
   const [userData, setUserData] = useState({});
   const [showEditDropdown, setShowEditDropdown] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,11 +36,36 @@ const About = () => {
         });
         setUserData(processedData);
         setIsLoading(false);
+
+        if (viewOnly) {
+          // In viewOnly mode, show all available fields but ensure Name, Interests, and Skills are included
+          const allAvailableFields = fieldOptions.filter(field => {
+            const value = processedData[field];
+            const hasValue = Array.isArray(value) ? value.length > 0 : !!value;
+            return hasValue;
+          });
+          
+          // Ensure Name, Interests, and Skills are always included if they have data
+          const defaultFields = ['Name', 'Interests', 'Skills'];
+          const fieldsWithData = defaultFields.filter(field => {
+            const value = processedData[field];
+            return Array.isArray(value) ? value.length > 0 : !!value;
+          });
+          
+          const otherFields = allAvailableFields.filter(field => !defaultFields.includes(field));
+          setSelectedFields([...fieldsWithData, ...otherFields]);
+        }
       })
       .catch(err => console.error('Fetch error:', err));
-  }, []);
+  }, [viewOnly]);
 
   const toggleField = (field) => {
+    // Prevent Name, Interests, and Skills from being deselected
+    const defaultFields = ['Name', 'Interests', 'Skills'];
+    if (defaultFields.includes(field) && selectedFields.includes(field)) {
+      return; // Don't allow deselection of default fields
+    }
+    
     setSelectedFields(fields =>
       fields.includes(field)
         ? fields.filter(f => f !== field)
@@ -149,161 +174,182 @@ const About = () => {
               position: 'relative'
             }}>
               {/* Field Selection Buttons */}
-              {fieldOptions.map(field => (
+              {fieldOptions.map(field => {
+                const isDefaultField = ['Name', 'Interests', 'Skills'].includes(field);
+                const isSelected = selectedFields.includes(field);
+                
+                return (
+                  <motion.button
+                    key={field}
+                    onClick={() => toggleField(field)}
+                    whileHover={{ 
+                      scale: isDefaultField && isSelected ? 1 : 1.05,
+                      rotate: isSelected ? [-2, 2] : 0
+                    }}
+                    transition={{
+                      rotate: {
+                        type: "keyframes",
+                        duration: 0.15,
+                        repeat: Infinity,
+                        repeatType: "mirror"
+                      },
+                      scale: { type: "spring", stiffness: 300 }
+                    }}
+                    whileTap={{ scale: isDefaultField && isSelected ? 1 : 0.95 }}
+                    style={{
+                      padding: '12px 24px',
+                      borderRadius: '16px',
+                      border: 'none',
+                      background: isSelected 
+                        ? (isDefaultField 
+                            ? 'linear-gradient(45deg, #10B981, #059669)' // Green for default fields
+                            : 'linear-gradient(45deg, #4A90E2, #6C5CE7)') // Blue for other fields
+                        : 'rgba(255,255,255,0.95)',
+                      color: isSelected ? 'white' : '#2A2D43',
+                      cursor: isDefaultField && isSelected ? 'default' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+                      fontSize: '1rem',
+                      backdropFilter: 'blur(4px)',
+                      WebkitBackdropFilter: 'blur(4px)',
+                      opacity: isDefaultField && isSelected ? 0.8 : 1
+                    }}
+                  >
+                    {isSelected ? (
+                      <FiCheck style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }} />
+                    ) : (
+                      <FiX style={{ opacity: 0.8 }} />
+                    )}
+                    {field}
+                    {isDefaultField && isSelected && (
+                      <span style={{ 
+                        fontSize: '0.7rem', 
+                        opacity: 0.8,
+                        marginLeft: '4px'
+                      }}>
+                        (Always)
+                      </span>
+                    )}
+                  </motion.button>
+                );
+              })}
+              
+              {/* Edit Content Button - Only show in non-viewOnly mode */}
+              {!viewOnly && (
                 <motion.button
-                  key={field}
-                  onClick={() => toggleField(field)}
-                  whileHover={{ 
-                    scale: 1.05,
-                    rotate: selectedFields.includes(field) ? [-2, 2] : 0
-                  }}
-                  transition={{
-                    rotate: {
-                      type: "keyframes",
-                      duration: 0.15,
-                      repeat: Infinity,
-                      repeatType: "mirror"
-                    },
-                    scale: { type: "spring", stiffness: 300 }
-                  }}
+                  onClick={() => setShowEditDropdown(!showEditDropdown)}
+                  whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   style={{
                     padding: '12px 24px',
                     borderRadius: '16px',
                     border: 'none',
-                    background: selectedFields.includes(field) 
-                      ? 'linear-gradient(45deg, #4A90E2, #6C5CE7)' 
-                      : 'rgba(255,255,255,0.95)',
-                    color: selectedFields.includes(field) ? 'white' : '#2A2D43',
+                    background: 'rgba(255,255,255,0.95)',
+                    color: '#2A2D43',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '12px',
                     boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
-                    fontSize: '1rem',
                     backdropFilter: 'blur(4px)',
                     WebkitBackdropFilter: 'blur(4px)'
                   }}
                 >
-                  {selectedFields.includes(field) ? (
-                    <FiCheck style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }} />
-                  ) : (
-                    <FiX style={{ opacity: 0.8 }} />
-                  )}
-                  {field}
+                  <FiEdit />
+                  Edit Content
+                  <motion.span
+                    animate={{ 
+                      rotate: showEditDropdown ? 180 : 0,
+                      scale: showEditDropdown ? 1.2 : 1
+                    }}
+                    transition={{ type: 'spring', stiffness: 300 }}
+                  >
+                    <FiChevronDown />
+                  </motion.span>
                 </motion.button>
-              ))}
-              
-              {/* Edit Content Button */}
-              <motion.button
-                onClick={() => setShowEditDropdown(!showEditDropdown)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                style={{
-                  padding: '12px 24px',
-                  borderRadius: '16px',
-                  border: 'none',
-                  background: 'rgba(255,255,255,0.95)',
-                  color: '#2A2D43',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
-                  backdropFilter: 'blur(4px)',
-                  WebkitBackdropFilter: 'blur(4px)'
-                }}
-              >
-                <FiEdit />
-                Edit Content
-                <motion.span
-                  animate={{ 
-                    rotate: showEditDropdown ? 180 : 0,
-                    scale: showEditDropdown ? 1.2 : 1
-                  }}
-                  transition={{ type: 'spring', stiffness: 300 }}
-                >
-                  <FiChevronDown />
-                </motion.span>
-              </motion.button>
+              )}
             </div>
 
-            {/* Edit Dropdown */}
-            <AnimatePresence>
-              {showEditDropdown && (
-                <motion.div
-                  initial={{ 
-                    opacity: 0, 
-                    y: -10,
-                    scale: 0.95,
-                    filter: 'blur(4px)'
-                  }}
-                  animate={{ 
-                    opacity: 1, 
-                    y: 0,
-                    scale: 1,
-                    filter: 'blur(0px)'
-                  }}
-                  exit={{ 
-                    opacity: 0, 
-                    y: -10,
-                    scale: 0.95,
-                    filter: 'blur(4px)'
-                  }}
-                  style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: 'rgba(255,255,255,0.95)',
-                    borderRadius: '16px',
-                    marginTop: '16px',
-                    boxShadow: '0 16px 32px rgba(0,0,0,0.15)',
-                    overflow: 'hidden',
-                    zIndex: 1002,
-                    width: '280px',
-                    backdropFilter: 'blur(12px)',
-                    WebkitBackdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255,255,255,0.2)'
-                  }}
-                >
-                  {fieldOptions.map(field => (
-                    <motion.div
-                      key={field}
-                      onClick={() => handleEditField(field)}
-                      whileHover={{ 
-                        background: 'rgba(74,144,226,0.1)',
-                        paddingLeft: '28px'
-                      }}
-                      style={{
-                        padding: '16px 24px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '16px',
-                        borderBottom: '1px solid rgba(0,0,0,0.05)',
-                        fontSize: '1rem',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                      }}
-                    >
-                      <FiEdit style={{ 
-                        color: '#4A90E2',
-                        flexShrink: 0,
-                        filter: 'drop-shadow(0 2px 4px rgba(74,144,226,0.2))'
-                      }} />
-                      <span style={{ 
-                        fontWeight: '500',
-                        background: 'linear-gradient(45deg, #4A90E2, #6C5CE7)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent'
-                      }}>
-                        {field}
-                      </span>
-                    </motion.div>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {/* Edit Dropdown - Only show in non-viewOnly mode */}
+            {!viewOnly && (
+              <AnimatePresence>
+                {showEditDropdown && (
+                  <motion.div
+                    initial={{ 
+                      opacity: 0, 
+                      y: -10,
+                      scale: 0.95,
+                      filter: 'blur(4px)'
+                    }}
+                    animate={{ 
+                      opacity: 1, 
+                      y: 0,
+                      scale: 1,
+                      filter: 'blur(0px)'
+                    }}
+                    exit={{ 
+                      opacity: 0, 
+                      y: -10,
+                      scale: 0.95,
+                      filter: 'blur(4px)'
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      background: 'rgba(255,255,255,0.95)',
+                      borderRadius: '16px',
+                      marginTop: '16px',
+                      boxShadow: '0 16px 32px rgba(0,0,0,0.15)',
+                      overflow: 'hidden',
+                      zIndex: 1002,
+                      width: '280px',
+                      backdropFilter: 'blur(12px)',
+                      WebkitBackdropFilter: 'blur(12px)',
+                      border: '1px solid rgba(255,255,255,0.2)'
+                    }}
+                  >
+                    {fieldOptions.map(field => (
+                      <motion.div
+                        key={field}
+                        onClick={() => handleEditField(field)}
+                        whileHover={{ 
+                          background: 'rgba(74,144,226,0.1)',
+                          paddingLeft: '28px'
+                        }}
+                        style={{
+                          padding: '16px 24px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '16px',
+                          borderBottom: '1px solid rgba(0,0,0,0.05)',
+                          fontSize: '1rem',
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                        }}
+                      >
+                        <FiEdit style={{ 
+                          color: '#4A90E2',
+                          flexShrink: 0,
+                          filter: 'drop-shadow(0 2px 4px rgba(74,144,226,0.2))'
+                        }} />
+                        <span style={{ 
+                          fontWeight: '500',
+                          background: 'linear-gradient(45deg, #4A90E2, #6C5CE7)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent'
+                        }}>
+                          {field}
+                        </span>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            )}
           </motion.div>
 
           {/* Content Cards Section - Now in 2 columns */}

@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import './Certificate.css';
 
-function Certificates() {
+function Certificates({ viewOnly = false, theme = 'dark' }) {
   const [certs, setCerts] = useState([]);
   const [form, setForm] = useState({
     title: '',
@@ -105,139 +104,415 @@ const deleteCertificate = async (id) => {
   }
 };
 
-  const openFile = (url) => {
-    window.open(url, '_blank');
+  // Theme-aware styles
+  const styles = {
+    container: {
+      maxWidth: '100%',
+      margin: '0 auto',
+      padding: '40px 20px',
+      fontFamily: "'Inter', system-ui, sans-serif",
+      background: theme === 'dark' 
+        ? 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)'
+        : '#FFFFFF',
+      minHeight: 'auto',
+      width: '100%',
+    },
+    header: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '2.5rem',
+      paddingBottom: '1rem',
+      borderBottom: theme === 'dark' ? '1px solid #334155' : '1px solid #E2E8F0',
+      maxWidth: '1400px',
+      margin: '0 auto 2.5rem auto',
+      width: '100%',
+      flexWrap: 'wrap',
+      gap: '1rem',
+      padding: '0 20px',
+    },
+    heading: {
+      fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+      fontWeight: '800',
+      color: theme === 'dark' ? '#F8FAFC' : '#1E293B',
+      margin: 0,
+      letterSpacing: '-1px',
+    },
+    subHeading: {
+      fontSize: '1.2rem',
+      color: theme === 'dark' ? '#94A3B8' : '#64748B',
+      margin: '0.5rem 0 0',
+    },
+    addButton: {
+      background: 'linear-gradient(135deg, #00BFFF 0%, #3B82F6 100%)',
+      color: theme === 'dark' ? '#0F172A' : '#FFFFFF',
+      border: 'none',
+      padding: '0.75rem 1.5rem',
+      borderRadius: '0.5rem',
+      cursor: 'pointer',
+      fontWeight: '600',
+      transition: 'all 0.15s ease',
+      boxShadow: '0 4px 6px -1px rgba(0, 191, 255, 0.2)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem',
+    },
+    cancelButton: {
+      background: 'linear-gradient(45deg, #ef4444, #f87171)',
+      color: theme === 'dark' ? '#0F172A' : '#FFFFFF',
+      border: 'none',
+      padding: '0.75rem 1.5rem',
+      borderRadius: '0.5rem',
+      cursor: 'pointer',
+      fontWeight: '600',
+      transition: 'all 0.15s ease',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem',
+    },
+    form: {
+      backgroundColor: theme === 'dark' ? '#1E293B' : '#FFFFFF',
+      borderRadius: '0.75rem',
+      marginBottom: '2rem',
+      padding: '1.5rem',
+      border: theme === 'dark' ? '1px solid #334155' : '1px solid #E2E8F0',
+      boxShadow: theme === 'dark' 
+        ? '0 4px 6px -1px rgba(0, 0, 0, 0.3)'
+        : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+      maxWidth: '1400px',
+      margin: '0 auto 2rem auto',
+      width: '100%',
+    },
+    formGroup: {
+      marginBottom: '1.5rem',
+    },
+    label: {
+      display: 'block',
+      marginBottom: '0.5rem',
+      fontWeight: '500',
+      color: theme === 'dark' ? '#F8FAFC' : '#1E293B',
+      fontSize: '0.95rem',
+    },
+    input: {
+      width: '100%',
+      padding: '0.75rem',
+      border: theme === 'dark' ? '1px solid #334155' : '1px solid #E2E8F0',
+      borderRadius: '0.5rem',
+      fontSize: '1rem',
+      transition: 'all 0.15s ease',
+      backgroundColor: theme === 'dark' ? '#0F172A' : '#F8FAFC',
+      color: theme === 'dark' ? '#F8FAFC' : '#1E293B',
+    },
+    fileHint: {
+      fontSize: '0.8rem',
+      color: theme === 'dark' ? '#94A3B8' : '#64748B',
+      marginTop: '0.25rem',
+      fontStyle: 'italic',
+    },
+    formActions: {
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: '1rem',
+    },
+    submitBtn: {
+      background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+      color: theme === 'dark' ? '#0F172A' : '#FFFFFF',
+      border: 'none',
+      padding: '0.75rem 1.5rem',
+      borderRadius: '0.5rem',
+      cursor: 'pointer',
+      fontWeight: '600',
+      transition: 'opacity 0.15s ease',
+    },
+    formCancelBtn: {
+      backgroundColor: theme === 'dark' ? '#334155' : '#F1F5F9',
+      color: theme === 'dark' ? '#F8FAFC' : '#475569',
+      border: theme === 'dark' ? '1px solid #475569' : '1px solid #CBD5E1',
+      padding: '0.75rem 1.25rem',
+      borderRadius: '0.5rem',
+      cursor: 'pointer',
+      fontWeight: '600',
+      transition: 'background-color 0.15s ease',
+    },
+    error: {
+      marginTop: '1rem',
+      color: '#ef4444',
+      fontWeight: '600',
+      fontSize: '0.9rem',
+      textAlign: 'center',
+    },
+    emptyState: {
+      marginTop: '4rem',
+      textAlign: 'center',
+      color: theme === 'dark' ? '#94A3B8' : '#64748B',
+      fontWeight: '600',
+      fontSize: '1.2rem',
+      maxWidth: '1400px',
+      margin: '4rem auto 0 auto',
+      width: '100%',
+    },
+    emptyIcon: {
+      fontSize: '4rem',
+      marginBottom: '1rem',
+      opacity: '0.4',
+    },
+    grid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+      gap: '1.5rem',
+      width: '100%',
+      maxWidth: '1400px',
+      margin: '0 auto',
+      padding: '0 20px',
+    },
+    card: {
+      position: 'relative',
+      backgroundColor: theme === 'dark' ? '#1E293B' : '#FFFFFF',
+      borderRadius: '1rem',
+      boxShadow: theme === 'dark' 
+        ? '0 8px 15px rgba(0,0,0,0.3)'
+        : '0 8px 15px rgba(0,0,0,0.07)',
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+      transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+      border: theme === 'dark' ? '1px solid #334155' : '1px solid #E2E8F0',
+    },
+    deleteBtn: {
+      background: '#ff4444',
+      color: 'white',
+      border: 'none',
+      borderRadius: '50%',
+      width: '25px',
+      height: '25px',
+      fontSize: '16px',
+      cursor: 'pointer',
+      position: 'absolute',
+      top: '10px',
+      right: '10px',
+      zIndex: '10',
+      transition: 'all 0.15s ease',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    image: {
+      width: '100%',
+      height: '200px',
+      objectFit: 'cover',
+      backgroundColor: theme === 'dark' ? '#334155' : '#F1F5F9',
+    },
+    noImagePlaceholder: {
+      width: '100%',
+      height: '200px',
+      backgroundColor: theme === 'dark' ? '#334155' : '#F1F5F9',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: theme === 'dark' ? '#94A3B8' : '#64748B',
+      fontSize: '0.9rem',
+    },
+    details: {
+      padding: '1rem',
+    },
+    title: {
+      color: theme === 'dark' ? '#F8FAFC' : '#1E293B',
+      fontSize: '1.125rem',
+      fontWeight: '600',
+      margin: '0 0 0.5rem 0',
+    },
+    issuer: {
+      color: theme === 'dark' ? '#94A3B8' : '#64748B',
+      fontSize: '0.9rem',
+      margin: '0 0 0.25rem 0',
+    },
+    date: {
+      color: theme === 'dark' ? '#94A3B8' : '#64748B',
+      fontSize: '0.8rem',
+      margin: '0',
+    },
+    deleteConfirmOverlay: {
+      position: 'absolute',
+      top: '0',
+      left: '0',
+      right: '0',
+      bottom: '0',
+      backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.7)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: '20',
+    },
+    deleteConfirmBox: {
+      backgroundColor: theme === 'dark' ? '#1E293B' : '#FFFFFF',
+      padding: '1.5rem',
+      borderRadius: '0.75rem',
+      textAlign: 'center',
+      maxWidth: '300px',
+      border: theme === 'dark' ? '1px solid #334155' : '1px solid #E2E8F0',
+    },
+    confirmText: {
+      color: theme === 'dark' ? '#F8FAFC' : '#1E293B',
+      marginBottom: '1rem',
+      fontSize: '0.95rem',
+    },
+    confirmActions: {
+      display: 'flex',
+      gap: '0.75rem',
+      justifyContent: 'center',
+    },
+    confirmDeleteBtn: {
+      background: '#ef4444',
+      color: 'white',
+      border: 'none',
+      padding: '0.5rem 1rem',
+      borderRadius: '0.375rem',
+      cursor: 'pointer',
+      fontWeight: '600',
+      fontSize: '0.875rem',
+      transition: 'background-color 0.15s ease',
+    },
   };
 
   return (
-    <div className="certificates-container">
-      <div className="header">
-        <h2>My Certificates</h2>
-        <button
-          onClick={() => setIsFormVisible(!isFormVisible)}
-          className={`add-btn ${isFormVisible ? 'cancel' : ''}`}
-        >
-          {isFormVisible ? '✕ Close' : '＋ Add Certificate'}
-        </button>
+    <section style={styles.container}>
+      <div style={styles.header}>
+        <div>
+          <h2 style={styles.heading}>My Certificates</h2>
+          <p style={styles.subHeading}>Manage your professional certifications</p>
+        </div>
+        {!viewOnly && (
+          <button
+            onClick={() => setIsFormVisible(!isFormVisible)}
+            style={isFormVisible ? styles.cancelButton : styles.addButton}
+          >
+            {isFormVisible ? '✕ Close' : '＋ Add Certificate'}
+          </button>
+        )}
       </div>
 
       <AnimatePresence>
-        {isFormVisible && (
+        {isFormVisible && !viewOnly && (
           <motion.form
             onSubmit={onSubmit}
-            className="cert-form"
+            style={styles.form}
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             encType="multipart/form-data"
           >
-            <div className="form-group">
-              <label>Certificate Title *</label>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Certificate Title *</label>
               <input
                 value={form.title}
                 onChange={e => setForm({ ...form, title: e.target.value })}
                 required
+                style={styles.input}
               />
             </div>
 
-            <div className="form-group">
-              <label>Issued By *</label>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Issued By *</label>
               <input
                 value={form.issuer}
                 onChange={e => setForm({ ...form, issuer: e.target.value })}
                 required
+                style={styles.input}
               />
             </div>
 
-            <div className="form-group">
-              <label>Date Issued *</label>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Date Issued *</label>
               <input
                 type="date"
                 value={form.date}
                 onChange={e => setForm({ ...form, date: e.target.value })}
                 required
-                className="modern-date"
+                style={styles.input}
               />
             </div>
 
-            <div className="form-group">
-              <label>Upload Document (Image or PDF)</label>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Upload Document (Image or PDF)</label>
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*,.pdf"
                 onChange={handleFileChange}
+                style={styles.input}
               />
-              <p className="file-hint">Supports JPG, PNG, GIF, or PDF files</p>
+              <p style={styles.fileHint}>Supports JPG, PNG, GIF, or PDF files</p>
             </div>
 
-            <div className="form-actions">
+            <div style={styles.formActions}>
               <button
                 type="button"
                 onClick={() => setIsFormVisible(false)}
-                className="cancel-btn"
+                style={styles.formCancelBtn}
               >
                 Cancel
               </button>
-              <button type="submit" className="submit-btn">
+              <button type="submit" style={styles.submitBtn}>
                 Save Certificate
               </button>
             </div>
-            {error && <div className="error">{error}</div>}
+            {error && <div style={styles.error}>{error}</div>}
           </motion.form>
         )}
       </AnimatePresence>
 
       {certs.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">📄</div>
+        <div style={styles.emptyState}>
+          <div style={styles.emptyIcon}>📄</div>
           <p>No certificates yet. Add your first one!</p>
         </div>
       ) : (
-        <div className="certificates-grid">
+        <div style={styles.grid}>
           {certs.map(cert => (
             <motion.div
               key={cert._id}
-              className="cert-card"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              whileHover={{ scale: 1.02 }}
+              style={styles.card}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: 0.02 }}
+              whileHover={{ y: -4, scale: 1.02 }}
             >
-              <button
-  className="delete-x-btn"
-  onClick={(e) => {
-    e.stopPropagation(); // This prevents the event from reaching the card
-    confirmDelete(cert._id);
-  }}
-  aria-label="Delete Certificate"
-  title="Delete Certificate"
->
-  ×
-</button>
+              {!viewOnly && (
+                <button
+                  style={styles.deleteBtn}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    confirmDelete(cert._id);
+                  }}
+                  aria-label="Delete Certificate"
+                  title="Delete Certificate"
+                >
+                  ×
+                </button>
+              )}
 
-
-              <div className="cert-image">
+              <div>
                 {cert.url ? (
                   <img
                     src={cert.url}
                     alt="Certificate"
+                    style={styles.image}
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = "https://via.placeholder.com/300x200?text=Certificate+Preview";
                     }}
                   />
                 ) : (
-                  <div className="no-image-placeholder">
+                  <div style={styles.noImagePlaceholder}>
                     <span>No Preview Available</span>
                   </div>
                 )}
               </div>
 
-              <div className="cert-details">
-                <h3>{cert.title}</h3>
-                <p className="issuer">{cert.issuer}</p>
-                <p className="date">
+              <div style={styles.details}>
+                <h3 style={styles.title}>{cert.title}</h3>
+                <p style={styles.issuer}>{cert.issuer}</p>
+                <p style={styles.date}>
                   {new Date(cert.date).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'short',
@@ -245,17 +520,17 @@ const deleteCertificate = async (id) => {
                   })}
                 </p>
 
-                {deletingId === cert._id && (
-                  <div className="delete-confirm-overlay">
-                    <div className="delete-confirm-box">
-                      <p>Are you sure you want to delete this certificate?</p>
-                      <div className="confirm-actions">
-                        <button onClick={cancelDelete} className="cancel-btn">
+                {deletingId === cert._id && !viewOnly && (
+                  <div style={styles.deleteConfirmOverlay}>
+                    <div style={styles.deleteConfirmBox}>
+                      <p style={styles.confirmText}>Are you sure you want to delete this certificate?</p>
+                      <div style={styles.confirmActions}>
+                        <button onClick={cancelDelete} style={styles.formCancelBtn}>
                           Cancel
                         </button>
                         <button
                           onClick={() => deleteCertificate(cert._id)}
-                          className="confirm-delete-btn"
+                          style={styles.confirmDeleteBtn}
                         >
                           Yes, Delete
                         </button>
@@ -268,7 +543,7 @@ const deleteCertificate = async (id) => {
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }
 

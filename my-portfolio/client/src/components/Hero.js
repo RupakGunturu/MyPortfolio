@@ -45,7 +45,7 @@ const letterVariants = {
   }
 };
 
-const TechPill = ({ techStackMessage, onUpdate }) => {
+const TechPill = ({ techStackMessage, onUpdate, viewOnly = false }) => {
   const [editMode, setEditMode] = useState(false);
   const [message, setMessage] = useState(techStackMessage || '');
 
@@ -116,14 +116,16 @@ const TechPill = ({ techStackMessage, onUpdate }) => {
             <span style={{ color: 'white', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
               {message || "Currently working with React & Next.js"}
             </span>
-            <button 
-              onClick={() => setEditMode(true)} 
-              className="tech-pill-edit-button"
-              aria-label="Edit tech stack"
-              style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '0.8rem' }}
-            >
-              ✏️
-            </button>
+            {!viewOnly && (
+              <button 
+                onClick={() => setEditMode(true)} 
+                className="tech-pill-edit-button"
+                aria-label="Edit tech stack"
+                style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '0.8rem' }}
+              >
+                ✏️
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -131,7 +133,7 @@ const TechPill = ({ techStackMessage, onUpdate }) => {
   );
 };
 
-const Hero = () => {
+const Hero = ({ viewOnly = false }) => {
   const [profile, setProfile] = useState({ 
     name: "", 
     bio: "", 
@@ -451,22 +453,24 @@ const Hero = () => {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                <button
-                  onClick={() => setEditing(true)}
-                  style={{
-                    background: '#fff',
-                    color: '#1e293b',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '999px',
-                    padding: '10px 22px',
-                    fontWeight: 600,
-                    fontSize: '0.9rem',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Edit Profile
-                </button>
+                {!viewOnly && (
+                  <button
+                    onClick={() => setEditing(true)}
+                    style={{
+                      background: '#fff',
+                      color: '#1e293b',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '999px',
+                      padding: '10px 22px',
+                      fontWeight: 600,
+                      fontSize: '0.9rem',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Edit Profile
+                  </button>
+                )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <a href="https://github.com/RupakGunturu" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
                     <FaGithub style={{ fontSize: '1.5rem', color: '#1e293b' }} />
@@ -477,7 +481,7 @@ const Hero = () => {
                 </div>
               </div>
               <div style={{ transform: 'translate(11rem, 1.75rem)' }}>
-                <TechPill techStackMessage={profile.techStackMessage} onUpdate={handleTechStackUpdate} />
+                <TechPill techStackMessage={profile.techStackMessage} onUpdate={handleTechStackUpdate} viewOnly={viewOnly} />
               </div>
             </motion.div>
           </motion.div>
