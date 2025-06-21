@@ -89,13 +89,6 @@ const certificateSchema = new mongoose.Schema({
 
 const Certificate = mongoose.model('Certificate', certificateSchema);
 
-const experienceSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  description: { type: String, default: "" },
-});
-const Experience = mongoose.model("Experience", experienceSchema);
-
-
 const skillSchema = new mongoose.Schema({
   title: String,
   level: {
@@ -125,6 +118,17 @@ const userSchema = new mongoose.Schema({
   techStackMessage: { type: String, default: "Currently working with React & Next.js" }
 });
 const User = mongoose.model("User", userSchema);
+
+// --- Mongoose Model (inline) ---
+const experienceSchema = new mongoose.Schema({
+  iconType: { type: String, enum: ['briefcase', 'code', 'graduation'], default: 'briefcase' },
+  date: { type: String, required: true },
+  title: { type: String, required: true },
+  company: { type: String, required: true },
+  description: { type: String, required: true }
+}, { timestamps: true });
+
+const Experience = mongoose.model("Experience", experienceSchema);
 
 // -------------------- Routes --------------------
 
@@ -222,68 +226,6 @@ app.put("/api/user", uploadUserImage.single("image"), async (req, res) => {
     });
   }
 });
-
-// ---- Experience ----
-app.get("/api/experience/:id", async (req, res) => {
-  try {
-    const exp = await Experience.findById(req.params.id);
-    if (!exp) return res.status(404).json({ error: "Not found" });
-    res.json(exp);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-// Create a new experience
-app.post("/api/experience", async (req, res) => {
-  try {
-    const { title, description } = req.body;
-    if (!title) {
-      return res.status(400).json({ error: "Title is required" });
-    }
-    const newExp = new Experience({ title, description: description || "" });
-    await newExp.save();
-    res.status(201).json(newExp);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Update an experience by ID
-app.put("/api/experience/:id", async (req, res) => {
-  try {
-    const { title, description } = req.body;
-    if (!title) {
-      return res.status(400).json({ error: "Title is required" });
-    }
-    const updated = await Experience.findByIdAndUpdate(
-      req.params.id,
-      { title, description: description || "" },
-      { new: true, runValidators: true }
-    );
-    if (!updated) {
-      return res.status(404).json({ error: "Experience not found" });
-    }
-    res.json(updated);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Delete an experience by ID
-app.delete("/api/experience/:id", async (req, res) => {
-  try {
-    const deleted = await Experience.findByIdAndDelete(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ message: "Experience not found" });
-    }
-    res.json({ message: "Deleted", deleted });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 
 // ---- Certificates ----
 
@@ -505,6 +447,161 @@ app.post('/api/contact', async (req, res) => {
   } catch (error) {
     console.error('Error saving contact message:', error);
     res.status(500).json({ error: 'Failed to save message.' });
+  }
+});
+
+// --- API Endpoints ---
+
+// Get all experiences
+app.get("/api/experiences", async (req, res) => {
+  try {
+    const experiences = await Experience.find().sort({ createdAt: -1 });
+    res.json(experiences);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch experiences", error: error.message });
+  }
+});
+
+// Add a new experience
+app.post("/api/experiences", async (req, res) => {
+  try {
+    const { iconType, date, title, company, description } = req.body;
+    if (!date || !title || !company || !description) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+    const validIconTypes = ['briefcase', 'code', 'graduation'];
+    if (!validIconTypes.includes(iconType)) {
+      return res.status(400).json({ message: "Invalid iconType" });
+    }
+    const newExp = new Experience({ iconType, date, title, company, description });
+    await newExp.save();
+    res.status(201).json(newExp);
+  } catch (error) {
+    res.status(400).json({ message: "Failed to add experience", error: error.message });
+  }
+});
+
+// Delete an experience by ID
+app.delete("/api/experiences/:id", async (req, res) => {
+  try {
+    const deleted = await Experience.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ message: "Experience not found" });
+    }
+    res.json({ message: "Deleted", deleted });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete experience", error: error.message });
+  }
+});
+
+// Bulk update experiences (replace all)
+app.put("/api/experiences", async (req, res) => {
+  try {
+    const { experiences } = req.body;
+    
+    if (!Array.isArray(experiences)) {
+      return res.status(400).json({ message: "Experiences must be an array" });
+    }
+
+    // Validate each experience
+    for (const exp of experiences) {
+      if (!exp.date || !exp.title || !exp.company || !exp.description) {
+        return res.status(400).json({ 
+          message: "All fields (date, title, company, description) are required for each experience" 
+        });
+      }
+      
+      const validIconTypes = ['briefcase', 'code', 'graduation'];
+      if (!validIconTypes.includes(exp.iconType)) {
+        return res.status(400).json({ 
+          message: "Invalid iconType. Must be one of: briefcase, code, graduation" 
+        });
+      }
+    }
+
+    // Delete all existing experiences
+    await Experience.deleteMany({});
+    
+    // Insert new experiences
+    const savedExperiences = await Experience.insertMany(experiences);
+    
+    res.json(savedExperiences);
+  } catch (error) {
+    res.status(400).json({ message: "Failed to bulk update experiences", error: error.message });
+  }
+});
+
+// ---- Projects ----
+
+// Project Schema
+const projectSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  link: { type: String, required: true },
+  image: { type: String, default: "" }
+}, { timestamps: true });
+
+const Project = mongoose.model('Project', projectSchema);
+
+// Get all projects
+app.get("/api/projects", async (req, res) => {
+  try {
+    const projects = await Project.find().sort({ createdAt: -1 });
+    res.json(projects);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch projects", error: error.message });
+  }
+});
+
+// Add a new project
+app.post("/api/projects", async (req, res) => {
+  try {
+    const { name, link, image } = req.body;
+    if (!name || !link) {
+      return res.status(400).json({ message: "Name and link are required" });
+    }
+    const newProject = new Project({ 
+      name, 
+      link, 
+      image: image || "https://via.placeholder.com/400x300?text=Project+Preview" 
+    });
+    await newProject.save();
+    res.status(201).json(newProject);
+  } catch (error) {
+    res.status(400).json({ message: "Failed to add project", error: error.message });
+  }
+});
+
+// Delete a project by ID
+app.delete("/api/projects/:id", async (req, res) => {
+  try {
+    const deleted = await Project.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+    res.json({ message: "Project deleted successfully", deleted });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete project", error: error.message });
+  }
+});
+
+// Update a project by ID
+app.put("/api/projects/:id", async (req, res) => {
+  try {
+    const { name, link, image } = req.body;
+    if (!name || !link) {
+      return res.status(400).json({ message: "Name and link are required" });
+    }
+    const updated = await Project.findByIdAndUpdate(
+      req.params.id, 
+      { name, link, image }, 
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+    res.json(updated);
+  } catch (error) {
+    res.status(400).json({ message: "Failed to update project", error: error.message });
   }
 });
 

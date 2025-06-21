@@ -73,23 +73,8 @@ const App = () => {
             editingGlobal={mode === 'editContent'}
           />
           
-          {/* New Project Section */}
-          <section id="projects" style={{ textAlign: 'center', padding: '50px 20px', background: '#f9fafb' }}>
-            <h2 style={{ fontSize: '2.5rem', marginBottom: '40px', color: '#1e293b' }}>My Projects</h2>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}>
-              <ProjectCard
-                name="Sample Project"
-                link="https://example.com"
-                image="https://via.placeholder.com/350x200?text=Project+1"
-              />
-              <ProjectCard
-                name="Another Cool App"
-                link="https://example.com"
-                image="https://via.placeholder.com/350x200?text=Project+2"
-              />
-              {/* You can add more <ProjectCard /> components here */}
-            </div>
-          </section>
+          {/* Projects Section - Now handled by ProjectCard component */}
+          <ProjectCard />
 
           <Contact />
         </main>
