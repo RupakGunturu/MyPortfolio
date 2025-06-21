@@ -249,7 +249,7 @@ const ProjectCard = ({ viewOnly = false }) => {
     <section className={`projects-section ${isVisible ? 'animate-in' : ''}`} ref={projectsSectionRef}>
       <div className="projects-container">
         <div className="projects-header">
-          <h2 className={isVisible ? 'animate-in' : ''}>My Projects</h2>
+          <h2 className={`project-title ${isVisible ? 'animate-in' : ''}`}>My Projects</h2>
           {!viewOnly && (
             <button 
               className={`add-project-btn ${isVisible ? 'animate-in' : ''}`}

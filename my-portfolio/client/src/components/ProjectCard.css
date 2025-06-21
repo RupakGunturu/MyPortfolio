@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 .project-gallery-container {
   padding: 2rem;
   max-width: 1400px;
@@ -171,46 +173,83 @@
 
 .project-card {
   background: #fff;
-  border-radius: 18px;
-  border: 2px solid #f3f4f6;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
   overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   width: 100%;
-  max-width: 420px;
-  min-height: 480px;
-  margin: 0 auto;
+  max-width: 380px;
+  min-height: 420px;
   opacity: 0;
-  transform: translateY(40px) scale(0.95);
-  animation: cardSlideIn 0.6s ease-out forwards;
+  transform: translateY(50px) scale(0.9);
+  animation: cardSlideIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  position: relative;
+  cursor: pointer;
+}
+
+.project-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  transform: scaleX(0);
+  transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.5s;
+}
+
+.project-card.animate-in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 
 .project-card:hover {
-  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-  transform: translateY(-8px) scale(1.02);
-  border-color: #60a5fa;
+  box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+  transform: translateY(-4px) scale(1.005);
+  transition-delay: 0s;
+  transition-duration: 0.8s;
+}
+
+.project-card:hover::before {
+  transform: scaleX(1);
+  transition-delay: 0s;
+  transition-duration: 0.6s;
+}
+
+.project-image {
+  position: relative;
+  overflow: hidden;
 }
 
 .project-image img,
 .project-image .no-image-placeholder {
   width: 100%;
-  height: 250px;
+  height: 220px;
   object-fit: cover;
-  background: #f9fafb;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   display: block;
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.6s;
+}
+
+.project-card:hover .project-image img {
+  transform: scale(1.03);
+  transition-delay: 0s;
+  transition-duration: 0.8s;
 }
 
 .no-image-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
+  color: #64748b;
   font-size: 1.1rem;
-  height: 250px;
-  background: #f9fafb;
+  font-weight: 500;
+  height: 220px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
 .project-details {
@@ -219,53 +258,130 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
+  background: linear-gradient(135deg, #fff 0%, #f8fafc 100%);
+  position: relative;
 }
 
 .project-details h3 {
-  margin: 0 0 15px 0;
-  font-size: 1.3rem;
+  font-family: 'Inter', sans-serif;
+  margin: 0 0 16px 0;
+  font-size: 1.4rem;
+  font-weight: 700;
   color: #1e293b;
   flex: 1;
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.4s;
+  line-height: 1.3;
+}
+
+.project-card:hover .project-details h3 {
+  color: #667eea;
+  transform: translateX(2px);
+  transition-delay: 0s;
+  transition-duration: 0.6s;
 }
 
 .project-actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   margin-top: auto;
+  opacity: 0.98;
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.7s;
+}
+
+.project-card:hover .project-actions {
+  opacity: 1;
+  transform: translateY(-1px);
+  transition-delay: 0s;
+  transition-duration: 0.6s;
 }
 
 .view-btn,
-.edit-btn {
-  padding: 8px 16px;
+.edit-btn,
+.delete-btn {
+  padding: 12px 20px;
   border: none;
-  border-radius: 6px;
+  border-radius: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.9rem;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  font-size: 0.95rem;
+  font-family: 'Inter', sans-serif;
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.5px;
 }
 
 .view-btn {
-  background: #2563eb;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   flex: 2;
+  box-shadow: 0 3px 12px rgba(102, 126, 234, 0.25);
 }
 
 .view-btn:hover {
-  background: #1d4ed8;
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: 0 5px 18px rgba(102, 126, 234, 0.3);
+}
+
+.view-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.view-btn:hover::before {
+  left: 100%;
 }
 
 .edit-btn {
-  background: #f3f4f6;
-  color: #374151;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  color: #475569;
   flex: 1;
+  border: 2px solid transparent;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .edit-btn:hover {
-  background: #e5e7eb;
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+  transform: translateY(-1px) scale(1.01);
+  color: #334155;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.06);
+}
+
+.delete-btn {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  color: #dc2626;
+  flex: 1;
+  border: 2px solid transparent;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.delete-btn:hover {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  transform: translateY(-1px) scale(1.01);
+  color: #b91c1c;
+  box-shadow: 0 5px 15px rgba(220, 38, 38, 0.12);
+}
+
+.delete-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(220, 38, 38, 0.08), transparent);
+  transition: left 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.delete-btn:hover::before {
+  left: 100%;
 }
 
 .project-link {
@@ -285,15 +401,6 @@
 .action-buttons {
   display: flex;
   gap: 0.5rem;
-}
-
-.delete-btn {
-  background: #fed7d7;
-  color: #e53e3e;
-}
-
-.delete-btn:hover {
-  background: #feb2b2;
 }
 
 .edit-form {
@@ -347,7 +454,7 @@
 /* Projects Section */
 .projects-section {
   padding: 80px 20px;
-  background: #ffffff;
+  background: #f8fafc;
   min-height: 100vh;
   opacity: 0;
   transform: translateY(30px);
@@ -373,18 +480,44 @@
 }
 
 .projects-header h2 {
-  font-size: 2.5rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 3.5rem;
+  font-weight: 900;
   color: #1e293b;
   margin: 0;
-  font-weight: 700;
+  text-align: center;
+  position: relative;
   opacity: 0;
-  transform: translateX(-30px);
-  transition: all 0.6s ease-out 0.2s;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+  letter-spacing: -0.05em;
 }
 
 .projects-header h2.animate-in {
   opacity: 1;
-  transform: translateX(0);
+  transform: translateY(0);
+}
+
+.projects-header h2::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 80%;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 2px;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s;
+}
+
+.projects-header h2.animate-in::after {
+  transform: translateX(-50%) scaleX(1);
 }
 
 .add-project-btn {
@@ -485,16 +618,34 @@
   margin: 0;
 }
 
-/* Animation Keyframes */
+/* Enhanced Animation Keyframes */
 @keyframes cardSlideIn {
-  from {
+  0% {
     opacity: 0;
-    transform: translateY(40px) scale(0.95);
+    transform: translateY(60px) scale(0.8);
   }
-  to {
+  50% {
+    opacity: 0.7;
+    transform: translateY(20px) scale(0.95);
+  }
+  100% {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Add floating animation to cards on hover */
+.project-card:hover {
+  animation: none;
 }
 
 /* Modal Styles */

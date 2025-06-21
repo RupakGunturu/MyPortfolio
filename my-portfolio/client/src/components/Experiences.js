@@ -134,6 +134,7 @@ const Experience = ({ viewOnly = false }) => {
         <div style={{ textAlign: 'center', padding: '2rem' }}>
           <div className="loading-spinner"></div>
           <p>Loading experiences...</p>
+        
         </div>
       </section>
     );
@@ -148,18 +149,19 @@ const Experience = ({ viewOnly = false }) => {
       >
         <div className="experience-header">
           <h2 className="experience-heading">My Journey</h2>
-          {!viewOnly && (
-            <motion.button
-              className="edit-button"
-              onClick={handleEditToggle}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {isEditing ? <FaSave /> : <FaEdit />}
-              {isEditing ? ' Save' : ' Edit'}
-            </motion.button>
-          )}
         </div>
+
+        {!viewOnly && (
+          <motion.button
+            className="edit-button"
+            onClick={handleEditToggle}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {isEditing ? <FaSave /> : <FaEdit />}
+            {isEditing ? ' Save' : ' Edit'}
+          </motion.button>
+        )}
 
         {error && (
           <div style={{ 

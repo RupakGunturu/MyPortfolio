@@ -121,27 +121,34 @@ const deleteCertificate = async (id) => {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: '2.5rem',
+      marginBottom: '3rem',
       paddingBottom: '1rem',
-      borderBottom: theme === 'dark' ? '1px solid #334155' : '1px solid #E2E8F0',
+      borderBottom: 'none',
       maxWidth: '1400px',
-      margin: '0 auto 2.5rem auto',
+      margin: '0 auto 3rem auto',
       width: '100%',
       flexWrap: 'wrap',
       gap: '1rem',
       padding: '0 20px',
     },
     heading: {
-      fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-      fontWeight: '800',
+      fontSize: 'clamp(2.5rem, 5vw, 3.5rem)',
+      fontWeight: '900',
       color: theme === 'dark' ? '#F8FAFC' : '#1E293B',
       margin: 0,
-      letterSpacing: '-1px',
+      letterSpacing: '-1.5px',
+      background: theme === 'dark'
+        ? 'linear-gradient(135deg, #A78BFA 0%, #60A5FA 100%)'
+        : 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
     },
     subHeading: {
       fontSize: '1.2rem',
       color: theme === 'dark' ? '#94A3B8' : '#64748B',
-      margin: '0.5rem 0 0',
+      margin: '0.25rem 0 0',
+      fontWeight: '500',
+      letterSpacing: '0.5px',
     },
     addButton: {
       background: 'linear-gradient(135deg, #00BFFF 0%, #3B82F6 100%)',
@@ -275,8 +282,6 @@ const deleteCertificate = async (id) => {
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
-      transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
-      border: theme === 'dark' ? '1px solid #334155' : '1px solid #E2E8F0',
     },
     deleteBtn: {
       background: '#ff4444',
@@ -382,12 +387,12 @@ const deleteCertificate = async (id) => {
           <p style={styles.subHeading}>Manage your professional certifications</p>
         </div>
         {!viewOnly && (
-          <button
-            onClick={() => setIsFormVisible(!isFormVisible)}
+        <button
+          onClick={() => setIsFormVisible(!isFormVisible)}
             style={isFormVisible ? styles.cancelButton : styles.addButton}
-          >
-            {isFormVisible ? '✕ Close' : '＋ Add Certificate'}
-          </button>
+        >
+          {isFormVisible ? '✕ Close' : '＋ Add Certificate'}
+        </button>
         )}
       </div>
 
@@ -474,21 +479,27 @@ const deleteCertificate = async (id) => {
               style={styles.card}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, delay: 0.02 }}
-              whileHover={{ y: -4, scale: 1.02 }}
+              transition={{ type: 'spring', stiffness: 600, damping: 30, mass: 0.5 }}
+              whileHover={{ 
+                y: -8, 
+                scale: 1.03,
+                boxShadow: theme === 'dark'
+                  ? '0 12px 24px rgba(0,0,0,0.4)'
+                  : '0 12px 24px rgba(30, 41, 59, 0.15)'
+              }}
             >
               {!viewOnly && (
-                <button
+              <button
                   style={styles.deleteBtn}
-                  onClick={(e) => {
+  onClick={(e) => {
                     e.stopPropagation();
-                    confirmDelete(cert._id);
-                  }}
-                  aria-label="Delete Certificate"
-                  title="Delete Certificate"
-                >
-                  ×
-                </button>
+    confirmDelete(cert._id);
+  }}
+  aria-label="Delete Certificate"
+  title="Delete Certificate"
+>
+  ×
+</button>
               )}
 
               <div>

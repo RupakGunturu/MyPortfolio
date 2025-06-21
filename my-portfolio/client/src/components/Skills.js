@@ -148,16 +148,21 @@ const DebugData = () => (
       gap: '1rem',
     },
     heading: {
-      fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-      fontWeight: '800',
-      color: theme === 'dark' ? '#F8FAFC' : '#1E293B',
+      fontFamily: "'Montserrat', sans-serif",
+      fontSize: 'clamp(2.5rem, 5vw, 3.5rem)',
+      fontWeight: '900',
       margin: 0,
-      letterSpacing: '-1px',
+      letterSpacing: '-2px',
+      background: 'linear-gradient(135deg, #34d399, #3b82f6)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
     },
     subHeading: {
+      fontFamily: "'Montserrat', sans-serif",
       fontSize: '1.2rem',
       color: theme === 'dark' ? '#94A3B8' : '#64748B',
-      margin: '0.5rem 0 0',
+      margin: '0.25rem 0 0',
+      fontWeight: '700',
     },
     addButton: {
       display: 'flex',
@@ -379,25 +384,25 @@ const DebugData = () => (
     boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
     fontSize: '1rem',
     zIndex: 1000,
-  };
+};
 
   return (
     <section style={styles.section}>
       <div style={styles.header}>
-        <div>
+        <div style={{ paddingLeft: '4rem' }}>
           <h2 style={styles.heading}>Technical Skills</h2>
           <p style={styles.subHeading}>Manage your skill proficiency levels</p>
         </div>
         {!viewOnly && (
-          <button 
-            style={styles.addButton}
-            onClick={() => setIsFormOpen(true)}
-          >
-            <svg style={styles.plusIcon} viewBox="0 0 24 24">
-              <path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
-            </svg>
-            Add Skill
-          </button>
+        <button 
+          style={styles.addButton}
+          onClick={() => setIsFormOpen(true)}
+        >
+          <svg style={styles.plusIcon} viewBox="0 0 24 24">
+            <path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+          </svg>
+          Add Skill
+        </button>
         )}
       </div>
 
@@ -462,19 +467,19 @@ const DebugData = () => (
                       {skill.level}
                     </span>
                     {!viewOnly && (
-                      <button 
-                        onClick={() => handleDelete(skill._id)}
-                        style={styles.deleteButton}
-                        disabled={isDeleting === skill._id}
-                      >
-                        {isDeleting === skill._id ? (
-                          <span style={styles.spinner}></span>
-                        ) : (
-                          <svg style={styles.trashIcon} viewBox="0 0 24 24">
-                            <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
-                          </svg>
-                        )}
-                      </button>
+                    <button 
+                      onClick={() => handleDelete(skill._id)}
+                      style={styles.deleteButton}
+                      disabled={isDeleting === skill._id}
+                    >
+                      {isDeleting === skill._id ? (
+                        <span style={styles.spinner}></span>
+                      ) : (
+                        <svg style={styles.trashIcon} viewBox="0 0 24 24">
+                          <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+                        </svg>
+                      )}
+                    </button>
                     )}
                   </div>
                 </div>

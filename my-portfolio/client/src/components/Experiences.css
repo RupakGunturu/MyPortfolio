@@ -1,63 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@800&family=Poppins&display=swap');
+
 .experience-section {
-  padding: 4rem 2rem;
-  background-color: #f9f9f9;
-  color: #333;
+  padding: 80px 20px;
+  background: #f8f9fa;
+  font-family: 'Poppins', sans-serif;
+  overflow-x: hidden;
 }
 
 .experience-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 3rem;
+  text-align: center;
+  margin-bottom: 50px;
 }
 
 .experience-heading {
-  font-size: 2.5rem;
+  font-family: 'Playfair Display', serif;
+  font-size: 3.5rem;
+  font-weight: 800;
   color: #2c3e50;
+  margin-bottom: 1rem;
   position: relative;
   display: inline-block;
+  padding-bottom: 15px;
+  letter-spacing: 1px;
 }
 
 .experience-heading::after {
   content: '';
   position: absolute;
-  bottom: -10px;
-  left: 0;
-  width: 60px;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
   height: 4px;
-  background-color: #3498db;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #84fab0, #8fd3f4);
 }
 
 .edit-button {
-  background-color: #3498db;
+  background-color: #2193b0;
   color: white;
+  padding: 10px 20px;
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: block;
+  margin: -40px auto 30px;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-  transition: all 0.3s ease;
+  gap: 8px;
+}
+
+.edit-button:hover {
+  background-color: #1c7a91;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .experience-timeline {
   position: relative;
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
-.experience-timeline::after {
+.experience-timeline::before {
   content: '';
   position: absolute;
-  width: 4px;
-  background-color: #3498db;
+  width: 2px;
+  background: #e9ecef;
   top: 0;
   bottom: 0;
   left: 50%;
-  margin-left: -2px;
-  border-radius: 2px;
+  margin-left: -1px;
 }
 
 .timeline-item {
@@ -65,116 +80,133 @@
   position: relative;
   width: 50%;
   box-sizing: border-box;
-  margin-bottom: 2rem;
 }
 
 .timeline-item:nth-child(odd) {
   left: 0;
+  padding-right: 30px;
+  text-align: right;
 }
 
 .timeline-item:nth-child(even) {
   left: 50%;
+  padding-left: 30px;
+}
+
+.timeline-content {
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.05);
+  position: relative;
+  transition: all 0.3s ease;
+  border-top: 4px solid #6dd5ed;
+}
+
+.timeline-item:hover .timeline-content {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
 .timeline-icon {
   position: absolute;
   width: 50px;
   height: 50px;
-  background-color: white;
-  border: 4px solid #3498db;
+  background: #ffffff;
+  border: 3px solid #6dd5ed;
+  top: 30px;
   border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  right: -27px;
-  top: 15px;
   z-index: 1;
-  color: #3498db;
-  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2193b0;
+  font-size: 1.4rem;
+  box-shadow: 0 0 0 5px #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+.timeline-item:nth-child(odd) .timeline-icon {
+  right: -25px;
 }
 
 .timeline-item:nth-child(even) .timeline-icon {
-  left: -27px;
+  left: -25px;
 }
 
-.timeline-content {
-  padding: 20px 30px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  position: relative;
-  transition: box-shadow 0.3s ease-in-out;
-}
-
-.timeline-content:hover {
-  box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+.timeline-item:hover .timeline-icon {
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(33, 147, 176, 0.5);
 }
 
 .timeline-date {
-  color: #3498db;
-  font-weight: bold;
+  font-weight: 500;
+  color: #2193b0;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
   display: block;
-  margin-bottom: 0.5rem;
 }
 
 .timeline-title {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
+  font-weight: 600;
   color: #2c3e50;
+  margin: 0 0 5px;
 }
 
 .timeline-company {
+  font-size: 1.1rem;
   color: #7f8c8d;
   font-style: italic;
-  margin: 0 0 1rem 0;
+  margin: 0 0 15px;
 }
 
 .timeline-description {
-  margin: 0;
   line-height: 1.6;
+  color: #555;
 }
 
-/* Edit Mode Styles */
+/* --- Edit Mode Styles --- */
+
 .timeline-item.edit-mode {
-  background-color: #f0f8ff;
-  border-radius: 8px;
-  padding: 1.5rem;
-}
-
-.timeline-icon-edit {
-  position: absolute;
-  width: 50px;
-  height: 50px;
-  background-color: white;
-  border: 4px solid #3498db;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  right: -27px;
-  top: 15px;
-  z-index: 1;
-  color: #3498db;
-  font-size: 1.5rem;
-}
-
-.timeline-item:nth-child(even).edit-mode .timeline-icon-edit {
-  left: -27px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+  margin-bottom: 20px;
+  border-left: 4px solid #6dd5ed;
 }
 
 .timeline-content-edit {
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 15px;
+}
+
+.timeline-icon-edit, .timeline-content-edit {
+  width: 100%;
 }
 
 .timeline-content-edit input,
 .timeline-content-edit textarea,
-.timeline-content-edit select {
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+.timeline-icon-edit select {
+  width: 100%;
+  padding: 12px 15px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
   font-size: 1rem;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.2s ease-in-out;
+  background-color: #f9fafb;
+}
+
+.timeline-content-edit input:focus,
+.timeline-content-edit textarea:focus,
+.timeline-icon-edit select:focus {
+  outline: none;
+  border-color: #2193b0;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(33, 147, 176, 0.1);
 }
 
 .timeline-content-edit textarea {
@@ -182,82 +214,85 @@
   resize: vertical;
 }
 
-.remove-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: #e74c3c;
-  color: white;
+.timeline-content-edit ::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
+.remove-button, .add-button, .save-button, .cancel-button {
+  padding: 10px 20px;
+  border-radius: 8px;
   border: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.remove-button {
+  background-color: #ef4444;
+  color: white;
+  margin-left: auto; /* Pushes button to the right */
+}
+.remove-button:hover {
+  background-color: #dc2626;
 }
 
 .add-button {
-  display: block;
-  margin: 2rem auto;
-  padding: 0.8rem 1.5rem;
-  background-color: #2ecc71;
+  background: linear-gradient(90deg, #6dd5ed, #2193b0);
   color: white;
-  border: none;
-  border-radius: 5px;
-  font-size: 1rem;
-  cursor: pointer;
+  margin: 20px auto;
+  display: block;
+  box-shadow: 0 4px 15px rgba(33, 147, 176, 0.2);
+}
+.add-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(33, 147, 176, 0.3);
 }
 
 .new-item-buttons {
   display: flex;
-  gap: 1rem;
+  gap: 10px;
+  margin-top: 10px;
   justify-content: flex-end;
-  margin-top: 1rem;
 }
 
 .save-button {
-  background-color: #2ecc71;
+  background-color: #10b981;
   color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  cursor: pointer;
+}
+.save-button:hover {
+  background-color: #059669;
 }
 
 .cancel-button {
-  background-color: #e74c3c;
+  background-color: #6b7280;
   color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  cursor: pointer;
+}
+.cancel-button:hover {
+  background-color: #4b5563;
 }
 
-/* Responsive Design */
+/* Responsive adjustments */
 @media screen and (max-width: 768px) {
-  .experience-timeline::after {
-    left: 31px;
+  .experience-timeline::before {
+    left: 25px;
   }
-
-  .timeline-item {
+  .timeline-item, .timeline-item:nth-child(even) {
     width: 100%;
-    padding-left: 70px;
-    padding-right: 25px;
-  }
-
-  .timeline-item:nth-child(even) {
     left: 0;
+    padding-left: 70px;
+    padding-right: 20px;
+    text-align: left;
   }
-
-  .timeline-icon, .timeline-icon-edit {
-    left: 15px;
-    right: auto;
+  .timeline-item:nth-child(odd) {
+    padding-right: 20px;
+    text-align: left;
   }
-
-  .timeline-item:nth-child(even) .timeline-icon,
-  .timeline-item:nth-child(even).edit-mode .timeline-icon-edit {
-    left: 15px;
+  .timeline-icon, .timeline-item:nth-child(even) .timeline-icon {
+    left: 0;
   }
 }
