@@ -14,8 +14,8 @@ const __dirname = path.resolve();
 const PORT = process.env.PORT || 9000;
 
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Ensure required directories exist
 [path.join(__dirname, "uploads"), path.join(__dirname, "images")].forEach(dir => {
@@ -37,6 +37,26 @@ app.use("/images", express.static(path.join(__dirname, "images")), (req, res) =>
 app.use((req, res, next) => {
   console.log(`→ ${req.method} ${req.originalUrl}`);
   next();
+});
+
+// Error handling middleware for payload too large
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 413) {
+    return res.status(413).json({ 
+      error: 'Payload too large', 
+      message: 'The image file is too large. Please use a smaller image (max 50MB).' 
+    });
+  }
+  
+  // Handle raw-body errors
+  if (err.message && err.message.includes('request entity too large')) {
+    return res.status(413).json({ 
+      error: 'Payload too large', 
+      message: 'The image file is too large. Please use a smaller image (max 50MB).' 
+    });
+  }
+  
+  next(err);
 });
 
 // -------------------- Multer Setup --------------------
@@ -556,9 +576,19 @@ app.get("/api/projects", async (req, res) => {
 app.post("/api/projects", async (req, res) => {
   try {
     const { name, link, image } = req.body;
+    
+    // Validate required fields
     if (!name || !link) {
       return res.status(400).json({ message: "Name and link are required" });
     }
+
+    // Validate image size if provided (base64 images can be large)
+    if (image && image.length > 50 * 1024 * 1024) { // 50MB limit
+      return res.status(413).json({ 
+        message: "Image file is too large. Please use a smaller image (max 50MB)." 
+      });
+    }
+
     const newProject = new Project({ 
       name, 
       link, 
@@ -567,6 +597,7 @@ app.post("/api/projects", async (req, res) => {
     await newProject.save();
     res.status(201).json(newProject);
   } catch (error) {
+    console.error('Error adding project:', error);
     res.status(400).json({ message: "Failed to add project", error: error.message });
   }
 });
@@ -580,6 +611,7 @@ app.delete("/api/projects/:id", async (req, res) => {
     }
     res.json({ message: "Project deleted successfully", deleted });
   } catch (error) {
+    console.error('Error deleting project:', error);
     res.status(500).json({ message: "Failed to delete project", error: error.message });
   }
 });
@@ -588,9 +620,19 @@ app.delete("/api/projects/:id", async (req, res) => {
 app.put("/api/projects/:id", async (req, res) => {
   try {
     const { name, link, image } = req.body;
+    
+    // Validate required fields
     if (!name || !link) {
       return res.status(400).json({ message: "Name and link are required" });
     }
+
+    // Validate image size if provided
+    if (image && image.length > 50 * 1024 * 1024) { // 50MB limit
+      return res.status(413).json({ 
+        message: "Image file is too large. Please use a smaller image (max 50MB)." 
+      });
+    }
+
     const updated = await Project.findByIdAndUpdate(
       req.params.id, 
       { name, link, image }, 
@@ -601,6 +643,7 @@ app.put("/api/projects/:id", async (req, res) => {
     }
     res.json(updated);
   } catch (error) {
+    console.error('Error updating project:', error);
     res.status(400).json({ message: "Failed to update project", error: error.message });
   }
 });
