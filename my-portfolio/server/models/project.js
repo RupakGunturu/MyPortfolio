@@ -1,12 +1,14 @@
-
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const projectSchema = new mongoose.Schema({
-title: String,
-description: String,
-link: String,
-image: String,
-file: String,
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  image: { type: String },
+  file: { type: String },
+  link: { type: String },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Project', projectSchema);
+const Project = mongoose.model('Project', projectSchema);
+
+export default Project;

@@ -1,0 +1,111 @@
+.dashboard-container {
+  background-color: #2c3e50;
+  min-height: 100vh;
+  color: #ecf0f1;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.dashboard-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.dashboard-card {
+  max-width: 800px;
+  width: 100%;
+}
+
+.dashboard-logo {
+  margin-bottom: 2rem;
+}
+
+.dashboard-logo img {
+  width: 120px;
+  height: 120px;
+  background-color: #000;
+  border-radius: 20px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.dashboard-description {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  max-width: 650px;
+  margin: 0 auto 2.5rem;
+  color: #bdc3c7;
+}
+
+.dashboard-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.btn-view, .btn-update {
+  padding: 0.8rem 2rem;
+  border-radius: 5px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-view {
+  background-color: #27ae60;
+  color: white;
+}
+
+.btn-view:hover {
+  background-color: #2ecc71;
+  transform: translateY(-2px);
+}
+
+.btn-update {
+  background-color: #27ae60;
+  color: white;
+}
+
+.btn-update:hover {
+  background-color: #2ecc71;
+  transform: translateY(-2px);
+}
+
+.dashboard-share h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.social-icons .icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #34495e;
+  color: #ecf0f1;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.social-icons .icon:hover {
+  transform: scale(1.1);
+  background-color: #4e6a85;
+} 

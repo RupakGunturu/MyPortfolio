@@ -2,9 +2,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 3rem;
-    background-color: transparent;
-    color: #64ffda;
+    padding: 1rem 2rem;
+    background-color: #1f2937;
+    color: #f9fafb;
     position: fixed;
     width: 100%;
     top: 0;
@@ -12,16 +12,58 @@
     transition: 0.5s ease;
   }
   
-  .nav-links a {
-    margin-left: 2rem;
-    color: #ccd6f6;
+  .navbar-logo a {
+    display: flex;
+    align-items: center;
     text-decoration: none;
-    font-weight: 500;
-    transition: 0.3s;
+    color: #f9fafb;
   }
   
-  .nav-links a:hover {
-    color: #64ffda;
-    border-bottom: 2px solid #64ffda;
+  .navbar-logo img {
+    height: 40px;
+    margin-right: 0.5rem;
+  }
+  
+  .navbar-logo span {
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+  }
+  
+  .navbar-links {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  
+  .welcome-message {
+    font-weight: 500;
+  }
+  
+  .logout-button {
+    background: none;
+    border: 1px solid #4b5563;
+    color: #f9fafb;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+  
+  .logout-button:hover {
+    background-color: #4b5563;
+    color: white;
+  }
+  
+  .nav-link {
+    text-decoration: none;
+    color: #d1d5db;
+    font-weight: 500;
+    transition: color 0.3s ease;
+  }
+  
+  .nav-link:hover {
+    color: white;
   }
   

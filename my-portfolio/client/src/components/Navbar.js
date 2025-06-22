@@ -1,78 +1,44 @@
-import React, { useState } from 'react';
+import React, { useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import AuthContext from '../context/AuthContext';
+import './Navbar.css';
+import logo from '../logo.svg'; 
 
 const Navbar = () => {
-  const [isMobile, setIsMobile] = useState(false);
+  const authContext = useContext(AuthContext);
+  const { isAuthenticated, logout, user } = authContext;
+  const navigate = useNavigate();
 
-  const toggleMobileMenu = () => {
-    setIsMobile(!isMobile);
+  const onLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
-    <nav style={styles.navbar}>
-      <div style={styles.brand}>My-Portfolio..</div>
-      <div style={styles.hamburger} onClick={toggleMobileMenu}>
-        ☰
+    <nav className="navbar">
+      <div className="navbar-logo">
+        <Link to="/">
+          <img src={logo} alt="Logo" />
+          <span>MY PORTFOLIO</span>
+        </Link>
       </div>
-      <ul style={{ ...styles.navLinks, display: isMobile ? 'flex' : 'none' }}>
-        <li style={styles.navItem}><a href="#home" style={styles.navLink}>Home</a></li>
-        <li style={styles.navItem}><a href="#about" style={styles.navLink}>About</a></li>
-        <li style={styles.navItem}><a href="#projects" style={styles.navLink}>Projects</a></li>
-        <li style={styles.navItem}><a href="#contact" style={styles.navLink}>Contact</a></li>
-      </ul>
+      <div className="navbar-links">
+        {isAuthenticated && user ? (
+          <>
+            <span className="welcome-message">WELCOME {user.name.toUpperCase()}!</span>
+            <button onClick={onLogout} className="logout-button">
+              LOGOUT
+            </button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" className="nav-link">Login</Link>
+            <Link to="/register" className="nav-link">Register</Link>
+          </>
+        )}
+      </div>
     </nav>
   );
-};
-
-const styles = {
-  navbar: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '1rem 2rem',
-    backgroundColor: '#0F172A',
-    color: 'white',
-    position: 'fixed',
-    width: '100%',
-    top: 0,
-    zIndex: 1000,
-  },
-  brand: {
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    color: '#00BFFF',
-  },
-  hamburger: {
-    fontSize: '2rem',
-    cursor: 'pointer',
-    display: 'none',
-  },
-  navLinks: {
-    display: 'flex',
-    listStyle: 'none',
-    gap: '1.5rem',
-  },
-  navItem: {
-    fontSize: '1.2rem',
-  },
-  navLink: {
-    textDecoration: 'none',
-    color: 'white',
-    transition: 'color 0.3s',
-  },
-  '@media (maxWidth: 768px)': {
-    hamburger: {
-      display: 'block',
-    },
-    navLinks: {
-      flexDirection: 'column',
-      alignItems: 'center',
-      position: 'absolute',
-      top: '100%',
-      left: 0,
-      right: 0,
-      backgroundColor: '#0F172A',
-    },
-  },
 };
 
 export default Navbar;

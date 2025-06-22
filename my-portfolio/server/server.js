@@ -6,12 +6,23 @@ import dotenv from "dotenv";
 import path from "path";
 import { GridFSBucket } from "mongodb";
 import fs from "fs";
+import connectDB from './config/db.js';
+import { getProjects } from './controllers/projectController.js';
+import { registerUser, loginUser } from './controllers/authController.js';
+import { check } from 'express-validator';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
+
+// Connect to database
+connectDB();
 
 const app = express();
 const __dirname = path.resolve();
 const PORT = process.env.PORT || 9000;
+
+// Set JWT_SECRET
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'a-very-secret-key-that-should-be-in-a-dotenv-file';
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -124,7 +135,7 @@ const contactSchema = new mongoose.Schema({
   email: { type: String, required: true },
   message: { type: String, required: true },
 }, { timestamps: true });
-const Contact = mongoose.model("Contact", contactSchema);
+const Contact = mongoose.models.Contact || mongoose.model("Contact", contactSchema);
 
 const aboutSchema = new mongoose.Schema({
   data: { type: Object, default: {} }
@@ -137,23 +148,26 @@ const userSchema = new mongoose.Schema({
   imageUrl: { type: String, default: "" },
   techStackMessage: { type: String, default: "Currently working with React & Next.js" }
 });
-const User = mongoose.model("User", userSchema);
+const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 // --- Mongoose Model (inline) ---
 const experienceSchema = new mongoose.Schema({
-  iconType: { type: String, enum: ['briefcase', 'code', 'graduation'], default: 'briefcase' },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  iconType: { type: String, required: true, enum: ['briefcase', 'code', 'graduation'] },
   date: { type: String, required: true },
   title: { type: String, required: true },
   company: { type: String, required: true },
-  description: { type: String, required: true }
-}, { timestamps: true });
+  description: { type: String, required: true },
+});
 
-const Experience = mongoose.model("Experience", experienceSchema);
+const Experience = mongoose.models.Experience || mongoose.model('Experience', experienceSchema);
 
 // -------------------- Routes --------------------
 
 // Basic test route
 app.get("/", (req, res) => res.send("✅ Server is running"));
+
+// Define Routes
 
 // ---- Skills ----
 app.post('/api/skill', async (req, res) => {
@@ -473,9 +487,9 @@ app.post('/api/contact', async (req, res) => {
 // --- API Endpoints ---
 
 // Get all experiences
-app.get("/api/experiences", async (req, res) => {
+app.get('/api/experiences', async (req, res) => {
   try {
-    const experiences = await Experience.find().sort({ createdAt: -1 });
+    const experiences = await Experience.find().sort({ date: -1 });
     res.json(experiences);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch experiences", error: error.message });
@@ -483,7 +497,7 @@ app.get("/api/experiences", async (req, res) => {
 });
 
 // Add a new experience
-app.post("/api/experiences", async (req, res) => {
+app.post('/api/experiences', async (req, res) => {
   try {
     const { iconType, date, title, company, description } = req.body;
     if (!date || !title || !company || !description) {
@@ -502,7 +516,7 @@ app.post("/api/experiences", async (req, res) => {
 });
 
 // Delete an experience by ID
-app.delete("/api/experiences/:id", async (req, res) => {
+app.delete('/api/experiences/:id', async (req, res) => {
   try {
     const deleted = await Experience.findByIdAndDelete(req.params.id);
     if (!deleted) {
@@ -515,7 +529,7 @@ app.delete("/api/experiences/:id", async (req, res) => {
 });
 
 // Bulk update experiences (replace all)
-app.put("/api/experiences", async (req, res) => {
+app.put('/api/experiences', async (req, res) => {
   try {
     const { experiences } = req.body;
     
@@ -560,7 +574,7 @@ const projectSchema = new mongoose.Schema({
   image: { type: String, default: "" }
 }, { timestamps: true });
 
-const Project = mongoose.model('Project', projectSchema);
+const Project = mongoose.models.Project || mongoose.model('Project', projectSchema);
 
 // Get all projects
 app.get("/api/projects", async (req, res) => {
@@ -648,9 +662,71 @@ app.put("/api/projects/:id", async (req, res) => {
   }
 });
 
-// -------------------- Catch-all 404 --------------------
-app.use((req, res) => {
-  res.status(404).send(`404 Not Found: ${req.originalUrl}`);
+// --- Auth Routes ---
+app.post(
+  '/api/auth/register',
+  [
+    check('name', 'Name is required').not().isEmpty(),
+    check('username', 'A unique username is required').not().isEmpty(),
+    check('email', 'Please include a valid email').isEmail(),
+    check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 }),
+  ],
+  registerUser
+);
+
+app.post(
+  '/api/auth/login',
+  [
+    check('email', 'Please include a valid email').isEmail(),
+    check('password', 'Password is required').exists(),
+  ],
+  loginUser
+);
+
+// --- Project Routes ---
+app.get('/api/projects', getProjects);
+
+// --- Certificate Routes ---
+const certificates = []; // Placeholder
+app.get('/api/certificates', (req, res) => {
+  res.json(certificates);
+});
+
+// Serve static assets in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '..', 'client', 'build')));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '..', 'client', 'build', 'index.html'));
+  });
+}
+
+// --- Middleware ---
+const auth = (req, res, next) => {
+  const token = req.header('x-auth-token');
+  if (!token) {
+    return res.status(401).json({ msg: 'No token, authorization denied' });
+  }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded.user;
+    next();
+  } catch (err) {
+    res.status(401).json({ msg: 'Token is not valid' });
+  }
+};
+
+// @route   GET api/auth
+// @desc    Get logged in user
+// @access  Private
+app.get('/api/auth', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    res.json(user);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
 });
 
 // -------------------- Connect to MongoDB & Start Server --------------------
