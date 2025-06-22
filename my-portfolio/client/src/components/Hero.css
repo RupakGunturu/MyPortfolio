@@ -44,6 +44,19 @@
   user-select: none;
   width: 100%;
   font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  /* Add these new properties for the text effect */
+  color: transparent;
+  -webkit-text-stroke: 2px #000; /* For Safari/Chrome */
+  text-stroke: 2px #000; /* Standard property */
+  opacity: 0.7;
+}
+
+/* If you want the text to be filled with a subtle color instead of transparent */
+.hero-background-name.filled {
+  color: rgba(0, 0, 0, 0.1);
+  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.3);
+  text-stroke: 1px rgba(0, 0, 0, 0.3);
 }
 
 /* Welcome Text */
@@ -53,6 +66,95 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  /* Add the text effect */
+  color: transparent;
+  -webkit-text-stroke: 2px #000;
+  text-stroke: 2px #000;
+}
+
+.glitch-text {
+  position: relative;
+  font-size: clamp(3rem, 12vw, 9rem);
+  font-weight: 1000;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: 'Montserrat', sans-serif;
+  color: #000;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.5;
+}
+
+.glitch-text::before {
+  color: #ff00ff;
+  z-index: -1;
+  transform: translate(-4px, 2px);
+}
+
+.glitch-text::after {
+  color: #00ffff;
+  z-index: -2;
+  transform: translate(4px, -2px);
+}
+
+/* Stacked Text Effect */
+.stacked-text-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.text-layer {
+  font-size: clamp(3rem, 12vw, 9rem);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.05em;
+  white-space: nowrap;
+  display: flex;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.text-layer-main {
+  color: #3b82f6; /* Blue color for main text */
+  z-index: 1;
+  position: relative; /* To establish stacking context */
+}
+
+.text-layer-shadow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.3);
+  text-stroke: 1px rgba(0, 0, 0, 0.3);
+  z-index: 0;
+}
+
+.shadow-top {
+  /* transform: translateY(-0.6em); */
+}
+.shadow-top-far {
+  /* transform: translateY(-1.2em); */
+  opacity: 0.6;
+}
+
+.shadow-bottom {
+  /* transform: translateY(0.6em); */
+}
+.shadow-bottom-far {
+  /* transform: translateY(1.2em); */
+  opacity: 0.6;
 }
 
 /* Hero Profile Image */
@@ -62,115 +164,6 @@
   width: auto;
   height: clamp(700px, 75vh, 1050px);
   object-fit: contain;
-}
-
-/* Tech Pill Styles */
-.tech-pill {
-  background: rgba(17, 24, 39, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 8px 16px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  max-width: clamp(300px, 80vw, 500px);
-}
-
-.tech-pill-edit {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.tech-pill-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.tech-pill-input {
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
-  color: #111827;
-  outline: none;
-  font-size: 0.8rem;
-  width: 220px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  transition: all 0.2s ease-in-out;
-  font-weight: 500;
-}
-
-.tech-pill-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-.tech-pill-input::placeholder {
-  color: #9ca3af;
-  font-style: italic;
-  opacity: 1;
-  font-weight: 400;
-}
-
-.tech-pill-edit-button {
-  background: transparent;
-  border: none;
-  color: white;
-  cursor: pointer;
-  font-size: 0.8rem;
-  transition: all 0.2s;
-  padding: 0;
-  margin-left: 8px;
-  font-weight: 500;
-}
-
-.tech-pill-edit-button:hover {
-  color: #4ade80;
-}
-
-.tech-pill-save {
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 2px 6px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.75rem;
-}
-
-.tech-pill-save:hover {
-  background: #2563eb;
-}
-
-.tech-pill-cancel {
-  background: transparent;
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.75rem;
-}
-
-.tech-pill-cancel:hover {
-  color: #fca5a5;
-}
-
-.pill-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #4ade80;
-  flex-shrink: 0;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.3; }
-  100% { opacity: 1; }
 }
 
 /* Form Styles */
@@ -206,7 +199,7 @@
   background: #f9fafb;
   border-radius: 8px;
   padding: 20px;
-  border: 2px dashed #d1d5db;
+  border: 2px dotted #d1d5db;
   text-align: center;
   cursor: pointer;
 }
@@ -223,38 +216,65 @@
 }
 
 /* Button Styles */
+.edit-profile-button {
+  background: linear-gradient(45deg, #f0f0f0, #ffffff);
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 12px 28px;
+  font-weight: 700;
+  font-size: 1rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  transform: translateY(0);
+}
+
+.edit-profile-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15), 0 3px 10px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(45deg, #e9e9e9, #ffffff);
+}
+
 .primary-button {
-  padding: 8px 16px;
+  padding: 10px 20px;
   border: none;
-  border-radius: 6px;
-  background: #3b82f6;
+  border-radius: 8px;
+  background: linear-gradient(45deg, #3b82f6, #60a5fa);
   color: #ffffff;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+  transform: translateY(0);
 }
 
 .primary-button:hover {
-  background: #2563eb;
-  transform: translateY(-1px);
+  background: linear-gradient(45deg, #2563eb, #3b82f6);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
 }
 
 .secondary-button {
-  padding: 8px 16px;
+  padding: 10px 20px;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #ffffff;
   color: #374151;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(0);
 }
 
 .secondary-button:hover {
   background: #f9fafb;
   border-color: #9ca3af;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px -1px rgba(0, 0, 0, 0.08), 0 3px 8px -2px rgba(0, 0, 0, 0.08);
 }
 
 /* Responsive Design */
@@ -299,5 +319,80 @@
     width: 140px;
     font-size: 0.75rem;
   }
+}
+
+/* Shattered Shadow Animation */
+.hero-background-name.shattered-text {
+  position: relative;
+  color: transparent;
+  -webkit-text-stroke: 2px #000;
+  text-stroke: 2px #000;
+  opacity: 0.8;
+  overflow: visible;
+}
+
+.hero-background-name.shattered-text::before,
+.hero-background-name.shattered-text::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  width: 100%;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: 'Montserrat', sans-serif;
+  opacity: 0.5;
+  -webkit-text-stroke: 1px rgba(0,0,0,0.3);
+  text-stroke: 1px rgba(0,0,0,0.3);
+}
+
+.hero-background-name.shattered-text::before {
+  top: -4px;
+  animation: slideUp 3s ease-in-out infinite alternate;
+}
+
+.hero-background-name.shattered-text::after {
+  bottom: -4px;
+  animation: slideDown 3s ease-in-out infinite alternate;
+}
+
+@keyframes slideUp {
+  0%   { transform: translateY(0)   rotate(0deg); }
+  100% { transform: translateY(-8px) rotate(-1deg); }
+}
+
+@keyframes slideDown {
+  0%   { transform: translateY(0)   rotate(0deg); }
+  100% { transform: translateY(8px)  rotate(1deg); }
+}
+
+/* Layered shattered shadows */
+.hero-background-name {
+  position: relative;
+  user-select: none;
+}
+
+.hero-background-name .shatter-layer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  transform: translate(-50%, -50%);
+}
+
+.hero-background-name .shatter-up {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.hero-background-name .shatter-down {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+/* tweak these distances to taste */
+.hero-background-name .shatter-up {
+  transform: translate(-50%, calc(-50% - 6px));
+}
+
+.hero-background-name .shatter-down {
+  transform: translate(-50%, calc(-50% + 6px));
 }
 

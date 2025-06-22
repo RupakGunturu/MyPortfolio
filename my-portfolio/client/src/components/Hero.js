@@ -45,100 +45,11 @@ const letterVariants = {
   }
 };
 
-const TechPill = ({ techStackMessage, onUpdate, viewOnly = false }) => {
-  const [editMode, setEditMode] = useState(false);
-  const [message, setMessage] = useState(techStackMessage || '');
-
-  const handleSave = () => {
-    onUpdate(message);
-    setEditMode(false);
-  };
-
-  return (
-    <motion.div 
-      className="tech-pill" 
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.7, type: 'spring', stiffness: 100 }}
-      style={{ 
-        background: 'rgba(17, 24, 39, 0.95)',
-        backdropFilter: 'blur(10px)', 
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        padding: '8px 16px',
-        borderRadius: '999px',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '10px',
-        maxWidth: 'clamp(300px, 80vw, 500px)',
-      }}
-    >
-      <div 
-        className="pill-dot" 
-        style={{
-          width: '8px', 
-          height: '8px',
-          borderRadius: '50%',
-          background: '#4ade80',
-          flexShrink: 0,
-        }}
-      />
-      <AnimatePresence mode="wait">
-        {editMode ? (
-          <motion.div
-            key="edit"
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="tech-pill-edit" 
-            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-          >
-            <input
-              type="text"
-              value={message}
-              onChange={e => setMessage(e.target.value)}
-              className="tech-pill-input"
-              placeholder="Enter your tech stack"
-            />
-            <button onClick={handleSave} className="tech-pill-save" style={{background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer'}}>Save</button>
-            <button onClick={() => setEditMode(false)} className="tech-pill-cancel" style={{background: 'transparent', color: 'white', border: 'none', cursor: 'pointer'}}>Cancel</button>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="view"
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="tech-pill-content" 
-            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-          >
-            <span style={{ color: 'white', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-              {message || "Currently working with React & Next.js"}
-            </span>
-            {!viewOnly && (
-              <button 
-                onClick={() => setEditMode(true)} 
-                className="tech-pill-edit-button"
-                aria-label="Edit tech stack"
-                style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '0.8rem' }}
-              >
-                ✏️
-              </button>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-};
-
 const Hero = ({ viewOnly = false }) => {
   const [profile, setProfile] = useState({ 
     name: "", 
     bio: "", 
     imageUrl: "",
-    techStackMessage: ""
   });
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -148,12 +59,24 @@ const Hero = ({ viewOnly = false }) => {
     name: "", 
     bio: "", 
     imageUrl: "",
-    techStackMessage: ""
   });
 
   // Split the name for left/right layout
-  const [firstName, ...restNameArr] = (profile.name || "").trim().split(' ');
-  const lastName = restNameArr.join(' ');
+  const [lastName, ...restNameArr] = (profile.name || "").trim().split(' ').reverse();
+  const firstName = restNameArr.reverse().join(' ');
+
+  const animationDelay = (profile.name || "").length * 0.08 + 0.5;
+
+  const shadowTransition = {
+    opacity: { duration: 0.5, ease: "easeIn", delay: animationDelay },
+    y: {
+      duration: 3,
+      repeat: Infinity,
+      repeatType: "mirror",
+      ease: "easeInOut",
+      delay: animationDelay,
+    },
+  };
 
   // Fetch profile
   useEffect(() => {
@@ -165,18 +88,16 @@ const Hero = ({ viewOnly = false }) => {
           name: data.name || "Your Name",
           bio: data.bio || "",
           imageUrl: data.imageUrl || "/images/profile-placeholder.png",
-          techStackMessage: data.techStackMessage || ""
         });
         setForm({
           name: data.name || "Your Name",
           bio: data.bio || "",
           imageUrl: data.imageUrl || "/images/profile-placeholder.png",
-          techStackMessage: data.techStackMessage || ""
         });
       } catch (error) {
         console.error("Error fetching profile:", error);
         // Set default profile on error
-        setProfile({ name: "Your Name", imageUrl: "/images/profile-placeholder.png", techStackMessage: "Tech Stack" });
+        setProfile({ name: "Your Name", imageUrl: "/images/profile-placeholder.png" });
       } finally {
         setLoading(false);
       }
@@ -200,7 +121,6 @@ const Hero = ({ viewOnly = false }) => {
       }
       formData.append('name', form.name);
       formData.append('bio', form.bio);
-      formData.append('techStackMessage', form.techStackMessage);
 
       const res = await axios.put("/api/user", formData, {
         headers: {
@@ -297,16 +217,6 @@ const Hero = ({ viewOnly = false }) => {
     }
   };
 
-  const handleTechStackUpdate = async (newMessage) => {
-    try {
-      const res = await axios.put("/api/user", { techStackMessage: newMessage });
-      setProfile(res.data);
-      setForm(prev => ({ ...prev, techStackMessage: newMessage }));
-    } catch (err) {
-      console.error("Failed to update tech stack:", err);
-    }
-  };
-
   if (loading) {
     return (
       <div className="hero-section loading" style={{ background: '#fff' }}>
@@ -320,7 +230,7 @@ const Hero = ({ viewOnly = false }) => {
       className="hero-section"
       id="home"
       style={{
-        background: '#fff',
+        background: '#fff', // White background
         minHeight: '100vh',
         width: '100vw',
         display: 'flex',
@@ -347,7 +257,7 @@ const Hero = ({ viewOnly = false }) => {
               fontWeight: 900,
               textTransform: 'uppercase',
               letterSpacing: '-0.05em',
-              fontFamily: 'Montserrat, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontFamily: "'Montserrat', sans-serif",
             }}
           >
             {'Welcome'.split('').map((char, index) => (
@@ -374,50 +284,63 @@ const Hero = ({ viewOnly = false }) => {
           >
             {/* Visual container for image and background text */}
             <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', flexGrow: 1, width: '100%' }}>
-              {/* Background Name */}
-              <motion.div
-                className="hero-background-name"
-                variants={textContainerVariants}
-                initial="hidden"
-                animate="visible"
+              {/* Background Name using new stacked effect */}
+              <div
                 style={{
                   position: 'absolute',
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
                   zIndex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  whiteSpace: 'nowrap',
-                  fontSize: 'clamp(3rem, 12vw, 9rem)',
-                  fontWeight: 900,
-                  textTransform: 'uppercase',
-                  letterSpacing: '-0.05em',
-                  userSelect: 'none',
-                  width: '100%',
-                  fontFamily: 'Montserrat, -apple-system, BlinkMacSystemFont, sans-serif',
                 }}
               >
-                <motion.span style={{ color: '#111827', display: 'flex' }}>
-                  {firstName.split('').map((char, index) => (
-                    <motion.span key={`fn-${index}`} variants={letterVariants} style={{ display: 'inline-block' }}>
-                      {char === ' ' ? '\u00A0' : char}
-                    </motion.span>
-                  ))}
-                </motion.span>
-                
-                <div style={{ position: 'relative' }}>
-                  <motion.span style={{ color: '#3b82f6', marginLeft: '0.25em', display: 'flex' }}>
-                    {lastName.split('').map((char, index) => (
-                      <motion.span key={`ln-${index}`} variants={letterVariants} style={{ display: 'inline-block' }}>
-                        {char === ' ' ? '\u00A0' : char}
-                      </motion.span>
-                    ))}
-                  </motion.span>
-                </div>
+                <div className="stacked-text-wrapper">
+                  
+                  <motion.div 
+                    className="text-layer text-layer-shadow shadow-top-far" 
+                    initial={{ opacity: 0, y: "-1.2em" }}
+                    animate={{ opacity: 0.6, y: ["-1.2em", "-1.3em", "-1.2em"] }}
+                    transition={shadowTransition}
+                  >
+                    {(profile.name || "Your Name").toUpperCase()}
+                  </motion.div>
+                  
+                  <motion.div 
+                    className="text-layer text-layer-shadow shadow-top" 
+                    initial={{ opacity: 0, y: "-0.6em" }}
+                    animate={{ opacity: 1, y: ["-0.6em", "-0.7em", "-0.6em"] }}
+                    transition={shadowTransition}
+                  >
+                    {(profile.name || "Your Name").toUpperCase()}
+                  </motion.div>
+                  
+                  <motion.div 
+                    className="text-layer text-layer-shadow shadow-bottom" 
+                    initial={{ opacity: 0, y: "0.6em" }}
+                    animate={{ opacity: 1, y: ["0.6em", "0.5em", "0.6em"] }}
+                    transition={shadowTransition}
+                  >
+                    {(profile.name || "Your Name").toUpperCase()}
+                  </motion.div>
+                  
+                  <motion.div 
+                    className="text-layer text-layer-shadow shadow-bottom-far"
+                    initial={{ opacity: 0, y: "1.2em" }}
+                    animate={{ opacity: 0.6, y: ["1.2em", "1.1em", "1.2em"] }}
+                    transition={shadowTransition}
+                  >
+                    {(profile.name || "Your Name").toUpperCase()}
+                  </motion.div>
 
-              </motion.div>
+                  {/* Main Text Layer */}
+                  <motion.div className="text-layer text-layer-main" variants={textContainerVariants} initial="hidden" animate="visible" >
+                    {(profile.name || "Your Name").toUpperCase().split('').map((char, index) => (
+                      <motion.span key={`main-${index}`} variants={letterVariants}>{char === ' ' ? '\u00A0' : char}</motion.span>
+                    ))}
+                  </motion.div>
+
+                </div>
+              </div>
 
               {/* Foreground Image */}
               <motion.img
@@ -458,32 +381,34 @@ const Hero = ({ viewOnly = false }) => {
                 {!viewOnly && (
                   <button
                     onClick={() => setEditing(true)}
-                    style={{
-                      background: '#fff',
-                      color: '#1e293b',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '999px',
-                      padding: '10px 22px',
-                      fontWeight: 600,
-                      fontSize: '0.9rem',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
-                      cursor: 'pointer'
-                    }}
+                    className="edit-profile-button"
                   >
                     Edit Profile
                   </button>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <a href="https://github.com/RupakGunturu" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
-                    <FaGithub style={{ fontSize: '1.5rem', color: '#1e293b' }} />
-                  </a>
-                  <a href="https://linkedin.com/in/RupakGunturu" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-                    <FaLinkedin style={{ fontSize: '1.5rem', color: '#1e293b' }} />
-                  </a>
+                  <motion.a 
+                    href="https://github.com/RupakGunturu" 
+                    target="_blank" rel="noopener noreferrer" 
+                    aria-label="GitHub"
+                    style={{ color: '#1e293b' }}
+                    whileHover={{ scale: 1.2, rotate: -5, color: '#3b82f6' }}
+                    transition={{ type: 'spring', stiffness: 300 }}
+                  >
+                    <FaGithub style={{ fontSize: '1.5rem' }} />
+                  </motion.a>
+                  <motion.a 
+                    href="https://linkedin.com/in/RupakGunturu" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    aria-label="LinkedIn"
+                    style={{ color: '#1e293b' }}
+                    whileHover={{ scale: 1.2, rotate: 5, color: '#3b82f6' }}
+                    transition={{ type: 'spring', stiffness: 300 }}
+                  >
+                    <FaLinkedin style={{ fontSize: '1.5rem' }} />
+                  </motion.a>
                 </div>
-              </div>
-              <div style={{ transform: 'translate(11rem, 1.75rem)' }}>
-                <TechPill techStackMessage={profile.techStackMessage} onUpdate={handleTechStackUpdate} viewOnly={viewOnly} />
               </div>
             </motion.div>
           </motion.div>
@@ -599,14 +524,7 @@ const Hero = ({ viewOnly = false }) => {
                   }}>
                     Profile Image
                   </label>
-                  <div className="file-upload-wrapper" style={{
-                    background: '#f9fafb',
-                    borderRadius: '8px',
-                    padding: '20px',
-                    border: '2px dashed #d1d5db',
-                    textAlign: 'center',
-                    cursor: 'pointer'
-                  }}>
+                  <div className="file-upload-wrapper">
                     <label className="file-upload-button" style={{
                       color: '#374151',
                       fontSize: '0.9rem',
@@ -635,7 +553,7 @@ const Hero = ({ viewOnly = false }) => {
                     borderRadius: '6px',
                     border: '1px solid rgba(59, 130, 246, 0.1)'
                   }}>
-                    ("Kindly upload the image as a background image to fully appreciate its visual appeal and enhance the overall aesthetic.")
+                    ("Kindly upload the image as a  Removed background image to fully appreciate its visual appeal and enhance the overall aesthetic.")
                   </p>
                 </div>
                 <div className="form-actions" style={{ 
@@ -648,34 +566,12 @@ const Hero = ({ viewOnly = false }) => {
                     type="button" 
                     onClick={() => setEditing(false)} 
                     className="secondary-button"
-                    style={{
-                      padding: '8px 16px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '6px',
-                      background: '#ffffff',
-                      color: '#374151',
-                      fontWeight: '500',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      fontSize: '0.85rem'
-                    }}
                   >
                     Cancel
                   </button>
                   <button 
                     type="submit" 
                     className="primary-button"
-                    style={{
-                      padding: '8px 16px',
-                      border: 'none',
-                      borderRadius: '6px',
-                      background: '#3b82f6',
-                      color: '#ffffff',
-                      fontWeight: '500',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      fontSize: '0.85rem'
-                    }}
                   >
                     Save Changes
                   </button>
