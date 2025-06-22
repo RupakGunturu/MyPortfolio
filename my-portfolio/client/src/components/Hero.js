@@ -347,6 +347,7 @@ const Hero = ({ viewOnly = false }) => {
               fontWeight: 900,
               textTransform: 'uppercase',
               letterSpacing: '-0.05em',
+              fontFamily: 'Montserrat, -apple-system, BlinkMacSystemFont, sans-serif',
             }}
           >
             {'Welcome'.split('').map((char, index) => (
@@ -395,6 +396,7 @@ const Hero = ({ viewOnly = false }) => {
                   letterSpacing: '-0.05em',
                   userSelect: 'none',
                   width: '100%',
+                  fontFamily: 'Montserrat, -apple-system, BlinkMacSystemFont, sans-serif',
                 }}
               >
                 <motion.span style={{ color: '#111827', display: 'flex' }}>

@@ -43,7 +43,7 @@
   letter-spacing: 0.1em;
   user-select: none;
   width: 100%;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Welcome Text */
@@ -52,7 +52,7 @@
   font-weight: 1000;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Hero Profile Image */

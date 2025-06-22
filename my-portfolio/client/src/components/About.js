@@ -66,7 +66,10 @@ const About = ({ viewOnly = false }) => {
       
       setSelectedFields(fieldsToShow);
     } else {
-      setSelectedFields(allFieldsWithData);
+      // In edit mode, show only default fields by default
+      const defaultFields = ['Name', 'Interests', 'Achievements'];
+      const fieldsToShow = defaultFields.filter(field => allFieldsWithData.includes(field));
+      setSelectedFields(fieldsToShow);
     }
   }, [userData, viewOnly, showAdditionalFields]);
 
@@ -155,12 +158,13 @@ const About = ({ viewOnly = false }) => {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 300, delay: 0.4 }}
               style={{
-                fontSize: '3rem',
+                fontSize: '3.5rem',
                 color: 'white',
                 margin: 0,
-                textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)',
-                fontWeight: '800',
-                letterSpacing: '-0.03em',
+                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)',
+                fontWeight: '900',
+                fontFamily: 'Montserrat, -apple-system, BlinkMacSystemFont, sans-serif',
+                letterSpacing: '-0.02em',
                 position: 'relative',
                 zIndex: 2
               }}
@@ -172,10 +176,11 @@ const About = ({ viewOnly = false }) => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.6, type: 'spring' }}
               style={{
-                fontSize: '1.2rem',
+                fontSize: '1.1rem',
                 color: 'rgba(255,255,255,0.9)',
                 margin: '10px 0 0',
                 fontWeight: '400',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
                 textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
                 position: 'relative',
                 zIndex: 2,
@@ -214,7 +219,10 @@ const About = ({ viewOnly = false }) => {
                   gap: '12px',
                   boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
                   backdropFilter: 'blur(4px)',
-                  WebkitBackdropFilter: 'blur(4px)'
+                  WebkitBackdropFilter: 'blur(4px)',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                  fontWeight: '500',
+                  fontSize: '0.95rem'
                 }}
               >
                 {showAdditionalFields ? <FiChevronUp /> : <FiChevronDown />}
@@ -241,7 +249,10 @@ const About = ({ viewOnly = false }) => {
                     gap: '12px',
                     boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
                     backdropFilter: 'blur(4px)',
-                    WebkitBackdropFilter: 'blur(4px)'
+                    WebkitBackdropFilter: 'blur(4px)',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                    fontWeight: '500',
+                    fontSize: '0.95rem'
                   }}
                 >
                   <FiEdit />
@@ -310,7 +321,9 @@ const About = ({ viewOnly = false }) => {
                             alignItems: 'center',
                             gap: '16px',
                             borderBottom: '1px solid rgba(0,0,0,0.05)',
-                            fontSize: '1rem',
+                            fontSize: '0.95rem',
+                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                            fontWeight: '500',
                             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                           }}
                         >
@@ -321,9 +334,7 @@ const About = ({ viewOnly = false }) => {
                           }} />
                           <span style={{ 
                             fontWeight: '500',
-                            background: 'linear-gradient(45deg, #4A90E2, #6C5CE7)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent'
+                            color: '#4A90E2'
                           }}>
                             {field}
                           </span>
@@ -335,6 +346,57 @@ const About = ({ viewOnly = false }) => {
               </>
             )}
           </div>
+
+          {/* Toggle Buttons for Additional Fields - Edit Mode Only */}
+          {!viewOnly && (
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              justifyContent: 'center',
+              marginBottom: '32px',
+              flexWrap: 'wrap'
+            }}>
+              {['Hobbies', 'Skills', 'Bio', 'Social Links'].map(field => {
+                const hasData = userData[field] && (Array.isArray(userData[field]) ? userData[field].length > 0 : !!userData[field]);
+                const isVisible = selectedFields.includes(field);
+                
+                return (
+                  <motion.button
+                    key={field}
+                    onClick={() => toggleField(field)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(74,144,226,0.3)',
+                      background: isVisible ? 'rgba(74,144,226,0.1)' : 'rgba(255,255,255,0.8)',
+                      color: isVisible ? '#4A90E2' : '#666',
+                      cursor: hasData ? 'pointer' : 'not-allowed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                      fontWeight: '500',
+                      fontSize: '0.9rem',
+                      opacity: hasData ? 1 : 0.5,
+                      transition: 'all 0.3s ease'
+                    }}
+                    disabled={!hasData}
+                  >
+                    <div style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      background: isVisible ? '#4A90E2' : '#ccc'
+                    }} />
+                    {field}
+                  </motion.button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Content Cards Section - Now in 2 columns */}
           <div style={{ 
@@ -438,7 +500,9 @@ const About = ({ viewOnly = false }) => {
                   <h3 style={{
                     margin: '0 0 16px',
                     color: '#2A2D43',
-                    fontSize: '1.5rem',
+                    fontSize: '1.4rem',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                    fontWeight: '600',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '16px',
@@ -454,7 +518,10 @@ const About = ({ viewOnly = false }) => {
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: 'white',
-                      boxShadow: '0 4px 12px rgba(74,144,226,0.3)'
+                      boxShadow: '0 4px 12px rgba(74,144,226,0.3)',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                      fontWeight: '600',
+                      fontSize: '1.2rem'
                     }}>
                       {field[0]}
                     </span>
@@ -466,8 +533,10 @@ const About = ({ viewOnly = false }) => {
                     style={{
                       margin: 0,
                       color: '#636E72',
-                      lineHeight: '1.7',
-                      fontSize: '1.1rem',
+                      lineHeight: 1.7,
+                      fontSize: '1rem',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                      fontWeight: '400',
                       position: 'relative',
                       zIndex: 1
                     }}
@@ -478,7 +547,8 @@ const About = ({ viewOnly = false }) => {
                         color: 'transparent',
                         borderRadius: '8px',
                         animation: 'shimmer 2s infinite linear',
-                        backgroundSize: '200% 100%'
+                        backgroundSize: '200% 100%',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
                       }}>
                         Loading content...
                       </span>
@@ -502,7 +572,8 @@ const About = ({ viewOnly = false }) => {
                                       color: '#4A90E2',
                                       padding: '6px 14px',
                                       borderRadius: '12px',
-                                      fontSize: '0.95rem',
+                                      fontSize: '0.9rem',
+                                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
                                       fontWeight: '500',
                                     }}
                                   >
@@ -510,12 +581,18 @@ const About = ({ viewOnly = false }) => {
                                   </motion.span>
                                 ))
                               ) : (
-                                <span style={{ opacity: 0.5 }}>Not specified</span>
+                                <span style={{ 
+                                  opacity: 0.5,
+                                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                                }}>Not specified</span>
                               )}
                             </div>
                           );
                         }
-                        return value || <span style={{ opacity: 0.5 }}>Not specified</span>;
+                        return value || <span style={{ 
+                          opacity: 0.5,
+                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                        }}>Not specified</span>;
                       })()
                     )}
                   </motion.p>
