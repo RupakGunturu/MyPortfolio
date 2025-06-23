@@ -1,75 +1,344 @@
-.landing-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  text-align: center;
-  padding: 2rem;
-  font-family: 'Montserrat', sans-serif;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #9333ea, #ec4899);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #7c3aed, #db2777);
+  }
+
+  /* Background Animation Elements */
+  .background-elements {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    overflow: hidden;
+  }
+  /* Large Cross styles - covers half the screen */
+  .cross {
+    position: absolute;
+    width: 200px; /* Much larger */
+    height: 30px; /* Proportionally thicker */
+    background-color: #2d0f36;
+    transform-origin: center;
+    opacity: 0.6;
+    animation: rotateCross 20s linear infinite;
+  }
+
+  .cross::after {
+    content: "";
+    position: absolute;
+    width: 30px; /* Proportionally thicker */
+    height: 200px; /* Much larger */
+    background-color: #2d0f36;
+    top: -85px; /* Adjusted for larger size */
+    left: 85px; /* Adjusted for larger size */
+  }
+
+  /* Main cross positioned to cover half screen */
+  .cross1 { 
+    top: 50%; 
+    left: 50%; 
+    transform: translate(-50%, -50%) rotate(15deg) scale(2); /* Even larger with scale */
+  }
+  .cross2 { top: 40%; left: 60%; transform: rotate(-10deg); }
+  .cross3 { top: 60%; left: 80%; transform: rotate(25deg); }
+
+  /* Bouncing ball */
+  .bouncing-ball {
+    position: absolute;
+    width: 25px;
+    height: 25px;
+    background: linear-gradient(135deg, #ff2d55, #ff6b6b);
+    border-radius: 50%;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: bounceBall 3s ease-in-out infinite;
+    z-index: 1;
+    box-shadow: 0 4px 8px rgba(255, 45, 85, 0.3);
+  }
+
+  /* Red dot - keeping original */
+  .dot {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background-color: #ff2d55;
+    border-radius: 50%;
+    top: 19%;
+    left: 69.5%;
+    z-index: 1;
+  }
+
+  /* Animations */
+  @keyframes rotateCross {
+    0% { transform: translate(-50%, -50%) rotate(15deg) scale(2); }
+    100% { transform: translate(-50%, -50%) rotate(375deg) scale(2); }
+  }
+
+  @keyframes bounceBall {
+    0% {
+      top: 10%;
+      animation-timing-function: ease-in;
+    }
+    25% {
+      top: 45%; /* Lands on the cross */
+      animation-timing-function: ease-out;
+    }
+    50% {
+      top: 30%; /* Bounces up slightly */
+      animation-timing-function: ease-in;
+    }
+    75% {
+      top: 45%; /* Lands again */
+      animation-timing-function: ease-out;
+    }
+    100% {
+      top: 100%; /* Falls down */
+      animation-timing-function: ease-in;
+    }
+  }
+
+  /* Ensure content stays on top */
+  .landing-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  @layer components {
+    .text-gradient {
+      background: linear-gradient(135deg, #9333ea, #ec4899, #3b82f6);
+      background-size: 200% 200%;
+      animation: gradient 3s ease infinite;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .hover-glow:hover {
+      box-shadow: 0 0 30px rgba(147, 51, 234, 0.2);
+      transform: translateY(-2px);
+      transition: all 0.3s ease;
+    }
+  }
+
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
-.landing-content {
-  max-width: 800px;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 3rem 4rem;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.landing-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fafbfc;
+  padding: 2rem;
 }
 
 .landing-title {
-  font-size: 3rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 1rem;
-  line-height: 1.2;
+  font-size: 4rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #a259c9 0%, #f24e1e 50%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-move 3s ease-in-out infinite alternate;
+  background-size: 200% 200%;
+}
+
+@keyframes gradient-move {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
 }
 
 .landing-subtitle {
-  font-size: 1.2rem;
-  color: #475569;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #23272f;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.landing-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(90deg, #f3e8ff 0%, #fde2ff 100%);
+  color: #8b5cf6;
+  font-weight: 500;
+  font-size: 1.1rem;
+  padding: 0.7rem 2rem;
+  border-radius: 999px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 12px 0 rgba(130, 88, 159, 0.07);
+}
+
+.badge-icon {
+  width: 1.3em;
+  height: 1.3em;
+}
+
+.landing-desc {
+  color: #5b6478;
+  font-size: 1.25rem;
+  text-align: center;
+  max-width: 600px;
   margin-bottom: 2.5rem;
-  line-height: 1.6;
 }
 
-.landing-cta-buttons {
+.landing-actions {
   display: flex;
+  gap: 1.2rem;
   justify-content: center;
-  gap: 1rem;
 }
 
-.btn {
-  padding: 0.8rem 2rem;
-  border: none;
-  border-radius: 50px;
-  font-size: 1rem;
+.btn-gradient {
+  background: linear-gradient(90deg, #a259c9 0%, #f24e1e 100%);
+  color: #fff;
   font-weight: 600;
+  font-size: 1.1rem;
+  padding: 0.9rem 2.2rem;
+  border: none;
+  border-radius: 999px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  text-decoration: none;
+  box-shadow: 0 2px 12px 0 rgba(130, 88, 159, 0.07);
+  transition: background 0.2s, transform 0.2s;
+}
+.btn-gradient:hover {
+  background: linear-gradient(90deg, #f24e1e 0%, #a259c9 100%);
+  transform: translateY(-2px) scale(1.04);
 }
 
-.btn-primary {
-  background: linear-gradient(45deg, #3b82f6, #60a5fa);
-  color: white;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+.btn-outline {
+  background: #fff;
+  color: #a259c9;
+  font-weight: 600;
+  font-size: 1.1rem;
+  padding: 0.9rem 2.2rem;
+  border: 2px solid #a259c9;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
 }
-
-.btn-primary:hover {
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
-  transform: translateY(-2px);
+.btn-outline:hover {
+  background: #f3e8ff;
+  color: #f24e1e;
+  border-color: #f24e1e;
+  transform: translateY(-2px) scale(1.04);
 }
-
-.btn-secondary {
-  background: transparent;
-  color: #3b82f6;
-  border: 2px solid #3b82f6;
-}
-
-.btn-secondary:hover {
-  background: #3b82f6;
-  color: white;
-  transform: translateY(-2px);
-} 

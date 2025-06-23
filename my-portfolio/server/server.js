@@ -12,6 +12,21 @@ import { registerUser, loginUser } from './controllers/authController.js';
 import { check } from 'express-validator';
 import jwt from 'jsonwebtoken';
 
+// --- Auth Middleware ---
+const auth = (req, res, next) => {
+  const token = req.header('x-auth-token');
+  if (!token) {
+    return res.status(401).json({ msg: 'No token, authorization denied' });
+  }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded.user;
+    next();
+  } catch (err) {
+    res.status(401).json({ msg: 'Token is not valid' });
+  }
+};
+
 dotenv.config();
 
 // Connect to database
@@ -672,21 +687,6 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.resolve(__dirname, '..', 'client', 'build', 'index.html'));
   });
 }
-
-// --- Middleware ---
-const auth = (req, res, next) => {
-  const token = req.header('x-auth-token');
-  if (!token) {
-    return res.status(401).json({ msg: 'No token, authorization denied' });
-  }
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded.user;
-    next();
-  } catch (err) {
-    res.status(401).json({ msg: 'Token is not valid' });
-  }
-};
 
 // @route   GET api/auth
 // @desc    Get logged in user

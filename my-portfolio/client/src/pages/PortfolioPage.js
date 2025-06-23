@@ -17,19 +17,19 @@ const PortfolioPage = () => {
   const { username } = useParams();
   const navigate = useNavigate();
   const authContext = useContext(AuthContext);
-  const { user, isAuthenticated } = authContext;
+  const { user, isAuthenticated, loading } = authContext;
 
   // Only allow edit mode if logged-in user matches the username in the URL
   const requestedEdit = searchParams.get('edit') === 'true';
   const isOwner = isAuthenticated && user && user.username === username;
   const isEditMode = requestedEdit && isOwner;
 
-  // If someone tries to access edit mode but isn't the owner, redirect to view-only
+  // Wait for loading to finish before redirecting
   React.useEffect(() => {
-    if (requestedEdit && !isEditMode) {
+    if (!loading && requestedEdit && !isEditMode) {
       navigate(`/portfolio/${username}`);
     }
-  }, [requestedEdit, isEditMode, navigate, username]);
+  }, [requestedEdit, isEditMode, navigate, username, loading]);
 
   return (
     <>
