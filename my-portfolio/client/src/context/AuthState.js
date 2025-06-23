@@ -1,5 +1,6 @@
 import React, { useReducer } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 import AuthContext from './AuthContext';
 import authReducer from './authReducer';
 import setAuthToken from '../utils/setAuthToken';
@@ -48,11 +49,14 @@ const AuthState = (props) => {
       const res = await axios.post('/api/auth/register', formData, config);
       dispatch({ type: REGISTER_SUCCESS, payload: res.data });
       loadUser();
+      toast.success('🎉 Registration successful! Welcome aboard!');
     } catch (err) {
+      const errorMsg = err.response.data.msg || 'Registration failed. Please try again.';
       dispatch({
         type: REGISTER_FAIL,
-        payload: err.response.data.msg,
+        payload: errorMsg,
       });
+      toast.error(`🔥 ${errorMsg}`);
     }
   };
 
@@ -65,16 +69,22 @@ const AuthState = (props) => {
       const res = await axios.post('/api/auth/login', formData, config);
       dispatch({ type: LOGIN_SUCCESS, payload: res.data });
       loadUser();
+      toast.success('🚀 Login successful! Welcome back!');
     } catch (err) {
+      const errorMsg = err.response.data.msg || 'Login failed. Please check your credentials.';
       dispatch({
         type: LOGIN_FAIL,
-        payload: err.response.data.msg,
+        payload: errorMsg,
       });
+      toast.error(`😞 ${errorMsg}`);
     }
   };
 
   // Logout
-  const logout = () => dispatch({ type: LOGOUT });
+  const logout = () => {
+    dispatch({ type: LOGOUT });
+    toast.info('👋 You have been logged out.');
+  };
 
   // Clear Errors
   const clearErrors = () => dispatch({ type: CLEAR_ERRORS });

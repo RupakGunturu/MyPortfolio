@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import AuthContext from '../context/AuthContext';
@@ -10,6 +10,7 @@ const Dashboard = () => {
   const authContext = useContext(AuthContext);
   const { user, loadUser } = authContext;
   const navigate = useNavigate();
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     // On initial mount, load the user's data
@@ -28,6 +29,16 @@ const Dashboard = () => {
   const onViewPortfolio = () => {
     if(user) {
       navigate(`/portfolio/${user.username}`);
+    }
+  };
+
+  const onSharePortfolio = () => {
+    if (user) {
+      const portfolioUrl = `${window.location.origin}/portfolio/${user.username}`;
+      navigator.clipboard.writeText(portfolioUrl).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+      });
     }
   };
 
@@ -52,18 +63,21 @@ const Dashboard = () => {
             <button className="btn-view" onClick={onViewPortfolio}>View My Portfolio</button>
             <button className="btn-update" onClick={onUpdatePortfolio}>Update My Portfolio</button>
           </div>
-          <div className="dashboard-share">
-            <h2>Share Your Portfolio on</h2>
-            <div className="social-icons">
-              {/* Add your social share icons/logic here */}
-              <div className="icon">F</div>
-              <div className="icon">W</div>
-              <div className="icon">E</div>
-              <div className="icon">M</div>
-              <div className="icon">I</div>
-              <div className="icon">T</div>
-              <div className="icon">In</div>
-              <div className="icon">Tw</div>
+          <div className="dashboard-share-section">
+            <h2 className="share-title">Share Your Portfolio</h2>
+            <p className="share-description">
+              Here's the link to your public portfolio. Share it with the world!
+            </p>
+            <div className="share-link-container">
+              <input 
+                type="text" 
+                value={user ? `${window.location.origin}/portfolio/${user.username}` : ''} 
+                readOnly 
+                className="share-link-input"
+              />
+              <button className="btn-copy" onClick={onSharePortfolio}>
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
             </div>
           </div>
         </motion.div>

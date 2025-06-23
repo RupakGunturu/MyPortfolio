@@ -1,5 +1,6 @@
-import React from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
+import AuthContext from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import CursorTrail from '../components/CursorTrail';
@@ -13,7 +14,22 @@ import ProjectCard from '../components/ProjectCard';
 
 const PortfolioPage = () => {
   const [searchParams] = useSearchParams();
-  const isEditMode = searchParams.get('edit') === 'true';
+  const { username } = useParams();
+  const navigate = useNavigate();
+  const authContext = useContext(AuthContext);
+  const { user, isAuthenticated } = authContext;
+
+  // Only allow edit mode if logged-in user matches the username in the URL
+  const requestedEdit = searchParams.get('edit') === 'true';
+  const isOwner = isAuthenticated && user && user.username === username;
+  const isEditMode = requestedEdit && isOwner;
+
+  // If someone tries to access edit mode but isn't the owner, redirect to view-only
+  React.useEffect(() => {
+    if (requestedEdit && !isEditMode) {
+      navigate(`/portfolio/${username}`);
+    }
+  }, [requestedEdit, isEditMode, navigate, username]);
 
   return (
     <>

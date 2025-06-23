@@ -170,7 +170,7 @@ app.get("/", (req, res) => res.send("✅ Server is running"));
 // Define Routes
 
 // ---- Skills ----
-app.post('/api/skill', async (req, res) => {
+app.post('/api/skill', auth, async (req, res) => {
   try {
     const newSkill = new Skill({
       title: req.body.title,
@@ -192,7 +192,7 @@ app.get("/api/skill", async (req, res) => {
   }
 });
 
-app.delete('/api/skill/:id', async (req, res) => {
+app.delete('/api/skill/:id', auth, async (req, res) => {
   console.log('DELETE request to /api/skill/:id', req.params.id);
 
   try {
@@ -221,7 +221,7 @@ app.get("/api/user", async (req, res) => {
 });
 
 // Update user with optional user image upload (disk)
-app.put("/api/user", uploadUserImage.single("image"), async (req, res) => {
+app.put("/api/user", auth, uploadUserImage.single("image"), async (req, res) => {
   try {
     console.log("Request body:", req.body);
     console.log("Uploaded file:", req.file);
@@ -244,11 +244,14 @@ app.put("/api/user", uploadUserImage.single("image"), async (req, res) => {
 
     console.log("Update data:", updateData);
 
-    const updated = await User.findOneAndUpdate({}, updateData, {
-      upsert: true,
+    // Only update the user whose id matches the JWT
+    const updated = await User.findByIdAndUpdate(req.user.id, updateData, {
       new: true,
-      setDefaultsOnInsert: true
+      runValidators: true
     });
+    if (!updated) {
+      return res.status(404).json({ error: 'User not found or not authorized' });
+    }
 
     console.log("Updated user:", updated);
     res.json(updated);
@@ -264,7 +267,7 @@ app.put("/api/user", uploadUserImage.single("image"), async (req, res) => {
 // ---- Certificates ----
 
 // Upload certificate with file saved in GridFS
-app.post('/api/certificates', uploadCertificate.single('file'), async (req, res) => {
+app.post('/api/certificates', auth, uploadCertificate.single('file'), async (req, res) => {
   console.log('--- /api/certificates POST called ---');
   console.log('req.body:', req.body);
   console.log('req.file:', req.file);
@@ -400,7 +403,7 @@ app.get('/api/certificates/file/:id', async (req, res) => {
 });
 
 // Delete certificate
-app.delete('/api/certificates/:id', async (req, res) => {
+app.delete('/api/certificates/:id', auth, async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: 'Invalid ID format' });
@@ -455,7 +458,7 @@ app.get("/api/about", async (req, res) => {
 });
 
 // Update about data (singleton)
-app.put("/api/about", async (req, res) => {
+app.put("/api/about", auth, async (req, res) => {
   try {
     const data = req.body;
     const updated = await About.findOneAndUpdate({}, { data }, { upsert: true, new: true });
@@ -497,7 +500,7 @@ app.get('/api/experiences', async (req, res) => {
 });
 
 // Add a new experience
-app.post('/api/experiences', async (req, res) => {
+app.post('/api/experiences', auth, async (req, res) => {
   try {
     const { iconType, date, title, company, description } = req.body;
     if (!date || !title || !company || !description) {
@@ -507,7 +510,7 @@ app.post('/api/experiences', async (req, res) => {
     if (!validIconTypes.includes(iconType)) {
       return res.status(400).json({ message: "Invalid iconType" });
     }
-    const newExp = new Experience({ iconType, date, title, company, description });
+    const newExp = new Experience({ iconType, date, title, company, description, user: req.user.id });
     await newExp.save();
     res.status(201).json(newExp);
   } catch (error) {
@@ -516,49 +519,30 @@ app.post('/api/experiences', async (req, res) => {
 });
 
 // Delete an experience by ID
-app.delete('/api/experiences/:id', async (req, res) => {
+app.delete('/api/experiences/:id', auth, async (req, res) => {
   try {
-    const deleted = await Experience.findByIdAndDelete(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ message: "Experience not found" });
-    }
-    res.json({ message: "Deleted", deleted });
+    const exp = await Experience.findById(req.params.id);
+    if (!exp) return res.status(404).json({ message: "Experience not found" });
+    if (exp.user.toString() !== req.user.id) return res.status(403).json({ message: "Not authorized" });
+    await exp.deleteOne();
+    res.json({ message: "Deleted", deleted: exp });
   } catch (error) {
     res.status(500).json({ message: "Failed to delete experience", error: error.message });
   }
 });
 
 // Bulk update experiences (replace all)
-app.put('/api/experiences', async (req, res) => {
+app.put('/api/experiences', auth, async (req, res) => {
   try {
     const { experiences } = req.body;
-    
     if (!Array.isArray(experiences)) {
       return res.status(400).json({ message: "Experiences must be an array" });
     }
-
-    // Validate each experience
-    for (const exp of experiences) {
-      if (!exp.date || !exp.title || !exp.company || !exp.description) {
-        return res.status(400).json({ 
-          message: "All fields (date, title, company, description) are required for each experience" 
-        });
-      }
-      
-      const validIconTypes = ['briefcase', 'code', 'graduation'];
-      if (!validIconTypes.includes(exp.iconType)) {
-        return res.status(400).json({ 
-          message: "Invalid iconType. Must be one of: briefcase, code, graduation" 
-        });
-      }
-    }
-
-    // Delete all existing experiences
-    await Experience.deleteMany({});
-    
-    // Insert new experiences
-    const savedExperiences = await Experience.insertMany(experiences);
-    
+    // Remove all experiences for this user
+    await Experience.deleteMany({ user: req.user.id });
+    // Insert new experiences for this user
+    const toInsert = experiences.map(exp => ({ ...exp, user: req.user.id }));
+    const savedExperiences = await Experience.insertMany(toInsert);
     res.json(savedExperiences);
   } catch (error) {
     res.status(400).json({ message: "Failed to bulk update experiences", error: error.message });
@@ -617,45 +601,33 @@ app.post("/api/projects", async (req, res) => {
 });
 
 // Delete a project by ID
-app.delete("/api/projects/:id", async (req, res) => {
+app.delete("/api/projects/:id", auth, async (req, res) => {
   try {
-    const deleted = await Project.findByIdAndDelete(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-    res.json({ message: "Project deleted successfully", deleted });
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ message: "Project not found" });
+    if (project.user.toString() !== req.user.id) return res.status(403).json({ message: "Not authorized" });
+    await project.deleteOne();
+    res.json({ message: "Deleted", deleted: project });
   } catch (error) {
-    console.error('Error deleting project:', error);
     res.status(500).json({ message: "Failed to delete project", error: error.message });
   }
 });
 
 // Update a project by ID
-app.put("/api/projects/:id", async (req, res) => {
+app.put("/api/projects/:id", auth, async (req, res) => {
   try {
     const { name, link, image } = req.body;
-    
-    // Validate required fields
     if (!name || !link) {
       return res.status(400).json({ message: "Name and link are required" });
     }
-
-    // Validate image size if provided
-    if (image && image.length > 50 * 1024 * 1024) { // 50MB limit
-      return res.status(413).json({ 
-        message: "Image file is too large. Please use a smaller image (max 50MB)." 
-      });
-    }
-
-    const updated = await Project.findByIdAndUpdate(
-      req.params.id, 
-      { name, link, image }, 
-      { new: true }
-    );
-    if (!updated) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-    res.json(updated);
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ message: "Project not found" });
+    if (project.user.toString() !== req.user.id) return res.status(403).json({ message: "Not authorized" });
+    project.name = name;
+    project.link = link;
+    project.image = image;
+    await project.save();
+    res.json(project);
   } catch (error) {
     console.error('Error updating project:', error);
     res.status(400).json({ message: "Failed to update project", error: error.message });
