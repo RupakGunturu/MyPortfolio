@@ -1,7 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaPlus, FaEdit, FaTrash, FaTimes, FaExternalLinkAlt } from 'react-icons/fa';
+import AuthContext from '../context/AuthContext';
+import axios from 'axios';
 import './ProjectCard.css';
 
 const ProjectCard = ({ viewOnly = false }) => {
+  const authContext = useContext(AuthContext);
+  const { user } = authContext || {};
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -11,7 +17,8 @@ const ProjectCard = ({ viewOnly = false }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [formData, setFormData] = useState({
-    name: '',
+    title: '',
+    description: '',
     link: '',
     image: ''
   });
@@ -22,7 +29,7 @@ const ProjectCard = ({ viewOnly = false }) => {
   const projectsSectionRef = useRef(null);
 
   // API Base URL
-  const API_BASE_URL = 'http://localhost:9000/api';
+  const API_BASE_URL = '/api/projects';
 
   // Intersection Observer for scroll animations
   useEffect(() => {
@@ -49,16 +56,17 @@ const ProjectCard = ({ viewOnly = false }) => {
     };
   }, []);
 
-  // Fetch all projects
+  useEffect(() => {
+    if (user && user._id) {
+      fetchProjects();
+    }
+  }, [user]);
+
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/projects`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch projects');
-      }
-      const data = await response.json();
-      setProjects(data);
+      const response = await axios.get(`${API_BASE_URL}?userId=${user._id}`);
+      setProjects(response.data);
       setError(null);
     } catch (err) {
       console.error('Error fetching projects:', err);
@@ -68,13 +76,8 @@ const ProjectCard = ({ viewOnly = false }) => {
     }
   };
 
-  // Load projects on component mount
-  useEffect(() => {
-    fetchProjects();
-  }, []);
-
   const handleAddProject = () => {
-    setFormData({ name: '', link: '', image: '' });
+    setFormData({ title: '', description: '', link: '', image: '' });
     setSelectedImage(null);
     setImagePreview('');
     setShowAddModal(true);
@@ -83,9 +86,10 @@ const ProjectCard = ({ viewOnly = false }) => {
   const handleEditProject = (project) => {
     setEditingProject(project);
     setFormData({
-      name: project.name,
-      link: project.link,
-      image: project.image
+      title: project.title || '',
+      description: project.description || '',
+      link: project.link || '',
+      image: project.image || ''
     });
     setSelectedImage(null);
     setImagePreview(project.image || '');
@@ -95,21 +99,15 @@ const ProjectCard = ({ viewOnly = false }) => {
   const handleDeleteProject = async () => {
     if (!editingProject) return;
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/projects/${editingProject._id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete project');
+    if (window.confirm('Are you sure you want to delete this project?')) {
+      try {
+        await axios.delete(`${API_BASE_URL}/${editingProject._id}?userId=${user._id}`);
+        setProjects(projects.filter(project => project._id !== editingProject._id));
+        closeModal();
+      } catch (err) {
+        console.error('Error deleting project:', err);
+        alert('Failed to delete project. Please try again.');
       }
-
-      // Remove from local state
-      setProjects(projects.filter(project => project._id !== editingProject._id));
-      closeModal();
-    } catch (err) {
-      console.error('Error deleting project:', err);
-      alert('Failed to delete project. Please try again.');
     }
   };
 
@@ -124,9 +122,9 @@ const ProjectCard = ({ viewOnly = false }) => {
 
       setSelectedImage(file);
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target.result);
-        setFormData(prev => ({ ...prev, image: e.target.result }));
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+        setFormData(prev => ({ ...prev, image: reader.result }));
       };
       reader.readAsDataURL(file);
     }
@@ -138,57 +136,33 @@ const ProjectCard = ({ viewOnly = false }) => {
     try {
       if (showEditModal && editingProject) {
         // Update existing project
-        const response = await fetch(`${API_BASE_URL}/projects/${editingProject._id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
+        const response = await axios.put(`${API_BASE_URL}/${editingProject._id}`, {
+          ...formData,
+          userId: user._id
         });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          if (response.status === 413) {
-            throw new Error('Image file is too large. Please use a smaller image (max 50MB).');
-          }
-          throw new Error(errorData.message || 'Failed to update project');
-        }
-
-        const updatedProject = await response.json();
         setProjects(projects.map(project => 
-          project._id === editingProject._id ? updatedProject : project
+          project._id === editingProject._id ? response.data : project
         ));
         setShowEditModal(false);
         setEditingProject(null);
       } else {
         // Add new project
-        const response = await fetch(`${API_BASE_URL}/projects`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
+        const response = await axios.post('/api/projects', {
+          ...formData,
+          userId: user._id
         });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          if (response.status === 413) {
-            throw new Error('Image file is too large. Please use a smaller image (max 50MB).');
-          }
-          throw new Error(errorData.message || 'Failed to add project');
-        }
-
-        const newProject = await response.json();
-        setProjects([newProject, ...projects]);
+        setProjects([response.data, ...projects]);
         setShowAddModal(false);
       }
       
-      setFormData({ name: '', link: '', image: '' });
+      setFormData({ title: '', description: '', link: '', image: '' });
       setSelectedImage(null);
       setImagePreview('');
     } catch (err) {
       console.error('Error saving project:', err);
-      alert(err.message || 'Failed to save project. Please try again.');
+      alert(err.response?.data?.message || 'Failed to save project. Please try again.');
     }
   };
 
@@ -203,7 +177,7 @@ const ProjectCard = ({ viewOnly = false }) => {
     setShowAddModal(false);
     setShowEditModal(false);
     setEditingProject(null);
-    setFormData({ name: '', link: '', image: '' });
+    setFormData({ title: '', description: '', link: '', image: '' });
     setSelectedImage(null);
     setImagePreview('');
   };
@@ -276,7 +250,7 @@ const ProjectCard = ({ viewOnly = false }) => {
                   {project.image ? (
         <img
                       src={project.image}
-                      alt={project.name}
+                      alt={project.title}
           onError={e => {
             e.target.onerror = null;
             e.target.src = "https://via.placeholder.com/300x200?text=Project+Preview";
@@ -289,7 +263,7 @@ const ProjectCard = ({ viewOnly = false }) => {
       )}
     </div>
     <div className="project-details">
-                  <h3>{project.name}</h3>
+                  <h3>{project.title}</h3>
                   <div className="project-actions">
                     <button 
                       className="view-btn"
@@ -326,8 +300,8 @@ const ProjectCard = ({ viewOnly = false }) => {
                 <label>Project Title:</label>
                 <input
                   type="text"
-                  name="name"
-                  value={formData.name}
+                  name="title"
+                  value={formData.title}
                   onChange={handleInputChange}
                   required
                   placeholder="Enter project title"
@@ -390,8 +364,8 @@ const ProjectCard = ({ viewOnly = false }) => {
                 <label>Project Title:</label>
                 <input
                   type="text"
-                  name="name"
-                  value={formData.name}
+                  name="title"
+                  value={formData.title}
                   onChange={handleInputChange}
                   required
                   placeholder="Enter project title"

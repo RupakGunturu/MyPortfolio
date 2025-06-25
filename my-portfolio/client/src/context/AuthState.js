@@ -17,46 +17,33 @@ import {
 
 const AuthState = (props) => {
   const initialState = {
-    token: localStorage.getItem('token'),
-    isAuthenticated: null,
-    loading: true,
+    token: null,
+    isAuthenticated: false,
+    loading: false,
     user: null,
     error: null,
   };
 
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Load User
-  const loadUser = async () => {
-    if (localStorage.token) {
-      setAuthToken(localStorage.token);
-    }
-
-    try {
-      const res = await axios.get('/api/auth');
-      dispatch({ type: USER_LOADED, payload: res.data });
-    } catch (err) {
-      dispatch({ type: AUTH_ERROR });
-    }
-  };
-
-  // Register User
+  // Register User (does NOT automatically log in)
   const register = async (formData) => {
     const config = {
       headers: { 'Content-Type': 'application/json' },
     };
     try {
-      const res = await axios.post('/api/auth/register', formData, config);
-      dispatch({ type: REGISTER_SUCCESS, payload: res.data });
-      loadUser();
-      toast.success('🎉 Registration successful! Welcome aboard!');
+      const res = await axios.post('/api/register', formData, config);
+      // Don't dispatch REGISTER_SUCCESS - just show success message
+      toast.success('🎉 Registration successful! Please log in.');
+      return { success: true, data: res.data };
     } catch (err) {
-      const errorMsg = err.response.data.msg || 'Registration failed. Please try again.';
+      const errorMsg = err.response?.data?.msg || 'Registration failed. Please try again.';
       dispatch({
         type: REGISTER_FAIL,
         payload: errorMsg,
       });
       toast.error(`🔥 ${errorMsg}`);
+      return { success: false, error: errorMsg };
     }
   };
 
@@ -66,18 +53,28 @@ const AuthState = (props) => {
       headers: { 'Content-Type': 'application/json' },
     };
     try {
-      const res = await axios.post('/api/auth/login', formData, config);
+      const res = await axios.post('/api/login', formData, config);
+      console.log('LOGIN RESPONSE:', res.data); // Debug log
       dispatch({ type: LOGIN_SUCCESS, payload: res.data });
-      loadUser();
       toast.success('🚀 Login successful! Welcome back!');
     } catch (err) {
-      const errorMsg = err.response.data.msg || 'Login failed. Please check your credentials.';
+      const errorMsg = err.response?.data?.msg || 'Login failed. Please check your credentials.';
       dispatch({
         type: LOGIN_FAIL,
         payload: errorMsg,
       });
       toast.error(`😞 ${errorMsg}`);
     }
+  };
+
+  // Load User (for dashboard)
+  const loadUser = async () => {
+    // Since we're not using JWT tokens, we'll load user from the current state
+    // This function is called by Dashboard to ensure user data is available
+    if (state.user) {
+      return state.user;
+    }
+    return null;
   };
 
   // Logout

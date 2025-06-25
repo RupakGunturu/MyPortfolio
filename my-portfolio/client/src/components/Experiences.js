@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaBriefcase, FaCode, FaGraduationCap, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
 import axios from 'axios';
+import AuthContext from '../context/AuthContext';
 import './Experiences.css';
 
 const Experience = ({ viewOnly = false }) => {
+  const authContext = useContext(AuthContext);
+  const { user } = authContext || {};
   const [experiences, setExperiences] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState([]);
@@ -35,30 +38,37 @@ const Experience = ({ viewOnly = false }) => {
 
   // Load experiences from backend
   useEffect(() => {
-    const fetchExperiences = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await axios.get('/api/experiences');
-        setExperiences(response.data);
-      } catch (error) {
-        console.error('Error fetching experiences:', error);
-        setError('Failed to load experiences. Please refresh the page.');
-      } finally {
-        setLoading(false);
-      }
-    };
+    console.log('Experiences component - user object:', user);
+    console.log('Experiences component - userId:', user?._id);
+    if (user && user._id) {
+      fetchExperiences();
+    }
+  }, [user]);
 
-    fetchExperiences();
-  }, []);
+  const fetchExperiences = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await axios.get(`/api/experiences?userId=${user._id}`);
+      setExperiences(response.data);
+    } catch (error) {
+      console.error('Error fetching experiences:', error);
+      setError('Failed to load experiences. Please refresh the page.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleEditToggle = async () => {
     if (isEditing) {
       // Save changes when exiting edit mode
       try {
         setError(null);
-        await axios.put('/api/experiences', { experiences: editData });
+        await axios.put('/api/experiences', { 
+          experiences: editData,
+          userId: user._id
+        });
         setExperiences(editData);
         setIsEditing(false);
       } catch (error) {
@@ -94,7 +104,10 @@ const Experience = ({ viewOnly = false }) => {
         return;
       }
 
-      const response = await axios.post('/api/experiences', newExperience);
+      const response = await axios.post('/api/experiences', {
+        ...newExperience,
+        userId: user._id
+      });
       const updated = [...editData, response.data];
       setEditData(updated);
       setNewExperience({
@@ -116,7 +129,7 @@ const Experience = ({ viewOnly = false }) => {
     if (experienceToRemove._id) {
       try {
         setError(null);
-        await axios.delete(`/api/experiences/${experienceToRemove._id}`);
+        await axios.delete(`/api/experiences/${experienceToRemove._id}?userId=${user._id}`);
       } catch (error) {
         console.error('Error deleting experience:', error);
         setError('Failed to delete experience. Please try again.');

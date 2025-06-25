@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import AuthContext from '../context/AuthContext';
 import './AuthPage.css';
+import axios from 'axios';
 
 const LoginPage = () => {
   const authContext = useContext(AuthContext);
@@ -16,6 +17,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log('isAuthenticated:', isAuthenticated, 'user:', authContext.user);
     if (isAuthenticated) {
       navigate('/dashboard'); // Redirect if logged in
     }
@@ -75,7 +77,7 @@ const LoginPage = () => {
           </div>
           <motion.button
             type="submit"
-            className="btn btn-primary auth-button"
+            className="btn btn-primary auth-button login-btn"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >

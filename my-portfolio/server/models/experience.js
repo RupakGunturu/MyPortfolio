@@ -28,7 +28,8 @@ const experienceSchema = new mongoose.Schema({
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'RegisteredUser',
+    required: true
   }
 }, { timestamps: true });
 

@@ -1,16 +1,25 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { validationResult } from 'express-validator';
-import User from '../models/user.js';
 
 // @desc    Register a new user
-export const registerUser = async (req, res) => {
+export const registerUser = async (req, res, User) => {
+  console.log('REGISTER REQUEST BODY:', req.body);
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
 
   const { name, username, email, password } = req.body;
+  if (!username || typeof username !== 'string' || username.trim() === '') {
+    return res.status(400).json({ msg: 'Username is required and cannot be empty.' });
+  }
+  if (!email || typeof email !== 'string' || email.trim() === '') {
+    return res.status(400).json({ msg: 'Email is required and cannot be empty.' });
+  }
+  if (!password || typeof password !== 'string' || password.length < 6) {
+    return res.status(400).json({ msg: 'Password is required and must be at least 6 characters.' });
+  }
 
   try {
     // Check if user with that email OR username already exists
@@ -53,13 +62,22 @@ export const registerUser = async (req, res) => {
       }
     );
   } catch (err) {
+    if (err.code === 11000) {
+      if (err.keyPattern && err.keyPattern.username) {
+        return res.status(400).json({ msg: 'Username already exists.' });
+      }
+      if (err.keyPattern && err.keyPattern.email) {
+        return res.status(400).json({ msg: 'Email already exists.' });
+      }
+      return res.status(400).json({ msg: 'Duplicate field error.' });
+    }
     console.error(err.message);
     res.status(500).send('Server error');
   }
 };
 
 // @desc    Login user
-export const loginUser = async (req, res) => {
+export const loginUser = async (req, res, User) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -92,7 +110,16 @@ export const loginUser = async (req, res) => {
       { expiresIn: 3600 }, // 1 hour
       (err, token) => {
         if (err) throw err;
-        res.json({ token });
+        res.json({
+          token,
+          user: {
+            _id: user._id,
+            username: user.username,
+            email: user.email,
+            name: user.name,
+            // add any other fields you want to expose
+          }
+        });
       }
     );
   } catch (err) {

@@ -9,8 +9,10 @@ import fs from "fs";
 import connectDB from './config/db.js';
 import { getProjects } from './controllers/projectController.js';
 import { registerUser, loginUser } from './controllers/authController.js';
-import { check } from 'express-validator';
+import { check, validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
+import registerRoute from './routes/register.js';
+import bcrypt from 'bcryptjs';
 
 // --- Auth Middleware ---
 const auth = (req, res, next) => {
@@ -130,7 +132,8 @@ const certificateSchema = new mongoose.Schema({
   fileId: { type: mongoose.Schema.Types.ObjectId, required: true },
   filename: { type: String, required: true },
   contentType: { type: String },
-  url: { type: String }
+  url: { type: String },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'RegisteredUser', required: true }
 }, { timestamps: true });
 
 const Certificate = mongoose.model('Certificate', certificateSchema);
@@ -141,7 +144,8 @@ const skillSchema = new mongoose.Schema({
     type: String,
     enum: ['beginner', 'intermediate', 'advanced', 'expert'],
     default: 'intermediate'
-  }
+  },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'RegisteredUser', required: true }
 });
 const Skill = mongoose.model("Skill", skillSchema);
 
@@ -149,25 +153,27 @@ const contactSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true },
   message: { type: String, required: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'RegisteredUser', required: true }
 }, { timestamps: true });
 const Contact = mongoose.models.Contact || mongoose.model("Contact", contactSchema);
 
 const aboutSchema = new mongoose.Schema({
-  data: { type: Object, default: {} }
+  data: { type: Object, default: {} },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'RegisteredUser', required: true }
 });
 const About = mongoose.model("About", aboutSchema);
 
 const userSchema = new mongoose.Schema({
   name: { type: String, default: "" },
-  bio: { type: String, default: "" },
-  imageUrl: { type: String, default: "" },
-  techStackMessage: { type: String, default: "Currently working with React & Next.js" }
+  username: { type: String, required: true, unique: true, trim: true },
+  email: { type: String, required: true, unique: true, trim: true },
+  password: { type: String, required: true },
 });
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 // --- Mongoose Model (inline) ---
 const experienceSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'RegisteredUser', required: true },
   iconType: { type: String, required: true, enum: ['briefcase', 'code', 'graduation'] },
   date: { type: String, required: true },
   title: { type: String, required: true },
@@ -185,93 +191,137 @@ app.get("/", (req, res) => res.send("✅ Server is running"));
 // Define Routes
 
 // ---- Skills ----
-app.post('/api/skill', auth, async (req, res) => {
+
+// Get all skills for a specific user
+app.get("/api/skills", async (req, res) => {
   try {
-    const newSkill = new Skill({
-      title: req.body.title,
-      level: req.body.level || 'intermediate'
-    });
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    const skills = await Skill.find({ user: userId }).sort({ createdAt: -1 });
+    res.json(skills);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch skills", error: error.message });
+  }
+});
+
+// Add a new skill
+app.post("/api/skills", async (req, res) => {
+  try {
+    const { title, level, userId } = req.body;
+    if (!title || !userId) {
+      return res.status(400).json({ message: "Title and userId are required" });
+    }
+    const newSkill = new Skill({ title, level, user: userId });
     await newSkill.save();
     res.status(201).json(newSkill);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+  } catch (error) {
+    res.status(400).json({ message: "Failed to add skill", error: error.message });
   }
 });
 
-app.get("/api/skill", async (req, res) => {
+// Update a skill
+app.put("/api/skills/:id", async (req, res) => {
   try {
-    const skills = await Skill.find();
-    res.json(skills);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-app.delete('/api/skill/:id', auth, async (req, res) => {
-  console.log('DELETE request to /api/skill/:id', req.params.id);
-
-  try {
-    const deletedSkill = await Skill.findByIdAndDelete(req.params.id);
-    if (!deletedSkill) {
-      return res.status(404).json({ message: 'Skill not found' });
+    const { title, level, userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
     }
-    res.status(200).json({ message: 'Deleted', skill: deletedSkill });
-  } catch (err) {
-    console.error('Error during deletion:', err);
-    res.status(500).json({ message: 'Error deleting skill' });
+    
+    const skill = await Skill.findById(req.params.id);
+    if (!skill) {
+      return res.status(404).json({ error: 'Skill not found' });
+    }
+    
+    // Check if the skill belongs to the user
+    if (skill.user.toString() !== userId) {
+      return res.status(403).json({ error: 'Not authorized to update this skill' });
+    }
+    
+    const updatedSkill = await Skill.findByIdAndUpdate(
+      req.params.id,
+      { title, level },
+      { new: true }
+    );
+    res.json(updatedSkill);
+  } catch (error) {
+    res.status(400).json({ message: "Failed to update skill", error: error.message });
   }
 });
 
+// Delete a skill
+app.delete("/api/skills/:id", async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    const skill = await Skill.findById(req.params.id);
+    if (!skill) {
+      return res.status(404).json({ error: 'Skill not found' });
+    }
+    
+    // Check if the skill belongs to the user
+    if (skill.user.toString() !== userId) {
+      return res.status(403).json({ error: 'Not authorized to delete this skill' });
+    }
+    
+    await Skill.findByIdAndDelete(req.params.id);
+    res.json({ message: "Skill deleted successfully" });
+  } catch (error) {
+    res.status(400).json({ message: "Failed to delete skill", error: error.message });
+  }
+});
 
 // ---- User ----
 
-// Get user (single)
+// Get user (by userId)
 app.get("/api/user", async (req, res) => {
   try {
-    const user = await User.findOne();
-    res.json(user || { name: "", bio: "", imageUrl: "", techStackMessage: "Currently working with React & Next.js" });
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    const user = await RegisteredUser.findById(userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(user);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
 // Update user with optional user image upload (disk)
-app.put("/api/user", auth, uploadUserImage.single("image"), async (req, res) => {
+app.put("/api/user", uploadUserImage.single("image"), async (req, res) => {
   try {
-    console.log("Request body:", req.body);
-    console.log("Uploaded file:", req.file);
-
-    const { name, bio, techStackMessage } = req.body;
-    let finalImageUrl;
-
-    if (req.file) {
-      // Save relative path to serve static image
-      finalImageUrl = `/uploads/${req.file.filename}`;
-      console.log("New image URL:", finalImageUrl);
+    const { userId, fullname, username, email, bio, techStackMessage } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required to update profile.' });
     }
-
+    let finalImageUrl;
+    if (req.file) {
+      finalImageUrl = `/uploads/${req.file.filename}`;
+    }
     const updateData = {
-      ...(name !== undefined && { name }),
+      ...(fullname !== undefined && { fullname }),
+      ...(username !== undefined && { username }),
       ...(bio !== undefined && { bio }),
       ...(techStackMessage !== undefined && { techStackMessage }),
       ...(finalImageUrl !== undefined && { imageUrl: finalImageUrl }),
     };
-
-    console.log("Update data:", updateData);
-
-    // Only update the user whose id matches the JWT
-    const updated = await User.findByIdAndUpdate(req.user.id, updateData, {
+    const updated = await RegisteredUser.findByIdAndUpdate(userId, updateData, {
       new: true,
       runValidators: true
     });
     if (!updated) {
       return res.status(404).json({ error: 'User not found or not authorized' });
     }
-
-    console.log("Updated user:", updated);
     res.json(updated);
   } catch (err) {
-    console.error("PUT /api/user error:", err);
     res.status(500).json({ 
       error: err.message,
       details: "Image upload failed. Please check server logs."
@@ -282,19 +332,19 @@ app.put("/api/user", auth, uploadUserImage.single("image"), async (req, res) => 
 // ---- Certificates ----
 
 // Upload certificate with file saved in GridFS
-app.post('/api/certificates', auth, uploadCertificate.single('file'), async (req, res) => {
+app.post('/api/certificates', uploadCertificate.single('file'), async (req, res) => {
   console.log('--- /api/certificates POST called ---');
   console.log('req.body:', req.body);
   console.log('req.file:', req.file);
   try {
-    const { title, issuer, date } = req.body;
+    const { title, issuer, date, userId } = req.body;
     const file = req.file;
 
-    if (!title || !issuer || !date || !file) {
-      console.error('Missing required fields:', { title, issuer, date, file });
+    if (!title || !issuer || !date || !file || !userId) {
+      console.error('Missing required fields:', { title, issuer, date, file, userId });
       return res.status(400).json({ 
-        error: 'Title, issuer, date, and file are all required',
-        debug: { title, issuer, date, file }
+        error: 'Title, issuer, date, file, and userId are all required',
+        debug: { title, issuer, date, file, userId }
       });
     }
 
@@ -322,7 +372,8 @@ app.post('/api/certificates', auth, uploadCertificate.single('file'), async (req
           fileId: uploadStream.id,
           filename: uploadStream.filename,
           contentType: file.mimetype,
-          url: `/api/certificates/file/${uploadStream.id}`
+          url: `/api/certificates/file/${uploadStream.id}`,
+          user: userId
         });
 
         res.status(201).json({
@@ -351,10 +402,15 @@ app.post('/api/certificates', auth, uploadCertificate.single('file'), async (req
   }
 });
 
-// Get all certificates
+// Get all certificates for a specific user
 app.get('/api/certificates', async (req, res) => {
   try {
-    const certificates = await Certificate.find().sort({ createdAt: -1 });
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    const certificates = await Certificate.find({ user: userId }).sort({ createdAt: -1 });
     
     const result = certificates.map(cert => ({
       _id: cert._id,
@@ -418,18 +474,28 @@ app.get('/api/certificates/file/:id', async (req, res) => {
 });
 
 // Delete certificate
-app.delete('/api/certificates/:id', auth, async (req, res) => {
+app.delete('/api/certificates/:id', async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: 'Invalid ID format' });
     }
 
     const certificateId = new mongoose.Types.ObjectId(req.params.id);
+    const { userId } = req.query;
     
-    // Find the certificate to get the fileId
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    // Find the certificate to get the fileId and check ownership
     const certificate = await Certificate.findById(certificateId);
     if (!certificate) {
       return res.status(404).json({ error: 'Certificate not found' });
+    }
+    
+    // Check if the certificate belongs to the user
+    if (certificate.user.toString() !== userId) {
+      return res.status(403).json({ error: 'Not authorized to delete this certificate' });
     }
 
     // Delete from GridFS if file exists
@@ -462,24 +528,43 @@ app.delete('/api/certificates/:id', auth, async (req, res) => {
 
 // ---- About ----
 
-// Get about data (singleton)
+// Get about data for a specific user
 app.get("/api/about", async (req, res) => {
   try {
-    const about = await About.findOne();
-    res.json(about ? about.data : {});
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    const about = await About.findOne({ user: userId });
+    if (!about) {
+      return res.json({ data: {} });
+    }
+    res.json(about);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch about", error: error.message });
   }
 });
 
 // Update about data (singleton)
-app.put("/api/about", auth, async (req, res) => {
+app.put("/api/about", async (req, res) => {
   try {
-    const data = req.body;
-    const updated = await About.findOneAndUpdate({}, { data }, { upsert: true, new: true });
-    res.json(updated.data);
-  } catch (e) {
-    res.status(400).json({ error: e.message });
+    const { data, userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    let about = await About.findOne({ user: userId });
+    if (about) {
+      about.data = data;
+      await about.save();
+    } else {
+      about = new About({ data, user: userId });
+      await about.save();
+    }
+    res.json(about);
+  } catch (error) {
+    res.status(400).json({ message: "Failed to update about", error: error.message });
   }
 });
 
@@ -502,12 +587,48 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
+// Submit contact form
+app.post("/api/contact", async (req, res) => {
+  try {
+    const { name, email, message, userId } = req.body;
+    if (!name || !email || !message) {
+      return res.status(400).json({ message: "Name, email, and message are required" });
+    }
+    
+    const newContact = new Contact({ name, email, message, user: userId });
+    await newContact.save();
+    res.status(201).json({ message: "Contact form submitted successfully" });
+  } catch (error) {
+    res.status(400).json({ message: "Failed to submit contact form", error: error.message });
+  }
+});
+
+// Get contact messages for a specific user (if they have any)
+app.get("/api/contact", async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    const contacts = await Contact.find({ user: userId }).sort({ createdAt: -1 });
+    res.json(contacts);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch contact messages", error: error.message });
+  }
+});
+
 // --- API Endpoints ---
 
 // Get all experiences
 app.get('/api/experiences', async (req, res) => {
   try {
-    const experiences = await Experience.find().sort({ date: -1 });
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    const experiences = await Experience.find({ user: userId }).sort({ createdAt: -1 });
     res.json(experiences);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch experiences", error: error.message });
@@ -515,17 +636,17 @@ app.get('/api/experiences', async (req, res) => {
 });
 
 // Add a new experience
-app.post('/api/experiences', auth, async (req, res) => {
+app.post('/api/experiences', async (req, res) => {
   try {
-    const { iconType, date, title, company, description } = req.body;
-    if (!date || !title || !company || !description) {
-      return res.status(400).json({ message: "All fields are required" });
+    const { iconType, date, title, company, description, userId } = req.body;
+    if (!date || !title || !company || !description || !userId) {
+      return res.status(400).json({ message: "All fields including userId are required" });
     }
     const validIconTypes = ['briefcase', 'code', 'graduation'];
     if (!validIconTypes.includes(iconType)) {
       return res.status(400).json({ message: "Invalid iconType" });
     }
-    const newExp = new Experience({ iconType, date, title, company, description, user: req.user.id });
+    const newExp = new Experience({ iconType, date, title, company, description, user: userId });
     await newExp.save();
     res.status(201).json(newExp);
   } catch (error) {
@@ -534,30 +655,66 @@ app.post('/api/experiences', auth, async (req, res) => {
 });
 
 // Delete an experience by ID
-app.delete('/api/experiences/:id', auth, async (req, res) => {
+app.delete('/api/experiences/:id', async (req, res) => {
   try {
-    const exp = await Experience.findById(req.params.id);
-    if (!exp) return res.status(404).json({ message: "Experience not found" });
-    if (exp.user.toString() !== req.user.id) return res.status(403).json({ message: "Not authorized" });
-    await exp.deleteOne();
-    res.json({ message: "Deleted", deleted: exp });
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    const experience = await Experience.findById(req.params.id);
+    if (!experience) {
+      return res.status(404).json({ error: 'Experience not found' });
+    }
+    
+    // Check if the experience belongs to the user
+    if (experience.user.toString() !== userId) {
+      return res.status(403).json({ error: 'Not authorized to delete this experience' });
+    }
+    
+    await Experience.findByIdAndDelete(req.params.id);
+    res.json({ message: "Experience deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Failed to delete experience", error: error.message });
+    res.status(400).json({ message: "Failed to delete experience", error: error.message });
   }
 });
 
 // Bulk update experiences (replace all)
-app.put('/api/experiences', auth, async (req, res) => {
+app.put('/api/experiences', async (req, res) => {
   try {
-    const { experiences } = req.body;
-    if (!Array.isArray(experiences)) {
-      return res.status(400).json({ message: "Experiences must be an array" });
+    const { experiences, userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
     }
-    // Remove all experiences for this user
-    await Experience.deleteMany({ user: req.user.id });
-    // Insert new experiences for this user
-    const toInsert = experiences.map(exp => ({ ...exp, user: req.user.id }));
-    const savedExperiences = await Experience.insertMany(toInsert);
+    
+    if (!Array.isArray(experiences)) {
+      return res.status(400).json({ message: 'Experiences must be an array' });
+    }
+
+    // Validate each experience
+    for (const exp of experiences) {
+      if (!exp.date || !exp.title || !exp.company || !exp.description) {
+        return res.status(400).json({ 
+          message: 'All fields (date, title, company, description) are required for each experience' 
+        });
+      }
+      
+      const validIconTypes = ['briefcase', 'code', 'graduation'];
+      if (!validIconTypes.includes(exp.iconType)) {
+        return res.status(400).json({ 
+          message: 'Invalid iconType. Must be one of: briefcase, code, graduation' 
+        });
+      }
+    }
+
+    // Delete all existing experiences for this user
+    await Experience.deleteMany({ user: userId });
+    
+    // Insert new experiences with user ID
+    const experiencesWithUser = experiences.map(exp => ({ ...exp, user: userId }));
+    const savedExperiences = await Experience.insertMany(experiencesWithUser);
+    
     res.json(savedExperiences);
   } catch (error) {
     res.status(400).json({ message: "Failed to bulk update experiences", error: error.message });
@@ -575,10 +732,15 @@ const projectSchema = new mongoose.Schema({
 
 const Project = mongoose.models.Project || mongoose.model('Project', projectSchema);
 
-// Get all projects
+// Get all projects for a specific user
 app.get("/api/projects", async (req, res) => {
   try {
-    const projects = await Project.find().sort({ createdAt: -1 });
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    const projects = await Project.find({ user: userId }).sort({ createdAt: -1 });
     res.json(projects);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch projects", error: error.message });
@@ -588,63 +750,68 @@ app.get("/api/projects", async (req, res) => {
 // Add a new project
 app.post("/api/projects", async (req, res) => {
   try {
-    const { name, link, image } = req.body;
-    
-    // Validate required fields
-    if (!name || !link) {
-      return res.status(400).json({ message: "Name and link are required" });
+    const { title, description, image, file, link, userId } = req.body;
+    if (!title || !description || !userId) {
+      return res.status(400).json({ message: "Title, description, and userId are required" });
     }
-
-    // Validate image size if provided (base64 images can be large)
-    if (image && image.length > 50 * 1024 * 1024) { // 50MB limit
-      return res.status(413).json({ 
-        message: "Image file is too large. Please use a smaller image (max 50MB)." 
-      });
-    }
-
-    const newProject = new Project({ 
-      name, 
-      link, 
-      image: image || "https://via.placeholder.com/400x300?text=Project+Preview" 
-    });
+    const newProject = new Project({ title, description, image, file, link, user: userId });
     await newProject.save();
     res.status(201).json(newProject);
   } catch (error) {
-    console.error('Error adding project:', error);
     res.status(400).json({ message: "Failed to add project", error: error.message });
   }
 });
 
 // Delete a project by ID
-app.delete("/api/projects/:id", auth, async (req, res) => {
+app.delete("/api/projects/:id", async (req, res) => {
   try {
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
     const project = await Project.findById(req.params.id);
-    if (!project) return res.status(404).json({ message: "Project not found" });
-    if (project.user.toString() !== req.user.id) return res.status(403).json({ message: "Not authorized" });
-    await project.deleteOne();
-    res.json({ message: "Deleted", deleted: project });
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    
+    // Check if the project belongs to the user
+    if (project.user.toString() !== userId) {
+      return res.status(403).json({ error: 'Not authorized to delete this project' });
+    }
+    
+    await Project.findByIdAndDelete(req.params.id);
+    res.json({ message: "Project deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Failed to delete project", error: error.message });
+    res.status(400).json({ message: "Failed to delete project", error: error.message });
   }
 });
 
 // Update a project by ID
-app.put("/api/projects/:id", auth, async (req, res) => {
+app.put("/api/projects/:id", async (req, res) => {
   try {
-    const { name, link, image } = req.body;
-    if (!name || !link) {
-      return res.status(400).json({ message: "Name and link are required" });
+    const { title, description, image, file, link, userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
     }
+    
     const project = await Project.findById(req.params.id);
-    if (!project) return res.status(404).json({ message: "Project not found" });
-    if (project.user.toString() !== req.user.id) return res.status(403).json({ message: "Not authorized" });
-    project.name = name;
-    project.link = link;
-    project.image = image;
-    await project.save();
-    res.json(project);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    
+    // Check if the project belongs to the user
+    if (project.user.toString() !== userId) {
+      return res.status(403).json({ error: 'Not authorized to update this project' });
+    }
+    
+    const updatedProject = await Project.findByIdAndUpdate(
+      req.params.id,
+      { title, description, image, file, link },
+      { new: true }
+    );
+    res.json(updatedProject);
   } catch (error) {
-    console.error('Error updating project:', error);
     res.status(400).json({ message: "Failed to update project", error: error.message });
   }
 });
@@ -658,7 +825,7 @@ app.post(
     check('email', 'Please include a valid email').isEmail(),
     check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 }),
   ],
-  registerUser
+  (req, res) => registerUser(req, res, User)
 );
 
 app.post(
@@ -667,7 +834,7 @@ app.post(
     check('email', 'Please include a valid email').isEmail(),
     check('password', 'Password is required').exists(),
   ],
-  loginUser
+  (req, res) => loginUser(req, res, User)
 );
 
 // --- Project Routes ---
@@ -679,19 +846,20 @@ app.get('/api/certificates', (req, res) => {
   res.json(certificates);
 });
 
-// Serve static assets in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '..', 'client', 'build')));
-
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '..', 'client', 'build', 'index.html'));
-  });
-}
+// --- Registered User Count Endpoint ---
+app.get('/api/user-count', async (req, res) => {
+  try {
+    const count = await User.countDocuments();
+    res.json({ count });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch user count' });
+  }
+});
 
 // @route   GET api/auth
 // @desc    Get logged in user
 // @access  Private
-app.get('/api/auth', auth, async (req, res) => {
+app.get('/api/auth', async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
     res.json(user);
@@ -701,12 +869,109 @@ app.get('/api/auth', auth, async (req, res) => {
   }
 });
 
+// --- Register Route ---
+app.use('/api', registerRoute);
+
+// RegisteredUser Schema (new collection)
+const registeredUserSchema = new mongoose.Schema({
+  fullname: { type: String, required: true, trim: true },
+  username: { type: String, required: true, unique: true, trim: true },
+  email: { type: String, required: true, unique: true, trim: true },
+  password: { type: String, required: true }
+}, { collection: 'registered_users' });
+const RegisteredUser = mongoose.models.RegisteredUser || mongoose.model('RegisteredUser', registeredUserSchema);
+
+// Registration route
+app.post(
+  '/api/register',
+  [
+    check('fullname', 'Full name is required').not().isEmpty(),
+    check('username', 'Username is required').not().isEmpty(),
+    check('email', 'Valid email is required').isEmail(),
+    check('password', 'Password must be at least 6 characters').isLength({ min: 6 })
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    const { fullname, username, email, password } = req.body;
+    try {
+      let user = await RegisteredUser.findOne({ $or: [{ username }, { email }] });
+      if (user) {
+        return res.status(400).json({ msg: 'Username or email already exists' });
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user = new RegisteredUser({ fullname, username, email, password: hashedPassword });
+      await user.save();
+      // JWT token
+      const payload = { user: { id: user._id } };
+      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 3600 });
+      res.status(201).json({ 
+        msg: 'Registration successful', 
+        token, 
+        user: { 
+          _id: user._id,
+          fullname, 
+          username, 
+          email 
+        } 
+      });
+    } catch (err) {
+      if (err.code === 11000) {
+        return res.status(400).json({ msg: 'Username or email already exists' });
+      }
+      res.status(500).json({ msg: 'Server error', error: err.message });
+    }
+  }
+);
+
+// Registered user count route
+app.get('/api/register/count', async (req, res) => {
+  try {
+    const count = await RegisteredUser.countDocuments();
+    res.json({ count });
+  } catch (err) {
+    res.status(500).json({ msg: 'Failed to fetch user count', error: err.message });
+  }
+});
+
+// Login route for registered_users
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await RegisteredUser.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ msg: 'Invalid credentials' });
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ msg: 'Invalid credentials' });
+    }
+    // JWT token
+    const payload = { user: { id: user._id } };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 3600 });
+    res.json({ 
+      msg: 'Login successful', 
+      token, 
+      user: { 
+        _id: user._id,
+        fullname: user.fullname, 
+        username: user.username, 
+        email: user.email 
+      } 
+    });
+  } catch (err) {
+    res.status(500).json({ msg: 'Server error', error: err.message });
+  }
+});
+
 // -------------------- Connect to MongoDB & Start Server --------------------
 
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
-    console.log("✅ Connected to MongoDB");
+    console.log("✅ Connected to MongoDB 🚀");
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
   .catch((e) => {

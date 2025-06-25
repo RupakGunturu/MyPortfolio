@@ -1,7 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, useInView } from 'framer-motion';
+import React, { useState, useEffect, useRef, useContext } from 'react';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
+import { FaPlus, FaTrash, FaEdit, FaTimes } from 'react-icons/fa';
+import AuthContext from '../context/AuthContext';
+import axios from 'axios';
 
 const Skill = ({ viewOnly = false, theme = 'dark' }) => {
+  const authContext = useContext(AuthContext);
+  const { user } = authContext || {};
   const [skills, setSkills] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [newSkill, setNewSkill] = useState({ title: '', level: 'intermediate' });
@@ -9,47 +14,53 @@ const Skill = ({ viewOnly = false, theme = 'dark' }) => {
   const [isDeleting, setIsDeleting] = useState(null);
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.2 });
+  const [loading, setLoading] = useState(true);
 
-  // Fetch skills from backend
   useEffect(() => {
-    const fetchSkills = async () => {
-      try {
-        const response = await fetch('http://localhost:9000/api/skill');
-        const data = await response.json();
-        console.log('Fetched skills:', data); // Debug log
-        setSkills(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error('Failed to fetch skills:', err);
-        showToast('🚫 Failed to load skills!');
-      }
-    };
-    fetchSkills();
-  }, []);
+    if (user && user._id) {
+      fetchSkills();
+    }
+  }, [user]);
 
+  const fetchSkills = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`/api/skills?userId=${user._id}`);
+      setSkills(response.data);
+    } catch (error) {
+      console.error('Error fetching skills:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const showToast = (message) => {
     setToastMessage(message);
     setTimeout(() => setToastMessage(''), 3000);
   };
 
-  // Temporary debug component
-const DebugData = () => (
-  <div style={{
-    position: 'fixed',
-    bottom: 0,
-    left: 0,
-    background: 'white',
-    padding: '10px',
-    zIndex: 1000,
-    border: '1px solid red'
-  }}>
-    <h4>Debug Data:</h4>
-    <pre>{JSON.stringify(skills, null, 2)}</pre>
-  </div>
-);
-
-// Then add this right before your closing </section> tag:
-<DebugData />
+  // Temporary debug component for testing data isolation
+  const DebugData = () => (
+    <div style={{
+      position: 'fixed',
+      bottom: 10,
+      right: 10,
+      background: 'rgba(0,0,0,0.8)',
+      color: 'white',
+      padding: '10px',
+      borderRadius: '5px',
+      fontSize: '12px',
+      maxWidth: '300px',
+      zIndex: 1000,
+      border: '1px solid #4A90E2'
+    }}>
+      <h4 style={{margin: '0 0 5px 0', color: '#4A90E2'}}>🔍 Debug Info:</h4>
+      <div><strong>User ID:</strong> {user?._id || 'Not loaded'}</div>
+      <div><strong>Username:</strong> {user?.username || 'Not loaded'}</div>
+      <div><strong>Skills Count:</strong> {skills.length}</div>
+      <div><strong>Skills:</strong> {skills.map(s => s.title).join(', ') || 'None'}</div>
+    </div>
+  );
 
   const handleChange = e => {
     setNewSkill(prev => ({
@@ -66,16 +77,12 @@ const DebugData = () => (
     }
 
     try {
-      const response = await fetch('http://localhost:9000/api/skill', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newSkill)
+      const response = await axios.post('/api/skills', {
+        ...newSkill,
+        userId: user._id
       });
 
-      if (!response.ok) throw new Error('Failed to save skill');
-      
-      const savedSkill = await response.json();
-      setSkills(prev => [savedSkill, ...prev]);
+      setSkills(prev => [response.data, ...prev]);
       setNewSkill({ title: '', level: 'intermediate' });
       setIsFormOpen(false);
       showToast('✅ Skill added!');
@@ -88,11 +95,7 @@ const DebugData = () => (
   const handleDelete = async (skillId) => {
     setIsDeleting(skillId);
     try {
-      const response = await fetch(`http://localhost:9000/api/skill/${skillId}`, {
-        method: 'DELETE'
-      });
-
-      if (!response.ok) throw new Error('Failed to delete skill');
+      await axios.delete(`/api/skills/${skillId}?userId=${user._id}`);
       
       setSkills(prev => prev.filter(skill => skill._id !== skillId));
       showToast('❌ Skill deleted!');
@@ -101,6 +104,23 @@ const DebugData = () => (
       showToast('❌ Error deleting skill!');
     } finally {
       setIsDeleting(null);
+    }
+  };
+
+  const handleUpdate = async (skillId, updatedSkill) => {
+    try {
+      const response = await axios.put(`/api/skills/${skillId}`, {
+        ...updatedSkill,
+        userId: user._id
+      });
+      
+      setSkills(prev => prev.map(skill => 
+        skill._id === skillId ? response.data : skill
+      ));
+      showToast('✅ Skill updated!');
+    } catch (err) {
+      console.error('Update error:', err);
+      showToast('❌ Error updating skill!');
     }
   };
 
@@ -508,6 +528,8 @@ const DebugData = () => (
           {toastMessage}
         </div>
       )}
+
+      <DebugData />
     </section>
   );
 };

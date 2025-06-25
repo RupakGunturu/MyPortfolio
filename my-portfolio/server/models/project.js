@@ -6,7 +6,7 @@ const projectSchema = new mongoose.Schema({
   image: { type: String },
   file: { type: String },
   link: { type: String },
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'RegisteredUser', required: true }
 }, { timestamps: true });
 
 const Project = mongoose.model('Project', projectSchema);

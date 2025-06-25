@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import AuthContext from '../context/AuthContext';
 
 function Certificates({ viewOnly = false, theme = 'dark' }) {
+  const authContext = useContext(AuthContext);
+  const { user } = authContext || {};
   const [certs, setCerts] = useState([]);
   const [form, setForm] = useState({
     title: '',
@@ -16,12 +19,14 @@ function Certificates({ viewOnly = false, theme = 'dark' }) {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    fetchCertificates();
-  }, []);
+    if (user && user._id) {
+      fetchCertificates();
+    }
+  }, [user]);
 
   const fetchCertificates = async () => {
     try {
-      const response = await axios.get('/api/certificates');
+      const response = await axios.get(`/api/certificates?userId=${user._id}`);
       setCerts(response.data);
     } catch (err) {
       console.error('Failed to fetch certificates:', err);
@@ -45,10 +50,18 @@ function Certificates({ viewOnly = false, theme = 'dark' }) {
         throw new Error('All required fields must be filled');
       }
 
+      console.log('Certificate upload - User object:', user);
+      console.log('Certificate upload - User ID:', user?._id);
+
+      if (!user?._id) {
+        throw new Error('User ID not available. Please try logging in again.');
+      }
+
       const formData = new FormData();
       formData.append('title', form.title);
       formData.append('issuer', form.issuer);
       formData.append('date', form.date);
+      formData.append('userId', user._id);
 
       if (form.file) {
         // Accept both images and PDFs
@@ -62,7 +75,7 @@ function Certificates({ viewOnly = false, theme = 'dark' }) {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      setCerts(prev => [response.data, ...prev]);
+      setCerts(prev => [response.data.certificate, ...prev]);
       resetForm();
       setIsFormVisible(false);
     } catch (err) {
@@ -87,7 +100,7 @@ function Certificates({ viewOnly = false, theme = 'dark' }) {
 const deleteCertificate = async (id) => {
   console.log('Attempting to delete:', id);
   try {
-    const response = await axios.delete(`/api/certificates/${id}`);
+    const response = await axios.delete(`/api/certificates/${id}?userId=${user._id}`);
     
     if (response.data.success) {
       setCerts(prev => prev.filter(cert => cert._id !== id));

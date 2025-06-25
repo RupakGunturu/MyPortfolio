@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { FiEdit, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import AuthContext from '../context/AuthContext';
 
 const fieldOptions = [
   'Name',
@@ -16,34 +17,41 @@ const fieldOptions = [
 const multiValueFields = ['Interests', 'Skills', 'Achievements', 'Hobbies', 'Social Links'];
 
 const About = ({ viewOnly = false }) => {
+  const authContext = useContext(AuthContext);
+  const { user } = authContext || {};
   const [selectedFields, setSelectedFields] = useState([]);
-  const [userData, setUserData] = useState({});
+  const [userData, setUserData] = useState({
+    name: '',
+    title: '',
+    location: '',
+    email: '',
+    phone: '',
+    about: '',
+    education: [],
+    languages: [],
+    interests: []
+  });
   const [showEditDropdown, setShowEditDropdown] = useState(false);
   const [showAdditionalFields, setShowAdditionalFields] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsLoading(true);
-    fetch('/api/about')
-      .then(res => res.json())
-      .then(data => {
-        const processedData = { ...data };
-        multiValueFields.forEach(field => {
-          const value = processedData[field];
-          if (value && typeof value === 'string') {
-            processedData[field] = value.split(',').map(s => s.trim()).filter(Boolean);
-          } else if (!Array.isArray(value)) {
-            processedData[field] = [];
-          }
-        });
-        setUserData(processedData);
-        setIsLoading(false);
-      })
-      .catch(error => {
-        console.error('Fetch error:', error);
-        setIsLoading(false);
-      });
-  }, []);
+    if (user && user._id) {
+      fetchAboutData();
+    }
+  }, [user]);
+
+  const fetchAboutData = async () => {
+    try {
+      const response = await fetch(`/api/about?userId=${user._id}`);
+      const data = await response.json();
+      if (data.data) {
+        setUserData(data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch about data:', err);
+    }
+  };
 
   useEffect(() => {
     if (Object.keys(userData).length === 0) return;
@@ -105,7 +113,10 @@ const About = ({ viewOnly = false }) => {
         await fetch('/api/about', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedData),
+          body: JSON.stringify({
+            data: updatedData,
+            userId: user._id
+          }),
         });
       } catch (err) {
         console.error('Save error:', err);

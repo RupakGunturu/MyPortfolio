@@ -25,7 +25,9 @@ const Navbar = () => {
       <div className="navbar-links">
         {isAuthenticated && user ? (
           <>
-            <span className="welcome-message">WELCOME {user.name.toUpperCase()}!</span>
+            <span className="welcome-message">
+              WELCOME {(user && (user.fullname || user.name) ? (user.fullname || user.name).toUpperCase() : 'USER')}!
+            </span>
             <button onClick={onLogout} className="logout-button">
               LOGOUT
             </button>

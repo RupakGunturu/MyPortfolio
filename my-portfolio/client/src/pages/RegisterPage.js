@@ -6,10 +6,10 @@ import './AuthPage.css';
 
 const RegisterPage = () => {
   const authContext = useContext(AuthContext);
-  const { register, error, clearErrors, isAuthenticated } = authContext;
+  const { register, error, clearErrors } = authContext;
 
   const [formData, setFormData] = useState({
-    name: '',
+    fullname: '',
     username: '',
     email: '',
     password: '',
@@ -18,34 +18,36 @@ const RegisterPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard'); // Redirect if logged in
-    }
     if (error) {
-      // You can add a toast notification here
       console.error(error);
       clearErrors();
     }
-  }, [error, isAuthenticated, navigate, clearErrors]);
+  }, [error, clearErrors]);
 
-  const { name, username, email, password } = formData;
+  const { fullname, username, email, password } = formData;
 
-  const onChange = (e) =>
+  const onChange = (e) => {
+    console.log('CHANGED:', e.target.name, e.target.value);
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
     if (password.length < 6) {
-      // This state is local to the component, not from context
-      // You might want a different state for this kind of validation error
       return;
     }
-    register({
-      name,
+    console.log('REGISTER FORM DATA:', formData);
+    const result = await register({
+      fullname,
       username,
       email,
       password,
     });
+    
+    // If registration is successful, redirect to login
+    if (result && result.success) {
+      navigate('/login');
+    }
   };
 
   return (
@@ -61,13 +63,12 @@ const RegisterPage = () => {
           Join now to create your personal portfolio.
         </p>
         <form onSubmit={onSubmit} className="auth-form">
-          {/* Consider a more robust error display */}
           <div className="form-group">
             <input
               type="text"
               placeholder="Full Name"
-              name="name"
-              value={name}
+              name="fullname"
+              value={fullname}
               onChange={onChange}
               required
             />

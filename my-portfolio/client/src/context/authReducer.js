@@ -20,10 +20,17 @@ const authReducer = (state, action) => {
       };
     case REGISTER_SUCCESS:
     case LOGIN_SUCCESS:
-      localStorage.setItem('token', action.payload.token);
+      console.log('LOGIN_SUCCESS payload:', action.payload); // Debug log
+      let userObj = action.payload.user || action.payload;
+      // If _id is missing, try to extract it from other fields or log a warning
+      if (!userObj._id) {
+        console.warn('User object missing _id! Full userObj:', userObj);
+        if (action.payload._id) userObj._id = action.payload._id;
+      }
+      console.log('User object set in state:', userObj);
       return {
         ...state,
-        ...action.payload,
+        user: userObj,
         isAuthenticated: true,
         loading: false,
       };

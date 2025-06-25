@@ -24,12 +24,44 @@ const PortfolioPage = () => {
   const isOwner = isAuthenticated && user && user.username === username;
   const isEditMode = requestedEdit && isOwner;
 
-  // Wait for loading to finish before redirecting
+  // Only redirect to login if user is not authenticated and trying to access edit mode
   React.useEffect(() => {
-    if (!loading && requestedEdit && !isEditMode) {
+    if (!loading && requestedEdit && !isAuthenticated) {
+      navigate('/login');
+    }
+  }, [requestedEdit, isAuthenticated, navigate, loading]);
+
+  // If trying to edit but not the owner, redirect to view-only
+  React.useEffect(() => {
+    if (!loading && requestedEdit && isAuthenticated && !isOwner) {
       navigate(`/portfolio/${username}`);
     }
-  }, [requestedEdit, isEditMode, navigate, username, loading]);
+  }, [requestedEdit, isOwner, isAuthenticated, navigate, username, loading]);
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '1.2rem',
+        color: '#666'
+      }}>
+        Loading portfolio...
+      </div>
+    );
+  }
+
+  const onUpdatePortfolio = () => {
+    console.log('User in onUpdatePortfolio:', user);
+    if (user) {
+      navigate(`/portfolio/${user.username}?edit=true`);
+    } else {
+      alert('User not loaded!');
+    }
+  };
 
   return (
     <>

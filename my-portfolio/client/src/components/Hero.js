@@ -4,6 +4,8 @@ import { FaGithub, FaLinkedin, FaArrowRight } from "react-icons/fa";
 import axios from "axios";
 import { removeBackground } from "@imgly/background-removal";
 import "./Hero.css";
+import AuthContext from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const textContainerVariants = {
   hidden: { opacity: 0 },
@@ -61,6 +63,11 @@ const Hero = ({ viewOnly = false }) => {
     imageUrl: "",
   });
 
+  const authContext = React.useContext(AuthContext);
+  const { user } = authContext || {};
+
+  const navigate = useNavigate();
+
   // Split the name for left/right layout
   const [lastName, ...restNameArr] = (profile.name || "").trim().split(' ').reverse();
   const firstName = restNameArr.reverse().join(' ');
@@ -81,29 +88,29 @@ const Hero = ({ viewOnly = false }) => {
   // Fetch profile
   useEffect(() => {
     const fetchProfile = async () => {
+      if (!user || !user._id) return;
       try {
-        const res = await axios.get("/api/user");
+        const res = await axios.get(`/api/user?userId=${user._id}`);
         const data = res.data || {};
         setProfile({ 
-          name: data.name || "Your Name",
+          name: data.fullname || data.name || "Your Name",
           bio: data.bio || "",
           imageUrl: data.imageUrl || "/images/profile-placeholder.png",
         });
         setForm({
-          name: data.name || "Your Name",
+          name: data.fullname || data.name || "Your Name",
           bio: data.bio || "",
           imageUrl: data.imageUrl || "/images/profile-placeholder.png",
         });
       } catch (error) {
         console.error("Error fetching profile:", error);
-        // Set default profile on error
         setProfile({ name: "Your Name", imageUrl: "/images/profile-placeholder.png" });
       } finally {
         setLoading(false);
       }
     };
     fetchProfile();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -119,15 +126,16 @@ const Hero = ({ viewOnly = false }) => {
       if (form.imageUrl instanceof File) {
         formData.append('image', form.imageUrl);
       }
-      formData.append('name', form.name);
+      formData.append('fullname', form.name);
       formData.append('bio', form.bio);
-
+      if (user && user._id) {
+        formData.append('userId', user._id);
+      }
       const res = await axios.put("/api/user", formData, {
         headers: {
           'Content-Type': form.imageUrl instanceof File ? 'multipart/form-data' : 'application/json'
         }
       });
-      
       setProfile(res.data);
       setEditing(false);
     } catch (err) {

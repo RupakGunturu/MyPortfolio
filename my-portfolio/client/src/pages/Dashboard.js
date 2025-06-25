@@ -8,21 +8,52 @@ import logo from '../logo.svg'; // Assuming you have a logo file
 
 const Dashboard = () => {
   const authContext = useContext(AuthContext);
-  const { user, loadUser } = authContext;
+  const { user, isAuthenticated } = authContext;
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
+  // Redirect to login if not authenticated
   useEffect(() => {
-    // On initial mount, load the user's data
-    loadUser();
-    // eslint-disable-next-line
-  }, []);
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Show loading if user data is not available yet
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="dashboard-container">
+        <Navbar />
+        <div className="dashboard-content">
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            height: '50vh',
+            fontSize: '1.2rem',
+            color: '#666'
+          }}>
+            Loading dashboard...
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const onUpdatePortfolio = () => {
+    console.log('onUpdatePortfolio called');
+    console.log('User object:', user);
+    console.log('User username:', user?.username);
+    
     // Navigate to the edit page for the user's portfolio
     // This will likely be the portfolio page with edit mode enabled
-    if(user) {
-      navigate(`/portfolio/${user.username}?edit=true`);
+    if(user && user.username) {
+      const portfolioUrl = `/portfolio/${user.username}?edit=true`;
+      console.log('Navigating to:', portfolioUrl);
+      navigate(portfolioUrl);
+    } else {
+      console.error('User or username not available:', user);
+      alert('User data not loaded. Please try again.');
     }
   };
 
@@ -55,7 +86,7 @@ const Dashboard = () => {
           <div className="dashboard-logo">
             <img src={logo} alt="My Portfolio Logo" />
           </div>
-          <h1 className="dashboard-title">My Portfolio</h1>
+          <h1 className="dashboard-title">Welcome, {user.fullname || user.username}!</h1>
           <p className="dashboard-description">
             Build your standout portfolio effortlessly! Our user-friendly platform lets you create and showcase your achievements in minutes. Enjoy a seamless experience, all in one place. Craft your professional online presence quickly and easily!
           </p>
