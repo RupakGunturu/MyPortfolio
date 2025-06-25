@@ -308,6 +308,16 @@ const ProjectCard = ({ viewOnly = false }) => {
                 />
               </div>
               <div className="form-group">
+                <label>Description:</label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Enter a short description of your project"
+                />
+              </div>
+              <div className="form-group">
                 <label>Vercel URL:</label>
                 <input
                   type="url"
@@ -369,6 +379,16 @@ const ProjectCard = ({ viewOnly = false }) => {
                   onChange={handleInputChange}
                   required
                   placeholder="Enter project title"
+                />
+              </div>
+              <div className="form-group">
+                <label>Description:</label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Enter a short description of your project"
                 />
               </div>
               <div className="form-group">

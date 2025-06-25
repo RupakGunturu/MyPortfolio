@@ -16,9 +16,10 @@ const fieldOptions = [
 
 const multiValueFields = ['Interests', 'Skills', 'Achievements', 'Hobbies', 'Social Links'];
 
-const About = ({ viewOnly = false }) => {
+const About = ({ userId: propUserId, viewOnly = false }) => {
   const authContext = useContext(AuthContext);
   const { user } = authContext || {};
+  const userId = propUserId || (user && user._id);
   const [selectedFields, setSelectedFields] = useState([]);
   const [userData, setUserData] = useState({
     name: '',
@@ -36,20 +37,22 @@ const About = ({ viewOnly = false }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (user && user._id) {
+    if (userId) {
       fetchAboutData();
     }
-  }, [user]);
+  }, [userId]);
 
   const fetchAboutData = async () => {
     try {
-      const response = await fetch(`/api/about?userId=${user._id}`);
+      const response = await fetch(`/api/about?userId=${userId}`);
       const data = await response.json();
       if (data.data) {
         setUserData(data.data);
       }
+      setIsLoading(false);
     } catch (err) {
       console.error('Failed to fetch about data:', err);
+      setIsLoading(false);
     }
   };
 
@@ -115,9 +118,10 @@ const About = ({ viewOnly = false }) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             data: updatedData,
-            userId: user._id
+            userId: userId
           }),
         });
+        fetchAboutData(); // Refresh data after update
       } catch (err) {
         console.error('Save error:', err);
       }

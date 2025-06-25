@@ -22,6 +22,7 @@ const PortfolioPage = () => {
   // Only allow edit mode if logged-in user matches the username in the URL
   const requestedEdit = searchParams.get('edit') === 'true';
   const isOwner = isAuthenticated && user && user.username === username;
+  // Default to view mode on refresh unless ?edit=true is present and user is owner
   const isEditMode = requestedEdit && isOwner;
 
   // Only redirect to login if user is not authenticated and trying to access edit mode
@@ -69,8 +70,14 @@ const PortfolioPage = () => {
       <div className="App">
         <Navbar />
         <main style={{ marginTop: 0, flex: 1 }}>
-          <Hero viewOnly={!isEditMode} />
-          <About viewOnly={!isEditMode} />
+          <Hero 
+            viewOnly={!isEditMode}
+            userId={isEditMode ? (user && user._id) : undefined}
+          />
+          <About 
+            viewOnly={!isEditMode}
+            userId={isEditMode ? (user && user._id) : undefined}
+          />
           <Certificate viewOnly={!isEditMode} theme="light" />
           <Experience viewOnly={!isEditMode} />
           <Skills viewOnly={!isEditMode} theme="light" />

@@ -5,10 +5,12 @@ export const createProject = async (req, res) => {
     console.log('Req.body:', req.body);
     console.log('Req.files:', req.files);
     
-    const { title, description, link, image } = req.body;
-    
+    const { title, description, link, image, userId } = req.body;
+    if (!title || !description || !userId) {
+      return res.status(400).json({ message: 'Title, description, and userId are required' });
+    }
     // Create project with or without uploaded files
-    const projectData = { title, description, link };
+    const projectData = { title, description, link, user: userId };
     
     if (req.files?.image) {
       projectData.image = req.files.image[0].filename;

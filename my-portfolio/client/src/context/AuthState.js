@@ -18,9 +18,9 @@ import {
 const AuthState = (props) => {
   const initialState = {
     token: null,
-    isAuthenticated: false,
+    isAuthenticated: JSON.parse(localStorage.getItem('isAuthenticated')) || false,
     loading: false,
-    user: null,
+    user: JSON.parse(localStorage.getItem('user')) || null,
     error: null,
   };
 
@@ -56,6 +56,8 @@ const AuthState = (props) => {
       const res = await axios.post('/api/login', formData, config);
       console.log('LOGIN RESPONSE:', res.data); // Debug log
       dispatch({ type: LOGIN_SUCCESS, payload: res.data });
+      localStorage.setItem('isAuthenticated', true);
+      localStorage.setItem('user', JSON.stringify(res.data.user || res.data));
       toast.success('🚀 Login successful! Welcome back!');
     } catch (err) {
       const errorMsg = err.response?.data?.msg || 'Login failed. Please check your credentials.';
@@ -80,6 +82,8 @@ const AuthState = (props) => {
   // Logout
   const logout = () => {
     dispatch({ type: LOGOUT });
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('user');
     toast.info('👋 You have been logged out.');
   };
 

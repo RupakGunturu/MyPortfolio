@@ -153,23 +153,26 @@ const contactSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true },
   message: { type: String, required: true },
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'RegisteredUser', required: true }
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'RegisteredUser', required: false }
 }, { timestamps: true });
 const Contact = mongoose.models.Contact || mongoose.model("Contact", contactSchema);
 
 const aboutSchema = new mongoose.Schema({
   data: { type: Object, default: {} },
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'RegisteredUser', required: true }
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'RegisteredUser', required: true, unique: true }
 });
 const About = mongoose.model("About", aboutSchema);
 
-const userSchema = new mongoose.Schema({
-  name: { type: String, default: "" },
+// --- User Schema for registered_users collection ---
+const registeredUserSchema = new mongoose.Schema({
+  fullname: { type: String, required: true, trim: true },
   username: { type: String, required: true, unique: true, trim: true },
   email: { type: String, required: true, unique: true, trim: true },
   password: { type: String, required: true },
-});
-const User = mongoose.models.User || mongoose.model("User", userSchema);
+  imageUrl: { type: String, default: "" }
+}, { collection: 'registered_users' });
+
+const RegisteredUser = mongoose.models.RegisteredUser || mongoose.model('RegisteredUser', registeredUserSchema);
 
 // --- Mongoose Model (inline) ---
 const experienceSchema = new mongoose.Schema({
@@ -298,21 +301,26 @@ app.get("/api/user", async (req, res) => {
 // Update user with optional user image upload (disk)
 app.put("/api/user", uploadUserImage.single("image"), async (req, res) => {
   try {
+    console.log('REQ.FILE:', req.file);
     const { userId, fullname, username, email, bio, techStackMessage } = req.body;
     if (!userId) {
       return res.status(400).json({ error: 'userId is required to update profile.' });
     }
     let finalImageUrl;
     if (req.file) {
+      console.log('[USER IMAGE UPLOAD] Received file:', req.file);
       finalImageUrl = `/uploads/${req.file.filename}`;
+      console.log('[USER IMAGE UPLOAD] finalImageUrl:', finalImageUrl);
     }
     const updateData = {
       ...(fullname !== undefined && { fullname }),
       ...(username !== undefined && { username }),
       ...(bio !== undefined && { bio }),
-      ...(techStackMessage !== undefined && { techStackMessage }),
-      ...(finalImageUrl !== undefined && { imageUrl: finalImageUrl }),
+      ...(techStackMessage !== undefined && { techStackMessage })
     };
+    if (finalImageUrl !== undefined) {
+      updateData.imageUrl = finalImageUrl;
+    }
     const updated = await RegisteredUser.findByIdAndUpdate(userId, updateData, {
       new: true,
       runValidators: true
@@ -320,8 +328,13 @@ app.put("/api/user", uploadUserImage.single("image"), async (req, res) => {
     if (!updated) {
       return res.status(404).json({ error: 'User not found or not authorized' });
     }
-    res.json(updated);
+    console.log('[USER IMAGE UPLOAD] Updated user:', updated);
+    // Always include imageUrl in the response
+    const updatedObj = updated.toObject();
+    if (!updatedObj.imageUrl) updatedObj.imageUrl = "";
+    res.json(updatedObj);
   } catch (err) {
+    console.error('[USER IMAGE UPLOAD] Error:', err);
     res.status(500).json({ 
       error: err.message,
       details: "Image upload failed. Please check server logs."
@@ -540,7 +553,7 @@ app.get("/api/about", async (req, res) => {
     if (!about) {
       return res.json({ data: {} });
     }
-    res.json(about);
+    res.json({ data: about.data });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch about", error: error.message });
   }
@@ -562,40 +575,22 @@ app.put("/api/about", async (req, res) => {
       about = new About({ data, user: userId });
       await about.save();
     }
-    res.json(about);
+    res.json({ data: about.data });
   } catch (error) {
     res.status(400).json({ message: "Failed to update about", error: error.message });
   }
 });
 
 // ---- Contact ----
-app.post('/api/contact', async (req, res) => {
-  try {
-    const { name, email, message } = req.body;
-
-    if (!name || !email || !message) {
-      return res.status(400).json({ error: 'Name, email, and message are required.' });
-    }
-
-    const newContact = new Contact({ name, email, message });
-    await newContact.save();
-
-    res.status(201).json({ success: true, message: 'Message received!', data: newContact });
-  } catch (error) {
-    console.error('Error saving contact message:', error);
-    res.status(500).json({ error: 'Failed to save message.' });
-  }
-});
-
-// Submit contact form
 app.post("/api/contact", async (req, res) => {
   try {
     const { name, email, message, userId } = req.body;
     if (!name || !email || !message) {
       return res.status(400).json({ message: "Name, email, and message are required" });
     }
-    
-    const newContact = new Contact({ name, email, message, user: userId });
+    const contactData = { name, email, message };
+    if (userId) contactData.user = userId;
+    const newContact = new Contact(contactData);
     await newContact.save();
     res.status(201).json({ message: "Contact form submitted successfully" });
   } catch (error) {
@@ -825,7 +820,7 @@ app.post(
     check('email', 'Please include a valid email').isEmail(),
     check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 }),
   ],
-  (req, res) => registerUser(req, res, User)
+  (req, res) => registerUser(req, res, RegisteredUser)
 );
 
 app.post(
@@ -834,7 +829,7 @@ app.post(
     check('email', 'Please include a valid email').isEmail(),
     check('password', 'Password is required').exists(),
   ],
-  (req, res) => loginUser(req, res, User)
+  (req, res) => loginUser(req, res, RegisteredUser)
 );
 
 // --- Project Routes ---
@@ -849,7 +844,7 @@ app.get('/api/certificates', (req, res) => {
 // --- Registered User Count Endpoint ---
 app.get('/api/user-count', async (req, res) => {
   try {
-    const count = await User.countDocuments();
+    const count = await RegisteredUser.countDocuments();
     res.json({ count });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch user count' });
@@ -861,7 +856,7 @@ app.get('/api/user-count', async (req, res) => {
 // @access  Private
 app.get('/api/auth', async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
+    const user = await RegisteredUser.findById(req.user.id).select('-password');
     res.json(user);
   } catch (err) {
     console.error(err.message);
@@ -871,15 +866,6 @@ app.get('/api/auth', async (req, res) => {
 
 // --- Register Route ---
 app.use('/api', registerRoute);
-
-// RegisteredUser Schema (new collection)
-const registeredUserSchema = new mongoose.Schema({
-  fullname: { type: String, required: true, trim: true },
-  username: { type: String, required: true, unique: true, trim: true },
-  email: { type: String, required: true, unique: true, trim: true },
-  password: { type: String, required: true }
-}, { collection: 'registered_users' });
-const RegisteredUser = mongoose.models.RegisteredUser || mongoose.model('RegisteredUser', registeredUserSchema);
 
 // Registration route
 app.post(

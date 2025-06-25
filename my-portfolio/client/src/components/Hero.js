@@ -47,9 +47,19 @@ const letterVariants = {
   }
 };
 
-const Hero = ({ viewOnly = false }) => {
+// Helper to get the correct image URL
+const getImageUrl = (url) => {
+  if (!url) return "/images/profile-placeholder.png";
+  if (url.startsWith("http") || url.startsWith("/images/")) return url;
+  if (url.startsWith("/uploads/")) {
+    return `http://localhost:9000${url}`;
+  }
+  return url;
+};
+
+const Hero = ({ userId: propUserId, viewOnly = false }) => {
   const [profile, setProfile] = useState({ 
-    name: "", 
+    fullname: "", 
     bio: "", 
     imageUrl: "",
   });
@@ -58,7 +68,7 @@ const Hero = ({ viewOnly = false }) => {
   const [showMainContent, setShowMainContent] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [form, setForm] = useState({ 
-    name: "", 
+    fullname: "", 
     bio: "", 
     imageUrl: "",
   });
@@ -67,12 +77,13 @@ const Hero = ({ viewOnly = false }) => {
   const { user } = authContext || {};
 
   const navigate = useNavigate();
+  const userId = propUserId || (user && user._id);
 
   // Split the name for left/right layout
-  const [lastName, ...restNameArr] = (profile.name || "").trim().split(' ').reverse();
+  const [lastName, ...restNameArr] = (profile.fullname || "").trim().split(' ').reverse();
   const firstName = restNameArr.reverse().join(' ');
 
-  const animationDelay = (profile.name || "").length * 0.08 + 0.5;
+  const animationDelay = (profile.fullname || "").length * 0.08 + 0.5;
 
   const shadowTransition = {
     opacity: { duration: 0.5, ease: "easeIn", delay: animationDelay },
@@ -86,31 +97,31 @@ const Hero = ({ viewOnly = false }) => {
   };
 
   // Fetch profile
+  const fetchProfile = async () => {
+    if (!userId) return;
+    try {
+      const res = await axios.get(`/api/user?userId=${userId}`);
+      const data = res.data || {};
+      setProfile({ 
+        fullname: data.fullname || data.name || "Your Name",
+        bio: data.bio || "",
+        imageUrl: data.imageUrl || "/images/profile-placeholder.png",
+      });
+      setForm({
+        fullname: data.fullname || data.name || "Your Name",
+        bio: data.bio || "",
+        imageUrl: data.imageUrl || "/images/profile-placeholder.png",
+      });
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      setProfile({ fullname: "Your Name", imageUrl: "/images/profile-placeholder.png" });
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user || !user._id) return;
-      try {
-        const res = await axios.get(`/api/user?userId=${user._id}`);
-        const data = res.data || {};
-        setProfile({ 
-          name: data.fullname || data.name || "Your Name",
-          bio: data.bio || "",
-          imageUrl: data.imageUrl || "/images/profile-placeholder.png",
-        });
-        setForm({
-          name: data.fullname || data.name || "Your Name",
-          bio: data.bio || "",
-          imageUrl: data.imageUrl || "/images/profile-placeholder.png",
-        });
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-        setProfile({ name: "Your Name", imageUrl: "/images/profile-placeholder.png" });
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchProfile();
-  }, [user]);
+  }, [userId]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -126,17 +137,31 @@ const Hero = ({ viewOnly = false }) => {
       if (form.imageUrl instanceof File) {
         formData.append('image', form.imageUrl);
       }
-      formData.append('fullname', form.name);
+      formData.append('fullname', form.fullname);
       formData.append('bio', form.bio);
       if (user && user._id) {
         formData.append('userId', user._id);
       }
+      // Debug: log FormData keys
+      for (let pair of formData.entries()) {
+        console.log(pair[0]+ ':', pair[1]);
+      }
       const res = await axios.put("/api/user", formData, {
         headers: {
-          'Content-Type': form.imageUrl instanceof File ? 'multipart/form-data' : 'application/json'
+          'Content-Type': 'multipart/form-data'
         }
       });
-      setProfile(res.data);
+      console.log("Profile update response:", res.data);
+      setProfile({
+        fullname: res.data.fullname || res.data.name || "Your Name",
+        bio: res.data.bio || "",
+        imageUrl: res.data.imageUrl || "/images/profile-placeholder.png",
+        preview: false // Reset preview after save
+      });
+      setForm(form => ({
+        ...form,
+        imageUrl: res.data.imageUrl || "/images/profile-placeholder.png"
+      }));
       setEditing(false);
     } catch (err) {
       console.error("Update failed:", err);
@@ -197,8 +222,8 @@ const Hero = ({ viewOnly = false }) => {
     if (isAlreadyTransparent) {
         console.log("Image has transparency, skipping background removal.");
         setForm(prev => ({ ...prev, imageUrl: file }));
-        const previewUrl = URL.createObjectURL(file);
-        setProfile(prev => ({ ...prev, imageUrl: previewUrl }));
+        // Only set preview for editing, not for portfolio display
+        setProfile(prev => ({ ...prev, imageUrl: URL.createObjectURL(file), preview: true }));
         return;
     }
 
@@ -206,20 +231,16 @@ const Hero = ({ viewOnly = false }) => {
 
     try {
         const blob = await removeBackground(file);
-        const processedFile = new File([blob], file.name.replace(/\\.[^/.]+$/, "") + ".png", { type: 'image/png' });
+        const processedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".png", { type: 'image/png' });
 
         setForm(prev => ({ ...prev, imageUrl: processedFile }));
-
-        const previewUrl = URL.createObjectURL(processedFile);
-        setProfile(prev => ({ ...prev, imageUrl: previewUrl }));
+        setProfile(prev => ({ ...prev, imageUrl: URL.createObjectURL(processedFile), preview: true }));
 
     } catch (error) {
         console.error("Failed to remove background:", error);
         alert("Could not remove background. Please try another image.");
-        // Fallback to original image
         setForm(prev => ({ ...prev, imageUrl: file }));
-        const previewUrl = URL.createObjectURL(file);
-        setProfile(prev => ({ ...prev, imageUrl: previewUrl }));
+        setProfile(prev => ({ ...prev, imageUrl: URL.createObjectURL(file), preview: true }));
     } finally {
         setIsProcessing(false);
     }
@@ -310,7 +331,7 @@ const Hero = ({ viewOnly = false }) => {
                     animate={{ opacity: 0.6, y: ["-1.2em", "-1.3em", "-1.2em"] }}
                     transition={shadowTransition}
                   >
-                    {(profile.name || "Your Name").toUpperCase()}
+                    {(profile.fullname || "Your Name").toUpperCase()}
                   </motion.div>
                   
                   <motion.div 
@@ -319,7 +340,7 @@ const Hero = ({ viewOnly = false }) => {
                     animate={{ opacity: 1, y: ["-0.6em", "-0.7em", "-0.6em"] }}
                     transition={shadowTransition}
                   >
-                    {(profile.name || "Your Name").toUpperCase()}
+                    {(profile.fullname || "Your Name").toUpperCase()}
                   </motion.div>
                   
                   <motion.div 
@@ -328,7 +349,7 @@ const Hero = ({ viewOnly = false }) => {
                     animate={{ opacity: 1, y: ["0.6em", "0.5em", "0.6em"] }}
                     transition={shadowTransition}
                   >
-                    {(profile.name || "Your Name").toUpperCase()}
+                    {(profile.fullname || "Your Name").toUpperCase()}
                   </motion.div>
                   
                   <motion.div 
@@ -337,12 +358,12 @@ const Hero = ({ viewOnly = false }) => {
                     animate={{ opacity: 0.6, y: ["1.2em", "1.1em", "1.2em"] }}
                     transition={shadowTransition}
                   >
-                    {(profile.name || "Your Name").toUpperCase()}
+                    {(profile.fullname || "Your Name").toUpperCase()}
                   </motion.div>
 
                   {/* Main Text Layer */}
                   <motion.div className="text-layer text-layer-main" variants={textContainerVariants} initial="hidden" animate="visible" >
-                    {(profile.name || "Your Name").toUpperCase().split('').map((char, index) => (
+                    {(profile.fullname || "Your Name").toUpperCase().split('').map((char, index) => (
                       <motion.span key={`main-${index}`} variants={letterVariants}>{char === ' ' ? '\u00A0' : char}</motion.span>
                     ))}
                   </motion.div>
@@ -350,22 +371,27 @@ const Hero = ({ viewOnly = false }) => {
                 </div>
               </div>
 
-              {/* Foreground Image */}
+              {/* Foreground Image: always in front of name */}
+              {/* Each user's upload is unique and fetched by userId/profile.imageUrl */}
               <motion.img
                 initial={{ opacity: 0, y: 50, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ delay: 0.2, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                src={profile.imageUrl}
-                alt={profile.name}
+                src={getImageUrl(profile.imageUrl)}
+                alt={profile.fullname}
                 className="hero-profile-image"
                 style={{
-                  zIndex: 2,
+                  zIndex: 10, // Ensure image is always in front
                   position: 'relative',
                   width: 'auto',
                   height: 'clamp(700px, 75vh, 1050px)',
                   objectFit: 'contain',
+                  pointerEvents: 'auto',
                 }}
                 onError={(e) => { e.target.src = "/images/profile-placeholder.png"; }}
+                onLoad={() => {
+                  console.log("Image loaded:", profile.imageUrl, getImageUrl(profile.imageUrl));
+                }}
               />
             </div>
 
@@ -386,7 +412,7 @@ const Hero = ({ viewOnly = false }) => {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                {!viewOnly && (
+                {(!viewOnly && user && userId && user._id === userId) && (
                   <button
                     onClick={() => setEditing(true)}
                     className="edit-profile-button"
@@ -508,8 +534,8 @@ const Hero = ({ viewOnly = false }) => {
                   </label>
                   <input 
                     className="form-input" 
-                    value={form.name} 
-                    onChange={(e) => setForm({...form, name: e.target.value})} 
+                    value={form.fullname} 
+                    onChange={(e) => setForm({...form, fullname: e.target.value})} 
                     placeholder="Your name"
                     style={{
                       width: '100%',
@@ -532,6 +558,20 @@ const Hero = ({ viewOnly = false }) => {
                   }}>
                     Profile Image
                   </label>
+                  {/* Image Preview */}
+                  {form.imageUrl && (
+                    <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+                      <img
+                        src={
+                          form.imageUrl instanceof File
+                            ? URL.createObjectURL(form.imageUrl)
+                            : getImageUrl(form.imageUrl)
+                        }
+                        alt="Profile Preview"
+                        style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: '50%' }}
+                      />
+                    </div>
+                  )}
                   <div className="file-upload-wrapper">
                     <label className="file-upload-button" style={{
                       color: '#374151',
