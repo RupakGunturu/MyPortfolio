@@ -2,18 +2,9 @@ import express from 'express';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { check, validationResult } from 'express-validator';
+import RegisteredUser from '../models/registeredUser.js';
 
 const router = express.Router();
-
-// RegisteredUser Schema (new collection)
-const registeredUserSchema = new mongoose.Schema({
-  fullname: { type: String, required: true, trim: true },
-  username: { type: String, required: true, unique: true, trim: true },
-  email: { type: String, required: true, unique: true, trim: true },
-  password: { type: String, required: true }
-}, { collection: 'registered_users' }); // specify new collection name
-
-const RegisteredUser = mongoose.models.RegisteredUser || mongoose.model('RegisteredUser', registeredUserSchema);
 
 // Old User model (users collection) with unique model name
 const oldUserSchema = new mongoose.Schema({

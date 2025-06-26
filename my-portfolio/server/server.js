@@ -13,6 +13,7 @@ import { check, validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
 import registerRoute from './routes/register.js';
 import bcrypt from 'bcryptjs';
+import RegisteredUser from './models/registeredUser.js';
 
 // --- Auth Middleware ---
 const auth = (req, res, next) => {
@@ -163,17 +164,6 @@ const aboutSchema = new mongoose.Schema({
 });
 const About = mongoose.model("About", aboutSchema);
 
-// --- User Schema for registered_users collection ---
-const registeredUserSchema = new mongoose.Schema({
-  fullname: { type: String, required: true, trim: true },
-  username: { type: String, required: true, unique: true, trim: true },
-  email: { type: String, required: true, unique: true, trim: true },
-  password: { type: String, required: true },
-  imageUrl: { type: String, default: "" }
-}, { collection: 'registered_users' });
-
-const RegisteredUser = mongoose.models.RegisteredUser || mongoose.model('RegisteredUser', registeredUserSchema);
-
 // --- Mongoose Model (inline) ---
 const experienceSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'RegisteredUser', required: true },
@@ -316,15 +306,18 @@ app.put("/api/user", uploadUserImage.single("image"), async (req, res) => {
       ...(fullname !== undefined && { fullname }),
       ...(username !== undefined && { username }),
       ...(bio !== undefined && { bio }),
-      ...(techStackMessage !== undefined && { techStackMessage })
+      ...(techStackMessage !== undefined && { techStackMessage }),
     };
+    // Force imageUrl to be set if a new file is uploaded
     if (finalImageUrl !== undefined) {
       updateData.imageUrl = finalImageUrl;
     }
-    const updated = await RegisteredUser.findByIdAndUpdate(userId, updateData, {
-      new: true,
-      runValidators: true
-    });
+    // Use $set to guarantee the field is written
+    const updated = await RegisteredUser.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
     if (!updated) {
       return res.status(404).json({ error: 'User not found or not authorized' });
     }
