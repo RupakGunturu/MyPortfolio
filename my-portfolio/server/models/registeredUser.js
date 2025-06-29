@@ -5,7 +5,9 @@ const registeredUserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true, trim: true },
   email: { type: String, required: true, unique: true, trim: true },
   password: { type: String, required: true },
-  imageUrl: { type: String, default: "" }
+  imageUrl: { type: String, default: "" },
+  otp: { type: String },
+  otpExpires: { type: Date }
 }, { collection: 'registered_users' });
 
 const RegisteredUser = mongoose.models.RegisteredUser || mongoose.model('RegisteredUser', registeredUserSchema);

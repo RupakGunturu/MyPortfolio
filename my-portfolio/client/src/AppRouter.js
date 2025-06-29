@@ -9,6 +9,7 @@ import AuthState from './context/AuthState';
 import setAuthToken from './utils/setAuthToken';
 import PrivateRoute from './components/PrivateRoute';
 import AuthContext from './context/AuthContext';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 
 if (localStorage.token) {
   setAuthToken(localStorage.token);
@@ -40,6 +41,7 @@ const AppRouter = () => {
             } 
           />
           <Route path="/portfolio/:username" element={<PortfolioPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         </Routes>
       </Router>
     </AuthState>

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import AuthContext from '../context/AuthContext';
 import './AuthPage.css';
 import axios from 'axios';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const LoginPage = () => {
   const authContext = useContext(AuthContext);
@@ -15,6 +16,7 @@ const LoginPage = () => {
   });
 
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     console.log('isAuthenticated:', isAuthenticated, 'user:', authContext.user);
@@ -65,15 +67,41 @@ const LoginPage = () => {
               required
             />
           </div>
-          <div className="form-group">
+          <div className="form-group" style={{ position: 'relative' }}>
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Password"
               name="password"
               value={password}
               onChange={onChange}
               required
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              style={{
+                position: 'absolute',
+                right: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                color: '#888',
+                fontSize: '1.1rem',
+              }}
+              tabIndex={-1}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
+          {/* Forgot password link */}
+          <div style={{ textAlign: 'right', marginBottom: 12 }}>
+            <Link to="/forgot-password" style={{ fontSize: '0.95rem', color: '#2563eb', textDecoration: 'none' }}>
+              Forgot password?
+            </Link>
           </div>
           <motion.button
             type="submit"

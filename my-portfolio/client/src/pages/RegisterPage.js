@@ -1,121 +1,127 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import AuthContext from '../context/AuthContext';
-import './AuthPage.css';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const RegisterPage = () => {
-  const authContext = useContext(AuthContext);
-  const { register, error, clearErrors } = authContext;
-
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     fullname: '',
     username: '',
     email: '',
     password: '',
   });
-
+  const [step, setStep] = useState('form'); // 'form' | 'otp'
+  const [otp, setOtp] = useState('');
+  const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (error) {
-      console.error(error);
-      clearErrors();
+  // Handle input changes
+  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+
+  // Step 1: Send OTP
+  const handleSendOtp = async e => {
+    e.preventDefault();
+    setError('');
+    setInfo('');
+    try {
+      await axios.post('/api/auth/register-send-otp', { email: form.email });
+      setStep('otp');
+      setInfo('OTP sent to your email. Please check your inbox.');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to send OTP');
     }
-  }, [error, clearErrors]);
-
-  const { fullname, username, email, password } = formData;
-
-  const onChange = (e) => {
-    console.log('CHANGED:', e.target.name, e.target.value);
-    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const onSubmit = async (e) => {
+  // Step 2: Verify OTP and Register
+  const handleVerifyOtp = async e => {
     e.preventDefault();
-    if (password.length < 6) {
-      return;
-    }
-    console.log('REGISTER FORM DATA:', formData);
-    const result = await register({
-      fullname,
-      username,
-      email,
-      password,
-    });
-    
-    // If registration is successful, redirect to login
-    if (result && result.success) {
-      navigate('/login');
+    setError('');
+    setInfo('');
+    try {
+      await axios.post('/api/auth/register-verify-otp', {
+        ...form,
+        otp,
+      });
+      setInfo('Registration successful! Redirecting to login...');
+      setTimeout(() => navigate('/login'), 2000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'OTP verification failed');
     }
   };
 
   return (
     <div className="auth-container">
-      <motion.div
-        className="auth-card"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h1 className="auth-title">Create Your Account</h1>
-        <p className="auth-subtitle">
-          Join now to create your personal portfolio.
-        </p>
-        <form onSubmit={onSubmit} className="auth-form">
-          <div className="form-group">
-            <input
-              type="text"
-              placeholder="Full Name"
-              name="fullname"
-              value={fullname}
-              onChange={onChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <input
-              type="text"
-              placeholder="Username (for your public URL)"
-              name="username"
-              value={username}
-              onChange={onChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <input
-              type="email"
-              placeholder="Email Address"
-              name="email"
-              value={email}
-              onChange={onChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <input
-              type="password"
-              placeholder="Password (min. 6 characters)"
-              name="password"
-              value={password}
-              onChange={onChange}
-              required
-            />
-          </div>
-          <motion.button
-            type="submit"
-            className="btn btn-primary auth-button"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Register
-          </motion.button>
-        </form>
-        <p className="auth-switch">
-          Already have an account? <Link to="/login">Log In</Link>
-        </p>
-      </motion.div>
+      <div className="auth-card">
+        <h1 className="auth-title">Register</h1>
+        {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
+        {info && <div style={{ color: '#2563eb', marginBottom: 8 }}>{info}</div>}
+
+        {step === 'form' && (
+          <form onSubmit={handleSendOtp} className="auth-form">
+            <div className="form-group">
+              <input
+                type="text"
+                name="fullname"
+                placeholder="Full Name"
+                value={form.fullname}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <input
+                type="text"
+                name="username"
+                placeholder="Username"
+                value={form.username}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                value={form.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                value={form.password}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <button type="submit" className="btn btn-primary auth-button">
+              Register & Get OTP
+            </button>
+          </form>
+        )}
+
+        {step === 'otp' && (
+          <form onSubmit={handleVerifyOtp} className="auth-form">
+            <div className="form-group">
+              <input
+                type="text"
+                name="otp"
+                placeholder="Enter OTP from your email"
+                value={otp}
+                onChange={e => setOtp(e.target.value)}
+                required
+              />
+            </div>
+            <button type="submit" className="btn btn-primary auth-button">
+              Verify OTP & Register
+            </button>
+          </form>
+        )}
+      </div>
     </div>
   );
 };
