@@ -110,6 +110,28 @@ router.post('/auth/send-otp', async (req, res) => {
   res.json({ message: 'OTP sent to email' });
 });
 
+// --- OTP for Password Reset (alias for forgot password) ---
+router.post('/auth/send-forgot-otp', async (req, res) => {
+  const { email } = req.body;
+  const user = await RegisteredUser.findOne({ email });
+  if (!user) return res.status(404).json({ message: 'User not found' });
+
+  // Generate 6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  user.otp = otp;
+  user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+  await user.save();
+
+  await transporter.sendMail({
+    from: 'Portfolio App <noreply@yourapp.com>',
+    to: email,
+    subject: 'Your OTP Code',
+    text: `Your OTP code is: ${otp}`,
+  });
+
+  res.json({ message: 'OTP sent to email' });
+});
+
 router.post('/auth/verify-otp', async (req, res) => {
   const { email, otp } = req.body;
   const user = await RegisteredUser.findOne({ email, otp, otpExpires: { $gt: new Date() } });

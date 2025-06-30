@@ -945,6 +945,17 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// --- Portfolio Route ---
+app.get('/api/portfolio/:username', async (req, res) => {
+  const { username } = req.params;
+  const user = await RegisteredUser.findOne({ username });
+  if (!user) {
+    return res.status(404).json({ error: 'Portfolio not found' });
+  }
+  // Build and return the portfolio data here
+  res.json({ user });
+});
+
 // -------------------- Connect to MongoDB & Start Server --------------------
 
 mongoose

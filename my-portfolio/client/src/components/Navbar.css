@@ -52,8 +52,9 @@
   }
   
   .logout-button:hover {
-    background-color: #4b5563;
-    color: white;
+    background-color: transparent;
+    color: #ef4444;
+    border-color: #ef4444;
   }
   
   .nav-link {

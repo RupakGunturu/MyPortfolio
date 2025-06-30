@@ -106,4 +106,23 @@
 
 .auth-switch a:hover {
   text-decoration: underline;
+  color: #059669;
+}
+
+.login-underline {
+  display: block;
+  width: 40px;
+  height: 4px;
+  background: #2563eb;
+  border-radius: 2px;
+  margin: 0 auto 1.5rem auto;
+  /* Animation */
+  transform: scaleX(0);
+  animation: underlineIn 0.7s 0.2s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+
+@keyframes underlineIn {
+  to {
+    transform: scaleX(1);
+  }
 } 

@@ -52,6 +52,7 @@ const LoginPage = () => {
         transition={{ duration: 0.5 }}
       >
         <h1 className="auth-title">Welcome Back!</h1>
+        <span className="login-underline"></span>
         <p className="auth-subtitle">
           Sign in to access and edit your portfolio.
         </p>
