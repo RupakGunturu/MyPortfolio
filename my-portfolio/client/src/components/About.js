@@ -5,7 +5,6 @@ import AuthContext from '../context/AuthContext';
 
 const fieldOptions = [
   'Name',
-  'Title',
   'Bio',
   'Interests',
   'Skills',
@@ -66,7 +65,7 @@ const About = ({ userId: propUserId, viewOnly = false }) => {
 
     if (viewOnly) {
       const defaultFields = ['Name', 'Interests', 'Achievements'];
-      const additionalFields = [ 'Hobbies', 'Skills', 'Bio', 'Social Links'];
+      const additionalFields = [ 'Hobbies', 'Skills', 'Social Links'];
       
       let fieldsToShow = defaultFields.filter(field => allFieldsWithData.includes(field));
       

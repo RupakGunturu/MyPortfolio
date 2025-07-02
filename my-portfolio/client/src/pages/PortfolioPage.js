@@ -84,7 +84,6 @@ const PortfolioPage = () => {
           <ProjectCard viewOnly={!isEditMode} />
           <Contact viewOnly={!isEditMode} />
         </main>
-        <Footer />
       </div>
     </>
   );

@@ -57,11 +57,82 @@ const getImageUrl = (url) => {
   return url;
 };
 
+// Helper to format social media URLs
+const formatSocialUrl = (url, platform) => {
+  if (!url) return "";
+  
+  // Remove any whitespace
+  url = url.trim();
+  
+  // If it's already a full URL, return as is
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  
+  // Format based on platform
+  if (platform === 'github') {
+    if (url.startsWith('github.com/')) {
+      return `https://${url}`;
+    }
+    return `https://github.com/${url}`;
+  }
+  
+  if (platform === 'linkedin') {
+    if (url.startsWith('linkedin.com/')) {
+      return `https://${url}`;
+    }
+    return `https://linkedin.com/in/${url}`;
+  }
+  
+  return url;
+};
+
+// Helper to calculate dynamic font size based on name length
+const getDynamicFontSize = (name) => {
+  if (!name || name.trim() === "") return "clamp(4rem, 15vw, 12rem)";
+  
+  const nameLength = name.trim().length;
+  let fontSize;
+  
+  // Very short names (1-3 characters) - largest font
+  if (nameLength <= 3) {
+    fontSize = "clamp(6rem, 20vw, 16rem)";
+  }
+  // Short names (4-6 characters) - very large font
+  else if (nameLength <= 6) {
+    fontSize = "clamp(5rem, 18vw, 14rem)";
+  }
+  // Medium names (7-10 characters) - large font
+  else if (nameLength <= 10) {
+    fontSize = "clamp(4rem, 15vw, 12rem)";
+  }
+  // Long names (11-15 characters) - medium font
+  else if (nameLength <= 15) {
+    fontSize = "clamp(3.5rem, 13vw, 10rem)";
+  }
+  // Very long names (16-20 characters) - smaller font
+  else if (nameLength <= 20) {
+    fontSize = "clamp(2.5rem, 10vw, 7rem)";
+  }
+  // Extra long names (21-25 characters) - small font
+  else if (nameLength <= 25) {
+    fontSize = "clamp(2.5rem, 9vw, 6rem)";
+  }
+  // Extremely long names (26+ characters) - smallest font
+  else {
+    fontSize = "clamp(2rem, 7vw, 5rem)";
+  }
+  
+  console.log(`Name: "${name}" (${nameLength} chars) → Font size: ${fontSize}`);
+  return fontSize;
+};
+
 const Hero = ({ userId: propUserId, viewOnly = false }) => {
   const [profile, setProfile] = useState({ 
     fullname: "", 
-    bio: "", 
     imageUrl: "",
+    githubUrl: "",
+    linkedinUrl: "",
   });
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -69,8 +140,9 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [form, setForm] = useState({ 
     fullname: "", 
-    bio: "", 
     imageUrl: "",
+    githubUrl: "",
+    linkedinUrl: "",
   });
 
   const authContext = React.useContext(AuthContext);
@@ -104,17 +176,24 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
       const data = res.data || {};
       setProfile({ 
         fullname: data.fullname || data.name || "Your Name",
-        bio: data.bio || "",
         imageUrl: data.imageUrl || "/images/profile-placeholder.png",
+        githubUrl: data.githubUrl || "",
+        linkedinUrl: data.linkedinUrl || "",
       });
       setForm({
         fullname: data.fullname || data.name || "Your Name",
-        bio: data.bio || "",
         imageUrl: data.imageUrl || "/images/profile-placeholder.png",
+        githubUrl: data.githubUrl || "",
+        linkedinUrl: data.linkedinUrl || "",
       });
     } catch (error) {
       console.error("Error fetching profile:", error);
-      setProfile({ fullname: "Your Name", imageUrl: "/images/profile-placeholder.png" });
+      setProfile({ 
+        fullname: "Your Name", 
+        imageUrl: "/images/profile-placeholder.png",
+        githubUrl: "",
+        linkedinUrl: "",
+      });
     } finally {
       setLoading(false);
     }
@@ -132,40 +211,94 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
 
   const handleSubmit = async e => {
     e.preventDefault();
+    
+    // Check if user is authenticated
+    if (!user || !user._id) {
+      alert("You must be logged in to update your profile.");
+      return;
+    }
+    
+    // Validate form data
+    if (!form.fullname.trim()) {
+      alert("Please enter your name.");
+      return;
+    }
+    
     try {
+      // First, try a simple JSON request to test the database
+      console.log("Testing database update with simple request...");
+      const testData = {
+        userId: user._id,
+        fullname: form.fullname,
+        githubUrl: formatSocialUrl(form.githubUrl, 'github'),
+        linkedinUrl: formatSocialUrl(form.linkedinUrl, 'linkedin')
+      };
+      
+      console.log("Test data:", testData);
+      
+      // Test with simple JSON endpoint first
+      const testRes = await axios.post("/api/test-update", testData);
+      console.log("Test update response:", testRes.data);
+      
+      // If test succeeds, proceed with the actual update
       const formData = new FormData();
       if (form.imageUrl instanceof File) {
         formData.append('image', form.imageUrl);
       }
       formData.append('fullname', form.fullname);
-      formData.append('bio', form.bio);
-      if (user && user._id) {
-        formData.append('userId', user._id);
-      }
+      formData.append('githubUrl', formatSocialUrl(form.githubUrl, 'github'));
+      formData.append('linkedinUrl', formatSocialUrl(form.linkedinUrl, 'linkedin'));
+      formData.append('userId', user._id);
+      
       // Debug: log FormData keys
+      console.log("Submitting form data:");
       for (let pair of formData.entries()) {
         console.log(pair[0]+ ':', pair[1]);
       }
+      
       const res = await axios.put("/api/user", formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
+      
       console.log("Profile update response:", res.data);
-      setProfile({
+      
+      // Update profile state with the response data
+      const updatedProfile = {
         fullname: res.data.fullname || res.data.name || "Your Name",
-        bio: res.data.bio || "",
         imageUrl: res.data.imageUrl || "/images/profile-placeholder.png",
+        githubUrl: res.data.githubUrl || "",
+        linkedinUrl: res.data.linkedinUrl || "",
         preview: false // Reset preview after save
-      });
+      };
+      
+      console.log("Updated profile state:", updatedProfile);
+      
+      setProfile(updatedProfile);
       setForm(form => ({
         ...form,
-        imageUrl: res.data.imageUrl || "/images/profile-placeholder.png"
+        imageUrl: res.data.imageUrl || "/images/profile-placeholder.png",
+        githubUrl: res.data.githubUrl || "",
+        linkedinUrl: res.data.linkedinUrl || "",
       }));
+      
+      // Show success message
+      alert("Profile updated successfully! Social media icons will now appear.");
       setEditing(false);
+
+      // Update user in AuthContext
+      if (authContext && authContext.setUser) {
+        authContext.setUser({
+          ...user,
+          fullname: res.data.fullname || res.data.name || "Your Name",
+          // ...other fields if needed
+        });
+      }
     } catch (err) {
       console.error("Update failed:", err);
-      alert("Update failed. Please check console for details.");
+      console.error("Error response:", err.response?.data);
+      alert(`Update failed: ${err.response?.data?.error || err.message}`);
     }
   };
 
@@ -330,6 +463,7 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
                     initial={{ opacity: 0, y: "-1.2em" }}
                     animate={{ opacity: 0.6, y: ["-1.2em", "-1.3em", "-1.2em"] }}
                     transition={shadowTransition}
+                    style={{ fontSize: getDynamicFontSize(profile.fullname) }}
                   >
                     {(profile.fullname || "Your Name").toUpperCase()}
                   </motion.div>
@@ -339,6 +473,7 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
                     initial={{ opacity: 0, y: "-0.6em" }}
                     animate={{ opacity: 1, y: ["-0.6em", "-0.7em", "-0.6em"] }}
                     transition={shadowTransition}
+                    style={{ fontSize: getDynamicFontSize(profile.fullname) }}
                   >
                     {(profile.fullname || "Your Name").toUpperCase()}
                   </motion.div>
@@ -348,6 +483,7 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
                     initial={{ opacity: 0, y: "0.6em" }}
                     animate={{ opacity: 1, y: ["0.6em", "0.5em", "0.6em"] }}
                     transition={shadowTransition}
+                    style={{ fontSize: getDynamicFontSize(profile.fullname) }}
                   >
                     {(profile.fullname || "Your Name").toUpperCase()}
                   </motion.div>
@@ -357,12 +493,19 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
                     initial={{ opacity: 0, y: "1.2em" }}
                     animate={{ opacity: 0.6, y: ["1.2em", "1.1em", "1.2em"] }}
                     transition={shadowTransition}
+                    style={{ fontSize: getDynamicFontSize(profile.fullname) }}
                   >
                     {(profile.fullname || "Your Name").toUpperCase()}
                   </motion.div>
 
                   {/* Main Text Layer */}
-                  <motion.div className="text-layer text-layer-main" variants={textContainerVariants} initial="hidden" animate="visible" >
+                  <motion.div 
+                    className="text-layer text-layer-main" 
+                    variants={textContainerVariants} 
+                    initial="hidden" 
+                    animate="visible"
+                    style={{ fontSize: getDynamicFontSize(profile.fullname) }}
+                  >
                     {(profile.fullname || "Your Name").toUpperCase().split('').map((char, index) => (
                       <motion.span key={`main-${index}`} variants={letterVariants}>{char === ' ' ? '\u00A0' : char}</motion.span>
                     ))}
@@ -421,27 +564,32 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
                   </button>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <motion.a 
-                    href="https://github.com/RupakGunturu" 
-                    target="_blank" rel="noopener noreferrer" 
-                    aria-label="GitHub"
-                    style={{ color: '#1e293b' }}
-                    whileHover={{ scale: 1.2, rotate: -5, color: '#3b82f6' }}
-                    transition={{ type: 'spring', stiffness: 300 }}
-                  >
-                    <FaGithub style={{ fontSize: '1.5rem' }} />
-                  </motion.a>
-                  <motion.a 
-                    href="https://linkedin.com/in/RupakGunturu" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    aria-label="LinkedIn"
-                    style={{ color: '#1e293b' }}
-                    whileHover={{ scale: 1.2, rotate: 5, color: '#3b82f6' }}
-                    transition={{ type: 'spring', stiffness: 300 }}
-                  >
-                    <FaLinkedin style={{ fontSize: '1.5rem' }} />
-                  </motion.a>
+                  {profile.githubUrl && (
+                    <motion.a 
+                      href={profile.githubUrl} 
+                      target="_blank" rel="noopener noreferrer" 
+                      aria-label="GitHub"
+                      style={{ color: '#1e293b' }}
+                      whileHover={{ scale: 1.2, rotate: -5, color: '#3b82f6' }}
+                      transition={{ type: 'spring', stiffness: 300 }}
+                    >
+                      <FaGithub style={{ fontSize: '1.5rem' }} />
+                    </motion.a>
+                  )}
+                  {profile.linkedinUrl && (
+                    <motion.a 
+                      href={profile.linkedinUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      aria-label="LinkedIn"
+                      style={{ color: '#1e293b' }}
+                      whileHover={{ scale: 1.2, rotate: 5, color: '#3b82f6' }}
+                      transition={{ type: 'spring', stiffness: 300 }}
+                    >
+                      <FaLinkedin style={{ fontSize: '1.5rem' }} />
+                    </motion.a>
+                  )}
+
                 </div>
               </div>
             </motion.div>
@@ -522,6 +670,17 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
                 }}>
                   Edit Profile
                 </h2>
+                {(profile.githubUrl || profile.linkedinUrl) && (
+                  <p style={{ 
+                    fontSize: '0.8rem', 
+                    color: '#10b981', 
+                    textAlign: 'center',
+                    margin: '0 0 16px 0',
+                    fontWeight: '500'
+                  }}>
+                    ✓ Social media links are configured
+                  </p>
+                )}
                 <div className="form-group">
                   <label className="nav-label" style={{ 
                     fontSize: '0.9rem', 
@@ -536,7 +695,7 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
                     className="form-input" 
                     value={form.fullname} 
                     onChange={(e) => setForm({...form, fullname: e.target.value})} 
-                    placeholder="Your name"
+                    placeholder="Enter your full name"
                     style={{
                       width: '100%',
                       padding: '10px 12px',
@@ -548,6 +707,7 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
                     }}
                   />
                 </div>
+
                 <div className="form-group">
                   <label className="nav-label" style={{ 
                     fontSize: '0.9rem', 
@@ -603,6 +763,94 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
                   }}>
                     ("Kindly upload the image as a  Removed background image to fully appreciate its visual appeal and enhance the overall aesthetic.")
                   </p>
+                </div>
+                <div className="form-group">
+                  <label className="nav-label" style={{ 
+                    fontSize: '0.9rem', 
+                    fontWeight: '500', 
+                    color: '#374151',
+                    marginBottom: '6px',
+                    display: 'block'
+                  }}>
+                    GitHub Profile URL
+                  </label>
+                  <input 
+                    className="form-input" 
+                    value={form.githubUrl} 
+                    onChange={(e) => setForm({...form, githubUrl: e.target.value})} 
+                    placeholder="yourusername or https://github.com/yourusername"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '0.9rem',
+                      transition: 'all 0.2s ease',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <p style={{ 
+                    fontSize: '0.7rem', 
+                    color: '#6b7280', 
+                    marginTop: '4px',
+                    fontStyle: 'italic'
+                  }}>
+                    You can enter just your username or the full URL
+                  </p>
+                  {form.githubUrl && (
+                    <p style={{ 
+                      fontSize: '0.7rem', 
+                      color: '#10b981', 
+                      marginTop: '4px',
+                      fontWeight: '500'
+                    }}>
+                      ✓ Will be saved as: {formatSocialUrl(form.githubUrl, 'github')}
+                    </p>
+                  )}
+                </div>
+                <div className="form-group">
+                  <label className="nav-label" style={{ 
+                    fontSize: '0.9rem', 
+                    fontWeight: '500', 
+                    color: '#374151',
+                    marginBottom: '6px',
+                    display: 'block'
+                  }}>
+                    LinkedIn Profile URL
+                  </label>
+                  <input 
+                    className="form-input" 
+                    value={form.linkedinUrl} 
+                    onChange={(e) => setForm({...form, linkedinUrl: e.target.value})} 
+                    placeholder="yourusername or https://linkedin.com/in/yourusername"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '0.9rem',
+                      transition: 'all 0.2s ease',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <p style={{ 
+                    fontSize: '0.7rem', 
+                    color: '#6b7280', 
+                    marginTop: '4px',
+                    fontStyle: 'italic'
+                  }}>
+                    You can enter just your username or the full URL
+                  </p>
+                  {form.linkedinUrl && (
+                    <p style={{ 
+                      fontSize: '0.7rem', 
+                      color: '#10b981', 
+                      marginTop: '4px',
+                      fontWeight: '500'
+                    }}>
+                      ✓ Will be saved as: {formatSocialUrl(form.linkedinUrl, 'linkedin')}
+                    </p>
+                  )}
                 </div>
                 <div className="form-actions" style={{ 
                   display: 'flex', 

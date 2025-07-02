@@ -278,7 +278,7 @@ const deleteCertificate = async (id) => {
     },
     grid: {
       display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+      gridTemplateColumns: 'repeat(4, 1fr)',
       gap: '1.5rem',
       width: '100%',
       maxWidth: '1400px',
@@ -295,6 +295,10 @@ const deleteCertificate = async (id) => {
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
+      maxWidth: '350px',
+      minWidth: '320px',
+      width: '100%',
+      margin: '0 auto',
     },
     deleteBtn: {
       background: '#ff4444',

@@ -182,14 +182,6 @@ const PortfolioView = () => {
           </div>
         </section>
       )}
-
-      {/* Footer */}
-      <footer className="portfolio-footer">
-        <div className="container">
-          <p>&copy; 2024 {portfolio.name}. All rights reserved.</p>
-          <p>Portfolio created with My Portfolio</p>
-        </div>
-      </footer>
     </div>
   );
 };

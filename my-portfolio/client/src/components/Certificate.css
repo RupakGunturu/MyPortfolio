@@ -160,9 +160,14 @@ h2 {
 }
 
 .certificates-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 1.5rem;
+  justify-content: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
 .cert-card {
@@ -175,6 +180,10 @@ h2 {
   display: flex;
   flex-direction: column;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  max-width: 350px;
+  min-width: 320px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .cert-card-header {

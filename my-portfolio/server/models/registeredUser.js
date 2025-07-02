@@ -6,6 +6,9 @@ const registeredUserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, trim: true },
   password: { type: String, required: true },
   imageUrl: { type: String, default: "" },
+  bio: { type: String, default: "" },
+  githubUrl: { type: String, default: "" },
+  linkedinUrl: { type: String, default: "" },
   otp: { type: String },
   otpExpires: { type: Date }
 }, { collection: 'registered_users' });

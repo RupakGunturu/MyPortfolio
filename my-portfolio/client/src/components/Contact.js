@@ -1,16 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { motion } from 'framer-motion';
 import { FiUser, FiMail, FiMessageSquare, FiMapPin, FiPhone, FiSend } from 'react-icons/fi';
+import AuthContext from '../context/AuthContext';
 
 const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [status, setStatus] = useState('');
   const [visitorLocation, setVisitorLocation] = useState('Fetching your location...');
+  const [coords, setCoords] = useState(null);
+  const authContext = useContext(AuthContext);
+  const { user } = authContext || {};
 
   useEffect(() => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(async (position) => {
         const { latitude, longitude } = position.coords;
+        setCoords({ latitude, longitude });
         try {
           const response = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
@@ -69,6 +74,12 @@ const Contact = () => {
         >
           Let's Build Something Amazing
         </motion.h2>
+        <motion.div
+          style={styles.animatedLine}
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: 0.7, delay: 0.2, type: 'spring' }}
+        />
 
         <motion.p
           style={styles.description}
@@ -151,17 +162,17 @@ const Contact = () => {
               </div>
               <div style={styles.infoItem}>
                 <FiMail style={styles.infoIcon} />
-                <span>portfolio.guntur@email.com</span>
-              </div>
-              <div style={styles.infoItem}>
-                <FiPhone style={styles.infoIcon} />
-                <span>+91-901-234-5678</span>
+                <span>{user?.email || "Not logged in"}</span>
               </div>
             </div>
             <div style={styles.mapWrapper}>
               <iframe
-                title="Gudivada, Andhra Pradesh"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d61320.94981151849!2d80.9602996486328!3d16.439447400000004!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a36093444503953%3A0x4414251a364b496!2sGudivada%2C%20Andhra%20Pradesh!5e0!3m2!1sen!2sin!4v1678886400000"
+                title="User Location"
+                src={
+                  coords
+                    ? `https://maps.google.com/maps?q=${coords.latitude},${coords.longitude}&z=15&output=embed`
+                    : "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d61320.94981151849!2d80.9602996486328!3d16.439447400000004!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a36093444503953%3A0x4414251a364b496!2sGudivada%2C%20Andhra%20Pradesh!5e0!3m2!1sen!2sin!4v1678886400000"
+                }
                 style={styles.map}
                 allowFullScreen=""
                 loading="lazy"
@@ -322,5 +333,13 @@ const styles = {
       textAlign: 'center',
       color: '#3b82f6',
       fontWeight: '500',
-  }
+  },
+  animatedLine: {
+    height: '4px',
+    width: '60px',
+    background: 'linear-gradient(90deg, #3b82f6 0%, #6366f1 100%)',
+    borderRadius: '2px',
+    margin: '0.5rem auto 2rem auto',
+    transformOrigin: 'left',
+  },
 };

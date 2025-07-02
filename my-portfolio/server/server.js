@@ -181,6 +181,96 @@ const Experience = mongoose.models.Experience || mongoose.model('Experience', ex
 // Basic test route
 app.get("/", (req, res) => res.send("✅ Server is running"));
 
+// Test database connection
+app.get("/api/test-db", async (req, res) => {
+  try {
+    const userCount = await RegisteredUser.countDocuments();
+    res.json({ 
+      message: "Database connection successful", 
+      userCount,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error("Database test error:", error);
+    res.status(500).json({ 
+      error: "Database connection failed", 
+      details: error.message 
+    });
+  }
+});
+
+// Test user update endpoint
+app.post("/api/test-update", async (req, res) => {
+  try {
+    const { userId, fullname, githubUrl, linkedinUrl } = req.body;
+    console.log("Test update request:", { userId, fullname, githubUrl, linkedinUrl });
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    const updateData = {
+      fullname: fullname || "Test User",
+      githubUrl: githubUrl || "",
+      linkedinUrl: linkedinUrl || ""
+    };
+    
+    console.log("Test update data:", updateData);
+    
+    const updated = await RegisteredUser.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
+    
+    if (!updated) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    console.log("Test update successful:", updated);
+    res.json({ 
+      message: "Test update successful", 
+      user: {
+        _id: updated._id,
+        fullname: updated.fullname,
+        githubUrl: updated.githubUrl,
+        linkedinUrl: updated.linkedinUrl
+      }
+    });
+  } catch (error) {
+    console.error("Test update error:", error);
+    res.status(500).json({ 
+      error: "Test update failed", 
+      details: error.message 
+    });
+  }
+});
+
+// List all users (for testing - shows each user has unique data)
+app.get("/api/all-users", async (req, res) => {
+  try {
+    const users = await RegisteredUser.find({}, 'fullname username githubUrl linkedinUrl email');
+    res.json({
+      message: "All users with their unique profiles",
+      userCount: users.length,
+      users: users.map(user => ({
+        _id: user._id,
+        fullname: user.fullname,
+        username: user.username,
+        githubUrl: user.githubUrl,
+        linkedinUrl: user.linkedinUrl,
+        email: user.email
+      }))
+    });
+  } catch (error) {
+    console.error("Error fetching all users:", error);
+    res.status(500).json({ 
+      error: "Failed to fetch users", 
+      details: error.message 
+    });
+  }
+});
+
 // Define Routes
 
 // ---- Skills ----
@@ -291,27 +381,53 @@ app.get("/api/user", async (req, res) => {
 // Update user with optional user image upload (disk)
 app.put("/api/user", uploadUserImage.single("image"), async (req, res) => {
   try {
+    console.log('=== USER UPDATE REQUEST ===');
     console.log('REQ.FILE:', req.file);
-    const { userId, fullname, username, email, bio, techStackMessage } = req.body;
+    console.log('REQ.BODY:', req.body);
+    console.log('REQ.BODY KEYS:', Object.keys(req.body));
+    console.log('REQ.BODY VALUES:', {
+      userId: req.body.userId,
+      fullname: req.body.fullname,
+      githubUrl: req.body.githubUrl,
+      linkedinUrl: req.body.linkedinUrl
+    });
+    const { userId, fullname, username, email, bio, techStackMessage, githubUrl, linkedinUrl } = req.body;
     if (!userId) {
       return res.status(400).json({ error: 'userId is required to update profile.' });
     }
+    
+    // Check if user exists
+    const existingUser = await RegisteredUser.findById(userId);
+    if (!existingUser) {
+      console.log('[USER IMAGE UPLOAD] User not found:', userId);
+      return res.status(404).json({ error: 'User not found' });
+    }
+    console.log('[USER IMAGE UPLOAD] Found existing user:', existingUser.fullname);
+    
     let finalImageUrl;
     if (req.file) {
       console.log('[USER IMAGE UPLOAD] Received file:', req.file);
       finalImageUrl = `/uploads/${req.file.filename}`;
       console.log('[USER IMAGE UPLOAD] finalImageUrl:', finalImageUrl);
     }
-    const updateData = {
-      ...(fullname !== undefined && { fullname }),
-      ...(username !== undefined && { username }),
-      ...(bio !== undefined && { bio }),
-      ...(techStackMessage !== undefined && { techStackMessage }),
-    };
+    
+    // Build update data - include all fields that are provided (even empty strings)
+    const updateData = {};
+    
+    if (fullname !== undefined) updateData.fullname = fullname;
+    if (username !== undefined) updateData.username = username;
+    if (bio !== undefined) updateData.bio = bio;
+    if (techStackMessage !== undefined) updateData.techStackMessage = techStackMessage;
+    if (githubUrl !== undefined) updateData.githubUrl = githubUrl;
+    if (linkedinUrl !== undefined) updateData.linkedinUrl = linkedinUrl;
+    
     // Force imageUrl to be set if a new file is uploaded
     if (finalImageUrl !== undefined) {
       updateData.imageUrl = finalImageUrl;
     }
+    
+    console.log('[USER IMAGE UPLOAD] Update data:', updateData);
+    
     // Use $set to guarantee the field is written
     const updated = await RegisteredUser.findByIdAndUpdate(
       userId,
@@ -322,6 +438,12 @@ app.put("/api/user", uploadUserImage.single("image"), async (req, res) => {
       return res.status(404).json({ error: 'User not found or not authorized' });
     }
     console.log('[USER IMAGE UPLOAD] Updated user:', updated);
+    console.log('[USER IMAGE UPLOAD] Updated user data:', {
+      fullname: updated.fullname,
+      githubUrl: updated.githubUrl,
+      linkedinUrl: updated.linkedinUrl,
+      imageUrl: updated.imageUrl
+    });
     // Always include imageUrl in the response
     const updatedObj = updated.toObject();
     if (!updatedObj.imageUrl) updatedObj.imageUrl = "";

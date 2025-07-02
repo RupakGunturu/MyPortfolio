@@ -116,7 +116,6 @@
 }
 
 .text-layer {
-  font-size: clamp(3rem, 12vw, 9rem);
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: -0.05em;
@@ -394,5 +393,20 @@
 
 .hero-background-name .shatter-down {
   transform: translate(-50%, calc(-50% + 6px));
+}
+
+/* Edit Profile Modal Card */
+.edit-profile-modal-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 28px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  min-width: clamp(320px, 80vw, 420px);
+  max-width: 420px;
+  border: 1.5px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: stretch;
 }
 

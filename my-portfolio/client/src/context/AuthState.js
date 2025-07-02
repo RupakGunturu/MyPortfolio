@@ -90,6 +90,11 @@ const AuthState = (props) => {
   // Clear Errors
   const clearErrors = () => dispatch({ type: CLEAR_ERRORS });
 
+  const setUser = (userObj) => {
+    dispatch({ type: USER_LOADED, payload: userObj });
+    localStorage.setItem('user', JSON.stringify(userObj));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -103,6 +108,7 @@ const AuthState = (props) => {
         login,
         logout,
         clearErrors,
+        setUser,
       }}
     >
       {props.children}

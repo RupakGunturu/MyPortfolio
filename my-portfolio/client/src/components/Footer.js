@@ -1,47 +1,29 @@
 import React from 'react';
 import './Footer.css';    // ← our custom CSS
-import { FaLinkedin, FaGithub, FaTwitter } from 'react-icons/fa';
+import logo from '../logo.svg'; // Use your actual logo path
+import { FaInstagram, FaFacebook, FaTwitter } from 'react-icons/fa';
 
-export default function Footer() {
-  return (
-    <footer className="footer">
-      <div className="footer__inner">
-        {/* Brand */}
-        <div className="footer__brand">
-          <h1>Rupak Gunturu</h1>
-          <p>Full-Stack Developer &amp; Designer</p>
-        </div>
-
-        {/* Nav Links */}
-        <ul className="footer__nav">
-          {['about', 'projects', 'contact'].map((sec) => (
-            <li key={sec}>
-              <a href={`#${sec}`} className="footer__link">
-                {sec.charAt(0).toUpperCase() + sec.slice(1)}
-                <span className="footer__underline" />
-              </a>
-            </li>
-          ))}
-        </ul>
-
-        {/* Social Icons */}
-        <div className="footer__social">
-          {[FaLinkedin, FaGithub, FaTwitter].map((Icon, i) => (
-            <a
-              key={i}
-              href="/"
-              className="footer__social-btn"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Icon />
-            </a>
-          ))}
-        </div>
-      </div>
-      <div className="footer__copyright">
-        © {new Date().getFullYear()} Your Name. All rights reserved.
-      </div>
-    </footer>
+const Footer = () => (
+  <footer className="custom-footer">
+    <div className="footer-left">
+      <img src="/footer-logo.png" alt="Logo" className="footer-logo" />
+      <span>© 2025 My Portfolio, Inc</span>
+    </div>
+    <div className="footer-center">
+      This web application was developed and designed by Rupak Gunturu 
+    </div>
+    <div className="footer-right">
+      <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+        <FaInstagram />
+      </a>
+      <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+        <FaFacebook />
+      </a>
+      <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+        <FaTwitter />
+      </a>
+    </div>
+  </footer>
 );
-}
+
+export default Footer;
