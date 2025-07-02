@@ -15,19 +15,10 @@ if (localStorage.token) {
   setAuthToken(localStorage.token);
 }
 
-function DebugUser() {
-  const { user } = useContext(AuthContext);
-  useEffect(() => {
-    console.log('GLOBAL USER CONTEXT:', user);
-  }, [user]);
-  return null;
-}
-
 const AppRouter = () => {
   return (
     <AuthState>
       <Router>
-        <DebugUser />
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />

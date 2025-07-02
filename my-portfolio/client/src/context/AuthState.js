@@ -54,7 +54,6 @@ const AuthState = (props) => {
     };
     try {
       const res = await axios.post('/api/login', formData, config);
-      console.log('LOGIN RESPONSE:', res.data); // Debug log
       dispatch({ type: LOGIN_SUCCESS, payload: res.data });
       localStorage.setItem('isAuthenticated', true);
       localStorage.setItem('user', JSON.stringify(res.data.user || res.data));

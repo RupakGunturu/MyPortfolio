@@ -40,29 +40,6 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
     setTimeout(() => setToastMessage(''), 3000);
   };
 
-  // Temporary debug component for testing data isolation
-  const DebugData = () => (
-    <div style={{
-      position: 'fixed',
-      bottom: 10,
-      right: 10,
-      background: 'rgba(0,0,0,0.8)',
-      color: 'white',
-      padding: '10px',
-      borderRadius: '5px',
-      fontSize: '12px',
-      maxWidth: '300px',
-      zIndex: 1000,
-      border: '1px solid #4A90E2'
-    }}>
-      <h4 style={{margin: '0 0 5px 0', color: '#4A90E2'}}>🔍 Debug Info:</h4>
-      <div><strong>User ID:</strong> {effectiveUserId || 'Not loaded'}</div>
-      <div><strong>Username:</strong> {user?.username || 'Not loaded'}</div>
-      <div><strong>Skills Count:</strong> {skills.length}</div>
-      <div><strong>Skills:</strong> {skills.map(s => s.title).join(', ') || 'None'}</div>
-    </div>
-  );
-
   const handleChange = e => {
     setNewSkill(prev => ({
       ...prev,
@@ -529,8 +506,6 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
           {toastMessage}
         </div>
       )}
-
-      <DebugData />
     </section>
   );
 };

@@ -250,12 +250,6 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
       formData.append('linkedinUrl', formatSocialUrl(form.linkedinUrl, 'linkedin'));
       formData.append('userId', user._id);
       
-      // Debug: log FormData keys
-      console.log("Submitting form data:");
-      for (let pair of formData.entries()) {
-        console.log(pair[0]+ ':', pair[1]);
-      }
-      
       const res = await axios.put("/api/user", formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
