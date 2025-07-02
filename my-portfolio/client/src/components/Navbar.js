@@ -2,7 +2,8 @@ import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import './Navbar.css';
-import logo from '../logo.svg'; 
+import { motion } from 'framer-motion';
+// import logo from '../logo.svg';
 
 const Navbar = () => {
   const authContext = useContext(AuthContext);
@@ -15,10 +16,15 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar">
+    <motion.nav
+      className="navbar"
+      initial={{ y: -40, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+    >
       <div className="navbar-logo">
         <Link to="/">
-          <img src={logo} alt="Logo" />
+          <img src={process.env.PUBLIC_URL + '/image/devdesk777.jpg'} alt="Dev Desk Logo" className="navbar-logo" />
           <span>DevDesk</span>
         </Link>
       </div>
@@ -39,7 +45,7 @@ const Navbar = () => {
           </>
         )}
       </div>
-    </nav>
+    </motion.nav>
   );
 };
 

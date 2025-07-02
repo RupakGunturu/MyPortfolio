@@ -1,26 +1,23 @@
 import React from 'react';
 import './Footer.css';    // ← our custom CSS
-import logo from '../logo.svg'; // Use your actual logo path
-import { FaInstagram, FaFacebook, FaTwitter } from 'react-icons/fa';
+// import logo from '../logo.svg'; // No longer needed
+import { FaLinkedin, FaGithub } from 'react-icons/fa';
 
 const Footer = () => (
-  <footer className="custom-footer">
-    <div className="footer-left">
-      <img src="/footer-logo.png" alt="Logo" className="footer-logo" />
+  <footer className="custom-footer" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', width: '100%' }}>
+    <div className="footer-logo-row" style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+      <img src={process.env.PUBLIC_URL + '/image/devdesk777.jpg'} alt="Dev Desk Logo" className="footer-logo" />
       <span>© 2025 My Portfolio, Inc</span>
     </div>
-    <div className="footer-center">
-      This web application was developed and designed by Rupak Gunturu 
+    <div className="footer-center" style={{ textAlign: 'center', margin: '0 1.2rem', whiteSpace: 'nowrap' }}>
+      This web application was developed and designed by Rupak Gunturu
     </div>
-    <div className="footer-right">
-      <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-        <FaInstagram />
+    <div className="footer-right" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+      <a href="https://linkedin.com/in/rupakgunturu" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+        <FaLinkedin />
       </a>
-      <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-        <FaFacebook />
-      </a>
-      <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
-        <FaTwitter />
+      <a href="https://github.com/rupakgunturu" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+        <FaGithub />
       </a>
     </div>
   </footer>

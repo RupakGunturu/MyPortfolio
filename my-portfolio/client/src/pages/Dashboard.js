@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import AuthContext from '../context/AuthContext';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import './Dashboard.css';
-import logo from '../logo.svg'; // Assuming you have a logo file
+// import logo from '../logo.svg'; // Assuming you have a logo file
 
 const Dashboard = () => {
   const authContext = useContext(AuthContext);
@@ -84,7 +85,7 @@ const Dashboard = () => {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className="dashboard-logo">
-            <img src={logo} alt="My Portfolio Logo" />
+            <img src={process.env.PUBLIC_URL + '/image/devdesk777.jpg'} alt="Dev Desk Logo" className="dashboard-logo" />
           </div>
           <h1 className="dashboard-title">Welcome, {user.fullname || user.username}!</h1>
           <p className="dashboard-description">
@@ -112,6 +113,9 @@ const Dashboard = () => {
             </div>
           </div>
         </motion.div>
+      </div>
+      <div style={{ marginTop: '2.5rem' }}>
+        <Footer />
       </div>
     </div>
   );
