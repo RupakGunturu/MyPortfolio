@@ -658,17 +658,16 @@ app.delete('/api/certificates/:id', async (req, res) => {
 
 // Get about data for a specific user
 app.get("/api/about", async (req, res) => {
+  const { userId } = req.query;
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({ message: 'Invalid or missing userId' });
+  }
   try {
-    const { userId } = req.query;
-    if (!userId) {
-      return res.status(400).json({ error: 'userId is required' });
-    }
-    
     const about = await About.findOne({ user: userId });
     if (!about) {
       return res.json({ data: {} });
     }
-    res.json({ data: about.data });
+    res.json({ data: about.data || {} });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch about", error: error.message });
   }
@@ -681,13 +680,12 @@ app.put("/api/about", async (req, res) => {
     if (!userId) {
       return res.status(400).json({ error: 'userId is required' });
     }
-    
     let about = await About.findOne({ user: userId });
     if (about) {
-      about.data = data;
+      about.data = { ...data }; // flatten, don't nest
       await about.save();
     } else {
-      about = new About({ data, user: userId });
+      about = new About({ data: { ...data }, user: userId });
       await about.save();
     }
     res.json({ data: about.data });
@@ -1076,6 +1074,21 @@ app.get('/api/portfolio/:username', async (req, res) => {
   }
   // Build and return the portfolio data here
   res.json({ user });
+});
+
+// GET /api/users/username/:username (case-insensitive)
+app.get('/api/users/username/:username', async (req, res) => {
+  console.log('Username param:', req.params.username);
+  try {
+    const user = await RegisteredUser.findOne({
+      username: { $regex: `^${req.params.username}$`, $options: 'i' }
+    });
+    console.log('User found:', user);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 // -------------------- Connect to MongoDB & Start Server --------------------

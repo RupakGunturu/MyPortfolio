@@ -4,9 +4,10 @@ import { FaPlus, FaTrash, FaEdit, FaTimes } from 'react-icons/fa';
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
 
-const Skill = ({ viewOnly = false, theme = 'dark' }) => {
+const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
   const authContext = useContext(AuthContext);
   const { user } = authContext || {};
+  const effectiveUserId = userId || (user && user._id);
   const [skills, setSkills] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [newSkill, setNewSkill] = useState({ title: '', level: 'intermediate' });
@@ -17,15 +18,15 @@ const Skill = ({ viewOnly = false, theme = 'dark' }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user && user._id) {
+    if (effectiveUserId) {
       fetchSkills();
     }
-  }, [user]);
+  }, [effectiveUserId]);
 
   const fetchSkills = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/skills?userId=${user._id}`);
+      const response = await axios.get(`/api/skills?userId=${effectiveUserId}`);
       setSkills(response.data);
     } catch (error) {
       console.error('Error fetching skills:', error);
@@ -55,7 +56,7 @@ const Skill = ({ viewOnly = false, theme = 'dark' }) => {
       border: '1px solid #4A90E2'
     }}>
       <h4 style={{margin: '0 0 5px 0', color: '#4A90E2'}}>🔍 Debug Info:</h4>
-      <div><strong>User ID:</strong> {user?._id || 'Not loaded'}</div>
+      <div><strong>User ID:</strong> {effectiveUserId || 'Not loaded'}</div>
       <div><strong>Username:</strong> {user?.username || 'Not loaded'}</div>
       <div><strong>Skills Count:</strong> {skills.length}</div>
       <div><strong>Skills:</strong> {skills.map(s => s.title).join(', ') || 'None'}</div>
@@ -79,7 +80,7 @@ const Skill = ({ viewOnly = false, theme = 'dark' }) => {
     try {
       const response = await axios.post('/api/skills', {
         ...newSkill,
-        userId: user._id
+        userId: effectiveUserId
       });
 
       setSkills(prev => [response.data, ...prev]);
@@ -95,7 +96,7 @@ const Skill = ({ viewOnly = false, theme = 'dark' }) => {
   const handleDelete = async (skillId) => {
     setIsDeleting(skillId);
     try {
-      await axios.delete(`/api/skills/${skillId}?userId=${user._id}`);
+      await axios.delete(`/api/skills/${skillId}?userId=${effectiveUserId}`);
       
       setSkills(prev => prev.filter(skill => skill._id !== skillId));
       showToast('❌ Skill deleted!');
@@ -111,7 +112,7 @@ const Skill = ({ viewOnly = false, theme = 'dark' }) => {
     try {
       const response = await axios.put(`/api/skills/${skillId}`, {
         ...updatedSkill,
-        userId: user._id
+        userId: effectiveUserId
       });
       
       setSkills(prev => prev.map(skill => 
@@ -381,7 +382,7 @@ const Skill = ({ viewOnly = false, theme = 'dark' }) => {
       borderRadius: '0.5rem',
       cursor: 'pointer',
       fontWeight: '500',
-      transition: 'background-color 0.15s ease',
+      transition: 'background 0.2s, color 0.2s',
       ':hover': {
         backgroundColor: theme === 'dark' ? '#475569' : '#E2E8F0',
       },

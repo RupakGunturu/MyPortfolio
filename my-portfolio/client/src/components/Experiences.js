@@ -5,9 +5,10 @@ import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import './Experiences.css';
 
-const Experience = ({ viewOnly = false }) => {
+const Experience = ({ viewOnly = false, userId }) => {
   const authContext = useContext(AuthContext);
   const { user } = authContext || {};
+  const effectiveUserId = userId || (user && user._id);
   const [experiences, setExperiences] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState([]);
@@ -39,18 +40,18 @@ const Experience = ({ viewOnly = false }) => {
   // Load experiences from backend
   useEffect(() => {
     console.log('Experiences component - user object:', user);
-    console.log('Experiences component - userId:', user?._id);
-    if (user && user._id) {
+    console.log('Experiences component - userId:', effectiveUserId);
+    if (effectiveUserId) {
       fetchExperiences();
     }
-  }, [user]);
+  }, [effectiveUserId]);
 
   const fetchExperiences = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await axios.get(`/api/experiences?userId=${user._id}`);
+      const response = await axios.get(`/api/experiences?userId=${effectiveUserId}`);
       setExperiences(response.data);
     } catch (error) {
       console.error('Error fetching experiences:', error);
@@ -67,7 +68,7 @@ const Experience = ({ viewOnly = false }) => {
         setError(null);
         await axios.put('/api/experiences', { 
           experiences: editData,
-          userId: user._id
+          userId: effectiveUserId
         });
         setExperiences(editData);
         setIsEditing(false);
@@ -106,7 +107,7 @@ const Experience = ({ viewOnly = false }) => {
 
       const response = await axios.post('/api/experiences', {
         ...newExperience,
-        userId: user._id
+        userId: effectiveUserId
       });
       const updated = [...editData, response.data];
       setEditData(updated);
@@ -129,7 +130,7 @@ const Experience = ({ viewOnly = false }) => {
     if (experienceToRemove._id) {
       try {
         setError(null);
-        await axios.delete(`/api/experiences/${experienceToRemove._id}?userId=${user._id}`);
+        await axios.delete(`/api/experiences/${experienceToRemove._id}?userId=${effectiveUserId}`);
       } catch (error) {
         console.error('Error deleting experience:', error);
         setError('Failed to delete experience. Please try again.');

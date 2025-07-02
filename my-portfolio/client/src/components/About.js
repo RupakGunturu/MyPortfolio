@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { FiEdit, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import AuthContext from '../context/AuthContext';
+import axios from 'axios';
 
 const fieldOptions = [
   'Name',
@@ -15,10 +16,10 @@ const fieldOptions = [
 
 const multiValueFields = ['Interests', 'Skills', 'Achievements', 'Hobbies', 'Social Links'];
 
-const About = ({ userId: propUserId, viewOnly = false }) => {
+const About = ({ viewOnly = false, userId }) => {
   const authContext = useContext(AuthContext);
   const { user } = authContext || {};
-  const userId = propUserId || (user && user._id);
+  const effectiveUserId = userId || (user && user._id);
   const [selectedFields, setSelectedFields] = useState([]);
   const [userData, setUserData] = useState({
     name: '',
@@ -34,23 +35,21 @@ const About = ({ userId: propUserId, viewOnly = false }) => {
   const [showEditDropdown, setShowEditDropdown] = useState(false);
   const [showAdditionalFields, setShowAdditionalFields] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (userId) {
-      fetchAboutData();
+    if (effectiveUserId) {
+      fetchAbout();
     }
-  }, [userId]);
+  }, [effectiveUserId]);
 
-  const fetchAboutData = async () => {
+  const fetchAbout = async () => {
     try {
-      const response = await fetch(`/api/about?userId=${userId}`);
-      const data = await response.json();
-      if (data.data) {
-        setUserData(data.data);
-      }
+      const response = await axios.get(`/api/about?userId=${effectiveUserId}`);
+      setUserData(response.data.data || {});
       setIsLoading(false);
     } catch (err) {
-      console.error('Failed to fetch about data:', err);
+      setError('Failed to load about info. Please try again.');
       setIsLoading(false);
     }
   };
@@ -64,16 +63,20 @@ const About = ({ userId: propUserId, viewOnly = false }) => {
     });
 
     if (viewOnly) {
+      const backendSelectedFields = userData.selectedFields && Array.isArray(userData.selectedFields)
+        ? userData.selectedFields.filter(field => allFieldsWithData.includes(field))
+        : null;
       const defaultFields = ['Name', 'Interests', 'Achievements'];
       const additionalFields = [ 'Hobbies', 'Skills', 'Social Links'];
-      
       let fieldsToShow = defaultFields.filter(field => allFieldsWithData.includes(field));
-      
       if (showAdditionalFields) {
-        const additional = additionalFields.filter(field => allFieldsWithData.includes(field));
-        fieldsToShow = [...new Set([...fieldsToShow, ...additional])];
+        if (backendSelectedFields && backendSelectedFields.length > 0) {
+          fieldsToShow = backendSelectedFields;
+        } else {
+          const additional = additionalFields.filter(field => allFieldsWithData.includes(field));
+          fieldsToShow = [...new Set([...fieldsToShow, ...additional])];
+        }
       }
-      
       setSelectedFields(fieldsToShow);
     } else {
       // In edit mode, show only default fields by default
@@ -112,15 +115,11 @@ const About = ({ userId: propUserId, viewOnly = false }) => {
       setUserData(updatedData);
 
       try {
-        await fetch('/api/about', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            data: updatedData,
-            userId: userId
-          }),
+        await axios.put('/api/about', {
+          data: updatedData,
+          userId: effectiveUserId
         });
-        fetchAboutData(); // Refresh data after update
+        fetchAbout(); // Refresh data after update
       } catch (err) {
         console.error('Save error:', err);
       }

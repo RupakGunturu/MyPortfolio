@@ -3,13 +3,14 @@ import { motion } from 'framer-motion';
 import { FiUser, FiMail, FiMessageSquare, FiMapPin, FiPhone, FiSend } from 'react-icons/fi';
 import AuthContext from '../context/AuthContext';
 
-const Contact = () => {
+const Contact = ({ userId, ...props }) => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [status, setStatus] = useState('');
   const [visitorLocation, setVisitorLocation] = useState('Fetching your location...');
   const [coords, setCoords] = useState(null);
   const authContext = useContext(AuthContext);
   const { user } = authContext || {};
+  const effectiveUserId = userId || (user && user._id);
 
   useEffect(() => {
     if ('geolocation' in navigator) {

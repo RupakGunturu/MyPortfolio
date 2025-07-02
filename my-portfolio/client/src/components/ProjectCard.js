@@ -5,9 +5,10 @@ import AuthContext from '../context/AuthContext';
 import axios from 'axios';
 import './ProjectCard.css';
 
-const ProjectCard = ({ viewOnly = false }) => {
+const ProjectCard = ({ viewOnly = false, userId }) => {
   const authContext = useContext(AuthContext);
   const { user } = authContext || {};
+  const effectiveUserId = userId || (user && user._id);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -57,15 +58,15 @@ const ProjectCard = ({ viewOnly = false }) => {
   }, []);
 
   useEffect(() => {
-    if (user && user._id) {
+    if (effectiveUserId) {
       fetchProjects();
     }
-  }, [user]);
+  }, [effectiveUserId]);
 
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}?userId=${user._id}`);
+      const response = await axios.get(`${API_BASE_URL}?userId=${effectiveUserId}`);
       setProjects(response.data);
       setError(null);
     } catch (err) {
@@ -101,7 +102,7 @@ const ProjectCard = ({ viewOnly = false }) => {
 
     if (window.confirm('Are you sure you want to delete this project?')) {
       try {
-        await axios.delete(`${API_BASE_URL}/${editingProject._id}?userId=${user._id}`);
+        await axios.delete(`${API_BASE_URL}/${editingProject._id}?userId=${effectiveUserId}`);
         setProjects(projects.filter(project => project._id !== editingProject._id));
         closeModal();
       } catch (err) {
@@ -138,7 +139,7 @@ const ProjectCard = ({ viewOnly = false }) => {
         // Update existing project
         const response = await axios.put(`${API_BASE_URL}/${editingProject._id}`, {
           ...formData,
-          userId: user._id
+          userId: effectiveUserId
         });
 
         setProjects(projects.map(project => 
@@ -150,7 +151,7 @@ const ProjectCard = ({ viewOnly = false }) => {
         // Add new project
         const response = await axios.post('/api/projects', {
           ...formData,
-          userId: user._id
+          userId: effectiveUserId
         });
 
         setProjects([response.data, ...projects]);
@@ -264,6 +265,11 @@ const ProjectCard = ({ viewOnly = false }) => {
     </div>
     <div className="project-details">
                   <h3>{project.title}</h3>
+                  {project.description && (
+                    <div className="project-bio">
+                      <p>{project.description}</p>
+                    </div>
+                  )}
                   <div className="project-actions">
                     <button 
                       className="view-btn"

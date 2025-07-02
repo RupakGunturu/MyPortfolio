@@ -117,6 +117,28 @@
   box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
 }
 
+.form-group textarea {
+  width: 100%;
+  min-height: 100px;
+  resize: vertical;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1.5px solid #cbd5e1;
+  font-size: 1.05rem;
+  font-family: inherit;
+  background: rgba(255,255,255,0.9);
+  color: #1e293b;
+  transition: border 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.form-group textarea:focus {
+  border: 1.5px solid #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
+  outline: none;
+  background: #fff;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -172,11 +194,12 @@
 }
 
 .project-card {
+  border-radius: 1.2rem;
+  box-shadow: 0 8px 32px rgba(30,41,59,0.18);
+  transition: transform 0.2s, box-shadow 0.2s;
   background: #fff;
-  border-radius: 20px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
   overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -186,7 +209,6 @@
   opacity: 0;
   transform: translateY(50px) scale(0.9);
   animation: cardSlideIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  position: relative;
   cursor: pointer;
 }
 
@@ -208,10 +230,9 @@
 }
 
 .project-card:hover {
-  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-  transform: translateY(-8px) scale(1.02);
-  transition-delay: 0s;
-  transition-duration: 0.4s;
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 16px 40px rgba(30,41,59,0.22);
+  z-index: 2;
 }
 
 .project-card:hover::before {
@@ -914,4 +935,15 @@
   .submit-btn {
     order: 3;
   }
+}
+
+.project-bio {
+  margin: 1rem 0 0.85rem 0;
+  font-size: 1.08rem;
+  color: #334155;
+  line-height: 1.7;
+  word-break: break-word;
+  white-space: pre-line;
+  font-family: 'Montserrat', 'Segoe UI', 'Inter', 'Roboto', 'Arial', sans-serif;
+  font-weight: 600;
 }

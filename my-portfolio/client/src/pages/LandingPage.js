@@ -16,9 +16,17 @@ const LandingPage = () => {
       .catch(() => setRegisteredUserCount(0));
   }, []);
 
-  const handleFindPortfolio = () => {
+  const handleFindPortfolio = async () => {
     if (username.trim()) {
-      navigate(`/portfolio/${username.trim()}`);
+      try {
+        const res = await fetch(`/api/users/username/${username.trim()}`);
+        if (!res.ok) throw new Error('User not found');
+        const data = await res.json();
+        // Navigate to the public portfolio view for this user
+        navigate(`/portfolio/${data.user.username}?viewOnly=true`);
+      } catch (err) {
+        alert('User not found!');
+      }
     }
   };
 

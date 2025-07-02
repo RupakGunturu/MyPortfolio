@@ -3,9 +3,10 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import AuthContext from '../context/AuthContext';
 
-function Certificates({ viewOnly = false, theme = 'dark' }) {
+function Certificates({ viewOnly = false, theme = 'dark', userId }) {
   const authContext = useContext(AuthContext);
   const { user } = authContext || {};
+  const effectiveUserId = userId || (user && user._id);
   const [certs, setCerts] = useState([]);
   const [form, setForm] = useState({
     title: '',
@@ -19,14 +20,14 @@ function Certificates({ viewOnly = false, theme = 'dark' }) {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    if (user && user._id) {
+    if (effectiveUserId) {
       fetchCertificates();
     }
-  }, [user]);
+  }, [effectiveUserId]);
 
   const fetchCertificates = async () => {
     try {
-      const response = await axios.get(`/api/certificates?userId=${user._id}`);
+      const response = await axios.get(`/api/certificates?userId=${effectiveUserId}`);
       setCerts(response.data);
     } catch (err) {
       console.error('Failed to fetch certificates:', err);
@@ -51,9 +52,9 @@ function Certificates({ viewOnly = false, theme = 'dark' }) {
       }
 
       console.log('Certificate upload - User object:', user);
-      console.log('Certificate upload - User ID:', user?._id);
+      console.log('Certificate upload - User ID:', effectiveUserId);
 
-      if (!user?._id) {
+      if (!effectiveUserId) {
         throw new Error('User ID not available. Please try logging in again.');
       }
 
@@ -61,7 +62,7 @@ function Certificates({ viewOnly = false, theme = 'dark' }) {
       formData.append('title', form.title);
       formData.append('issuer', form.issuer);
       formData.append('date', form.date);
-      formData.append('userId', user._id);
+      formData.append('userId', effectiveUserId);
 
       if (form.file) {
         // Accept both images and PDFs
@@ -100,7 +101,7 @@ function Certificates({ viewOnly = false, theme = 'dark' }) {
 const deleteCertificate = async (id) => {
   console.log('Attempting to delete:', id);
   try {
-    const response = await axios.delete(`/api/certificates/${id}?userId=${user._id}`);
+    const response = await axios.delete(`/api/certificates/${id}?userId=${effectiveUserId}`);
     
     if (response.data.success) {
       setCerts(prev => prev.filter(cert => cert._id !== id));

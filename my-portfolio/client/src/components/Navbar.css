@@ -1,46 +1,57 @@
 .navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 2rem;
-    background-color: #1f2937;
-    color: #f9fafb;
-    position: fixed;
-    width: 100%;
+    position: sticky;
     top: 0;
-    z-index: 1000;
-    transition: 0.5s ease;
-  }
-  
-  .navbar-logo a {
+    width: 100%;
+    z-index: 100;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 16px rgba(30,41,59,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.35rem 1.2rem;
+    border-bottom: 1.5px solid rgba(99,102,241,0.07);
+}
+
+.navbar-logo a {
     display: flex;
     align-items: center;
     text-decoration: none;
     color: #f9fafb;
-  }
-  
-  .navbar-logo img {
-    height: 40px;
+}
+
+.navbar-logo img {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
     margin-right: 0.5rem;
-  }
-  
-  .navbar-logo span {
-    font-weight: 700;
-    font-size: 1.2rem;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.10);
+    background: #fff;
+}
+
+.navbar-logo span {
+    font-size: 1.3rem;
+    font-weight: 900;
     letter-spacing: 1px;
-  }
-  
-  .navbar-links {
+    color: #3730a3;
+    font-family: 'Montserrat', 'Inter', 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(90deg, #6366f1 0%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.navbar-links {
     display: flex;
     align-items: center;
     gap: 1.5rem;
-  }
-  
-  .welcome-message {
+}
+
+.welcome-message {
     font-weight: 500;
-  }
-  
-  .logout-button {
+}
+
+.logout-button {
     background: none;
     border: 1px solid #4b5563;
     color: #f9fafb;
@@ -49,22 +60,22 @@
     cursor: pointer;
     font-weight: 600;
     transition: all 0.3s ease;
-  }
-  
-  .logout-button:hover {
+}
+
+.logout-button:hover {
     background-color: transparent;
     color: #ef4444;
     border-color: #ef4444;
-  }
-  
-  .nav-link {
+}
+
+.nav-link {
     text-decoration: none;
     color: #d1d5db;
     font-weight: 500;
     transition: color 0.3s ease;
-  }
-  
-  .nav-link:hover {
+}
+
+.nav-link:hover {
     color: white;
-  }
+}
   

@@ -25,6 +25,11 @@ const PortfolioPage = () => {
   // Default to view mode on refresh unless ?edit=true is present and user is owner
   const isEditMode = requestedEdit && isOwner;
 
+  // State for public view user
+  const [viewedUser, setViewedUser] = React.useState(null);
+  const [viewLoading, setViewLoading] = React.useState(false);
+  const [viewError, setViewError] = React.useState(null);
+
   // Only redirect to login if user is not authenticated and trying to access edit mode
   React.useEffect(() => {
     if (!loading && requestedEdit && !isAuthenticated) {
@@ -39,8 +44,28 @@ const PortfolioPage = () => {
     }
   }, [requestedEdit, isOwner, isAuthenticated, navigate, username, loading]);
 
-  // Show loading while checking authentication
-  if (loading) {
+  // Fetch user by username for public view
+  React.useEffect(() => {
+    if (!isOwner && username) {
+      setViewLoading(true);
+      fetch(`/api/users/username/${username}`)
+        .then(res => {
+          if (!res.ok) throw new Error('User not found');
+          return res.json();
+        })
+        .then(data => {
+          setViewedUser(data.user);
+          setViewLoading(false);
+        })
+        .catch(err => {
+          setViewError('User not found');
+          setViewLoading(false);
+        });
+    }
+  }, [isOwner, username]);
+
+  // Show loading while checking authentication or fetching public user
+  if (loading || viewLoading) {
     return (
       <div style={{ 
         display: 'flex', 
@@ -54,6 +79,25 @@ const PortfolioPage = () => {
       </div>
     );
   }
+  if (viewError) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '1.2rem',
+        color: '#c00'
+      }}>
+        {viewError}
+      </div>
+    );
+  }
+
+  // Determine which userId to use
+  const userIdToUse = isEditMode
+    ? (user && user._id)
+    : (!isOwner && viewedUser ? viewedUser._id : undefined);
 
   const onUpdatePortfolio = () => {
     console.log('User in onUpdatePortfolio:', user);
@@ -72,17 +116,17 @@ const PortfolioPage = () => {
         <main style={{ marginTop: 0, flex: 1 }}>
           <Hero 
             viewOnly={!isEditMode}
-            userId={isEditMode ? (user && user._id) : undefined}
+            userId={userIdToUse}
           />
           <About 
             viewOnly={!isEditMode}
-            userId={isEditMode ? (user && user._id) : undefined}
+            userId={userIdToUse}
           />
-          <Certificate viewOnly={!isEditMode} theme="light" />
-          <Experience viewOnly={!isEditMode} />
-          <Skills viewOnly={!isEditMode} theme="light" />
-          <ProjectCard viewOnly={!isEditMode} />
-          <Contact viewOnly={!isEditMode} />
+          <Certificate viewOnly={!isEditMode} theme="light" userId={userIdToUse} />
+          <Experience viewOnly={!isEditMode} userId={userIdToUse} />
+          <Skills viewOnly={!isEditMode} theme="light" userId={userIdToUse} />
+          <ProjectCard viewOnly={!isEditMode} userId={userIdToUse} />
+          <Contact viewOnly={!isEditMode} userId={userIdToUse} />
         </main>
       </div>
     </>
