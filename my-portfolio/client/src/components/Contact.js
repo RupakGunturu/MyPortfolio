@@ -19,20 +19,7 @@ const Contact = ({ userId, ...props }) => {
       navigator.geolocation.getCurrentPosition(async (position) => {
         const { latitude, longitude } = position.coords;
         setCoords({ latitude, longitude });
-        try {
-          const response = await fetch(
-            `${API_BASE_URL}/api/location`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ latitude, longitude }),
-            }
-          );
-          const data = await response.json();
-          setVisitorLocation(data.display_name || 'Location found');
-        } catch (err) {
-          setVisitorLocation('Unable to fetch location');
-        }
+        setVisitorLocation('Location found');
       }, () => {
         setVisitorLocation('Location permission denied');
       });

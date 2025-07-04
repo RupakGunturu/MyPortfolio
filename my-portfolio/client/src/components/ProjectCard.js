@@ -240,7 +240,7 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
               <p>No projects yet. Add your first project!</p>
             </div>
           ) : (
-            projects.map((project, index) => (
+            (Array.isArray(projects) ? projects : []).map((project, index) => (
               <div 
                 key={project._id} 
                 className={`project-card ${isVisible ? 'animate-in' : ''}`}
