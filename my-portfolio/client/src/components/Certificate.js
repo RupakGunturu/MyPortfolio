@@ -523,9 +523,9 @@ const deleteCertificate = async (id) => {
               )}
 
               <div>
-                {cert.url ? (
+                {cert.url || (cert.file && cert.file.url) || cert.image || cert.imageUrl ? (
                   <img
-                    src={cert.url}
+                    src={cert.url || (cert.file && cert.file.url) || cert.image || cert.imageUrl}
                     alt="Certificate"
                     style={styles.image}
                     onError={(e) => {

@@ -247,9 +247,9 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
     <div className="project-image">
-                  {project.image ? (
+                  {project.image || project.imageUrl ? (
         <img
-                      src={project.image}
+                      src={project.image || project.imageUrl}
                       alt={project.title}
           onError={e => {
             e.target.onerror = null;
