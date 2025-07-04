@@ -2,8 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { motion } from 'framer-motion';
 import { FiUser, FiMail, FiMessageSquare, FiMapPin, FiPhone, FiSend } from 'react-icons/fi';
 import AuthContext from '../context/AuthContext';
-
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+import API_BASE_URL from '../utils/api';
 
 const Contact = ({ userId, ...props }) => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });

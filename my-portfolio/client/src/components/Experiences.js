@@ -4,8 +4,7 @@ import { FaBriefcase, FaCode, FaGraduationCap, FaEdit, FaSave, FaTimes } from 'r
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import './Experiences.css';
-
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+import API_BASE_URL from '../utils/api';
 
 const Experience = ({ viewOnly = false, userId }) => {
   const authContext = useContext(AuthContext);
