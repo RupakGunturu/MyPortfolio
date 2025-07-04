@@ -253,7 +253,7 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
                       alt={project.title}
           onError={e => {
             e.target.onerror = null;
-            e.target.src = "https://via.placeholder.com/300x200?text=Project+Preview";
+            e.target.src = "https://placehold.co/300x200?text=Project+Preview";
           }}
         />
       ) : (

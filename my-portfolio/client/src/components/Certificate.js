@@ -530,7 +530,7 @@ const deleteCertificate = async (id) => {
                     style={styles.image}
                     onError={(e) => {
                       e.target.onerror = null;
-                      e.target.src = "https://via.placeholder.com/300x200?text=Certificate+Preview";
+                      e.target.src = "https://placehold.co/300x200?text=Certificate+Preview";
                     }}
                   />
                 ) : (

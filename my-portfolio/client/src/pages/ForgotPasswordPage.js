@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
@@ -17,6 +17,7 @@ const ForgotPasswordPage = () => {
   const [otpCooldown, setOtpCooldown] = useState(0);
   const [info, setInfo] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -83,7 +84,7 @@ const ForgotPasswordPage = () => {
       const data = await res.json();
       if (res.ok) {
         setInfo('🎉 Password updated successfully! You can now login.');
-        // Optionally redirect to login after a delay
+        setTimeout(() => navigate('/login'), 1500);
       } else {
         setError(data.message || 'Failed to update password.');
       }
