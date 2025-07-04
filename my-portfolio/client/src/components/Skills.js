@@ -3,7 +3,7 @@ import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { FaPlus, FaTrash, FaEdit, FaTimes } from 'react-icons/fa';
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
-import API_BASE_URL from '../utils/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
   const authContext = useContext(AuthContext);

@@ -3,7 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import './PortfolioView.css';
-import API_BASE_URL from '../utils/api';
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const PortfolioView = () => {
   const { username } = useParams();

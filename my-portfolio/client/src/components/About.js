@@ -3,7 +3,7 @@ import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { FiEdit, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
-import API_BASE_URL from '../utils/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const fieldOptions = [
   'Name',

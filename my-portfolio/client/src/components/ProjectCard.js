@@ -4,7 +4,8 @@ import { FaPlus, FaEdit, FaTrash, FaTimes, FaExternalLinkAlt } from 'react-icons
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
 import './ProjectCard.css';
-import API_BASE_URL from '../utils/api';
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const ProjectCard = ({ viewOnly = false, userId }) => {
   const authContext = useContext(AuthContext);

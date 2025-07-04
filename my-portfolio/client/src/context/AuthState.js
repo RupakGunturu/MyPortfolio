@@ -14,7 +14,7 @@ import {
   LOGOUT,
   CLEAR_ERRORS,
 } from './types';
-import API_BASE_URL from '../utils/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const AuthState = (props) => {
   const initialState = {

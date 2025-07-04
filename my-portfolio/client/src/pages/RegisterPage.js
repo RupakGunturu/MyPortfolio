@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import API_BASE_URL from '../utils/api';
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const RegisterPage = () => {
   const [form, setForm] = useState({

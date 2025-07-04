@@ -11,7 +11,8 @@ import Experience from '../components/Experiences';
 import Skills from '../components/Skills';
 import Contact from '../components/Contact';
 import ProjectCard from '../components/ProjectCard';
-import API_BASE_URL from '../utils/api';
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const PortfolioPage = () => {
   const [searchParams] = useSearchParams();

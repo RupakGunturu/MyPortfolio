@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import AuthContext from '../context/AuthContext';
-import API_BASE_URL from '../utils/api';
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 function Certificates({ viewOnly = false, theme = 'dark', userId }) {
   const authContext = useContext(AuthContext);
