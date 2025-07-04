@@ -240,54 +240,58 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
               <p>No projects yet. Add your first project!</p>
             </div>
           ) : (
-            (Array.isArray(projects) ? projects : []).map((project, index) => (
-              <div 
-                key={project._id} 
-                className={`project-card ${isVisible ? 'animate-in' : ''}`}
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-    <div className="project-image">
-                  {project.image || project.imageUrl ? (
-        <img
-                      src={project.image || project.imageUrl}
-                      alt={project.title}
-          onError={e => {
-            e.target.onerror = null;
-            e.target.src = "https://placehold.co/300x200?text=Project+Preview";
-          }}
-        />
-      ) : (
-        <div className="no-image-placeholder">
-          <span>No Preview Available</span>
-        </div>
-      )}
-    </div>
-    <div className="project-details">
-                  <h3>{project.title}</h3>
-                  {project.description && (
-                    <div className="project-bio">
-                      <p>{project.description}</p>
-                    </div>
-                  )}
-                  <div className="project-actions">
-                    <button 
-                      className="view-btn"
-                      onClick={() => handleViewClick(project.link)}
-      >
-        View Project
-                    </button>
-                    {!viewOnly && (
-                      <button 
-                        className="edit-btn"
-                        onClick={() => handleEditProject(project)}
-                      >
-                        Edit
-                      </button>
+            (Array.isArray(projects) ? projects : []).map((project, index) => {
+              const projectRawUrl = project.image || project.imageUrl;
+              const projectImageUrl = projectRawUrl ? (projectRawUrl.startsWith('http') ? projectRawUrl : `${API_BASE_URL}${projectRawUrl}`) : null;
+              return (
+                <div 
+                  key={project._id} 
+                  className={`project-card ${isVisible ? 'animate-in' : ''}`}
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="project-image">
+                    {projectImageUrl ? (
+                      <img
+                        src={projectImageUrl}
+                        alt={project.title}
+                        onError={e => {
+                          e.target.onerror = null;
+                          e.target.src = "https://placehold.co/300x200?text=Project+Preview";
+                        }}
+                      />
+                    ) : (
+                      <div className="no-image-placeholder">
+                        <span>No Preview Available</span>
+                      </div>
                     )}
                   </div>
+                  <div className="project-details">
+                    <h3>{project.title}</h3>
+                    {project.description && (
+                      <div className="project-bio">
+                        <p>{project.description}</p>
+                      </div>
+                    )}
+                    <div className="project-actions">
+                      <button 
+                        className="view-btn"
+                        onClick={() => handleViewClick(project.link)}
+                      >
+                        View Project
+                      </button>
+                      {!viewOnly && (
+                        <button 
+                          className="edit-btn"
+                          onClick={() => handleEditProject(project)}
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
@@ -439,11 +443,11 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
                 </button>
               </div>
             </form>
-    </div>
-  </div>
+          </div>
+        </div>
       )}
     </section>
-);
+  );
 };
 
 export default ProjectCard; 
