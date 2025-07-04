@@ -4,8 +4,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #fafbfc;
+  background: #181a23;
   padding: 2rem;
+}
+
+.landing-content {
+  position: relative;
+  z-index: 1;
 }
 
 .landing-title {
@@ -14,10 +19,11 @@
   margin-bottom: 0.5rem;
   text-align: center;
   line-height: 1.1;
+  color: #fff;
 }
 
 .text-gradient {
-  background: linear-gradient(90deg, #a259c9 0%, #f24e1e 50%, #3b82f6 100%);
+  background: linear-gradient(90deg, #ff7e5f 0%, #feb47b 50%, #6a82fb 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -43,14 +49,14 @@
   display: inline-flex;
   align-items: center;
   gap: 0.7rem;
-  background: linear-gradient(90deg, #f3e8ff 0%, #fde2ff 100%);
-  color: #8b5cf6;
+  background: linear-gradient(90deg, #23243a 0%, #2d2e48 100%);
+  color: #ffb86c;
   font-weight: 500;
   font-size: 1.1rem;
   padding: 0.7rem 2rem;
   border-radius: 999px;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 12px 0 rgba(130, 88, 159, 0.07);
+  box-shadow: 0 2px 12px 0 rgba(30, 30, 40, 0.12);
 }
 
 .badge-icon {
@@ -69,7 +75,7 @@
 }
 
 .landing-desc {
-  color: #5b6478;
+  color: #bfc7d5;
   font-size: 1.25rem;
   text-align: center;
   max-width: 600px;
@@ -83,7 +89,7 @@
 }
 
 .btn-gradient {
-  background: linear-gradient(90deg, #a259c9 0%, #f24e1e 100%);
+  background: linear-gradient(90deg, #6a82fb 0%, #fc5c7d 100%);
   color: #fff;
   font-weight: 600;
   font-size: 1.1rem;
@@ -91,29 +97,29 @@
   border: none;
   border-radius: 999px;
   cursor: pointer;
-  box-shadow: 0 2px 12px 0 rgba(130, 88, 159, 0.07);
+  box-shadow: 0 2px 12px 0 rgba(30, 30, 40, 0.12);
   transition: background 0.2s, transform 0.2s;
 }
 .btn-gradient:hover {
-  background: linear-gradient(90deg, #f24e1e 0%, #a259c9 100%);
+  background: linear-gradient(90deg, #fc5c7d 0%, #6a82fb 100%);
   transform: translateY(-2px) scale(1.04);
 }
 
 .btn-outline {
-  background: #fff;
-  color: #a259c9;
+  background: transparent;
+  color: #ffb86c;
   font-weight: 600;
   font-size: 1.1rem;
   padding: 0.9rem 2.2rem;
-  border: 2px solid #a259c9;
+  border: 2px solid #ffb86c;
   border-radius: 999px;
   cursor: pointer;
   transition: background 0.2s, color 0.2s, transform 0.2s;
 }
 .btn-outline:hover {
-  background: #f3e8ff;
-  color: #f24e1e;
-  border-color: #f24e1e;
+  background: #23243a;
+  color: #fc5c7d;
+  border-color: #fc5c7d;
   transform: translateY(-2px) scale(1.04);
 }
 
@@ -122,23 +128,23 @@
   align-items: center;
   justify-content: center;
   gap: 0.7rem;
-  background: #fff;
-  border: 2px solid #a259c9;
+  background: #23243a;
+  border: 2px solid #6a82fb;
   border-radius: 1.5rem;
   padding: 0.7rem 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 12px 0 rgba(130, 88, 159, 0.07);
+  box-shadow: 0 2px 12px 0 rgba(30, 30, 40, 0.12);
 }
 
 .user-count-number {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #a259c9;
+  color: #6a82fb;
 }
 
 .user-count-label {
   font-size: 1.1rem;
-  color: #5b6478;
+  color: #bfc7d5;
   font-weight: 500;
 }
 
@@ -153,13 +159,15 @@
 .portfolio-search-input {
   padding: 0.8rem 1.2rem;
   font-size: 1.1rem;
-  border: 2px solid #a259c9;
+  border: 2px solid #6a82fb;
   border-radius: 999px;
   outline: none;
   min-width: 200px;
+  background: #181a23;
+  color: #fff;
   transition: border 0.2s;
 }
 
 .portfolio-search-input:focus {
-  border-color: #f24e1e;
+  border-color: #fc5c7d;
 }
