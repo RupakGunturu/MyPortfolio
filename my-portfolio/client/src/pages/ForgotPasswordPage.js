@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,8 +32,7 @@ const ForgotPasswordPage = () => {
     setError('');
     setInfo('Sending OTP...');
     try {
-      // Replace with your API endpoint
-      const res = await fetch('/api/auth/send-forgot-otp', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/send-forgot-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -74,7 +75,7 @@ const ForgotPasswordPage = () => {
     }
     // Call backend to verify OTP and update password
     try {
-      const res = await fetch('/api/auth/reset-password', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp, newPassword: password }),

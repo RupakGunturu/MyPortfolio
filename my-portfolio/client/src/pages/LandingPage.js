@@ -6,13 +6,15 @@ import Footer from '../components/Footer';
 import Hyperspeed from '../components/Hyperspeed';
 import hyperspeedPresets from '../components/hyperspeedPresets';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 const LandingPage = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [registeredUserCount, setRegisteredUserCount] = useState(0);
 
   useEffect(() => {
-    fetch('/api/user-count')
+    fetch(`${API_BASE_URL}/api/user-count`)
       .then(res => res.json())
       .then(data => setRegisteredUserCount(data.count))
       .catch(() => setRegisteredUserCount(0));
@@ -21,7 +23,7 @@ const LandingPage = () => {
   const handleFindPortfolio = async () => {
     if (username.trim()) {
       try {
-        const res = await fetch(`/api/users/username/${username.trim()}`);
+        const res = await fetch(`${API_BASE_URL}/api/users/username/${username.trim()}`);
         if (!res.ok) throw new Error('User not found');
         const data = await res.json();
         // Navigate to the public portfolio view for this user
