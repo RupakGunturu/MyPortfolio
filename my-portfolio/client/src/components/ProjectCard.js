@@ -5,6 +5,8 @@ import AuthContext from '../context/AuthContext';
 import axios from 'axios';
 import './ProjectCard.css';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 const ProjectCard = ({ viewOnly = false, userId }) => {
   const authContext = useContext(AuthContext);
   const { user } = authContext || {};
@@ -28,9 +30,6 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
 
   // Refs for intersection observer
   const projectsSectionRef = useRef(null);
-
-  // API Base URL
-  const API_BASE_URL = '/api/projects';
 
   // Intersection Observer for scroll animations
   useEffect(() => {
@@ -149,7 +148,7 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
         setEditingProject(null);
       } else {
         // Add new project
-        const response = await axios.post('/api/projects', {
+        const response = await axios.post(`${API_BASE_URL}/api/projects`, {
           ...formData,
           userId: effectiveUserId
         });

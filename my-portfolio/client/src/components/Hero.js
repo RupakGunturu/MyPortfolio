@@ -7,6 +7,8 @@ import "./Hero.css";
 import AuthContext from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 const textContainerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -52,7 +54,7 @@ const getImageUrl = (url) => {
   if (!url) return "/images/profile-placeholder.png";
   if (url.startsWith("http") || url.startsWith("/images/")) return url;
   if (url.startsWith("/uploads/")) {
-    return `http://localhost:9000${url}`;
+    return `${API_BASE_URL}${url}`;
   }
   return url;
 };
@@ -172,7 +174,7 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
   const fetchProfile = async () => {
     if (!userId) return;
     try {
-      const res = await axios.get(`/api/user?userId=${userId}`);
+      const res = await axios.get(`${API_BASE_URL}/api/user?userId=${userId}`);
       const data = res.data || {};
       setProfile({ 
         fullname: data.fullname || data.name || "Your Name",
@@ -237,7 +239,7 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
       console.log("Test data:", testData);
       
       // Test with simple JSON endpoint first
-      const testRes = await axios.post("/api/test-update", testData);
+      const testRes = await axios.post(`${API_BASE_URL}/api/test-update`, testData);
       console.log("Test update response:", testRes.data);
       
       // If test succeeds, proceed with the actual update
@@ -250,7 +252,7 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
       formData.append('linkedinUrl', formatSocialUrl(form.linkedinUrl, 'linkedin'));
       formData.append('userId', user._id);
       
-      const res = await axios.put("/api/user", formData, {
+      const res = await axios.put(`${API_BASE_URL}/api/user`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }

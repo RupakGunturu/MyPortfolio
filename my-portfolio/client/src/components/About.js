@@ -3,6 +3,7 @@ import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { FiEdit, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const fieldOptions = [
   'Name',
@@ -45,7 +46,7 @@ const About = ({ viewOnly = false, userId }) => {
 
   const fetchAbout = async () => {
     try {
-      const response = await axios.get(`/api/about?userId=${effectiveUserId}`);
+      const response = await axios.get(`${API_BASE_URL}/api/about?userId=${effectiveUserId}`);
       setUserData(response.data.data || {});
       setIsLoading(false);
     } catch (err) {
@@ -115,7 +116,7 @@ const About = ({ viewOnly = false, userId }) => {
       setUserData(updatedData);
 
       try {
-        await axios.put('/api/about', {
+        await axios.put(`${API_BASE_URL}/api/about`, {
           data: updatedData,
           userId: effectiveUserId
         });

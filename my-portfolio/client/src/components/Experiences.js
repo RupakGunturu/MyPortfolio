@@ -5,6 +5,8 @@ import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import './Experiences.css';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 const Experience = ({ viewOnly = false, userId }) => {
   const authContext = useContext(AuthContext);
   const { user } = authContext || {};
@@ -51,7 +53,7 @@ const Experience = ({ viewOnly = false, userId }) => {
       setLoading(true);
       setError(null);
       
-      const response = await axios.get(`/api/experiences?userId=${effectiveUserId}`);
+      const response = await axios.get(`${API_BASE_URL}/api/experiences?userId=${effectiveUserId}`);
       setExperiences(response.data);
     } catch (error) {
       console.error('Error fetching experiences:', error);
@@ -66,7 +68,7 @@ const Experience = ({ viewOnly = false, userId }) => {
       // Save changes when exiting edit mode
       try {
         setError(null);
-        await axios.put('/api/experiences', { 
+        await axios.put(`${API_BASE_URL}/api/experiences`, { 
           experiences: editData,
           userId: effectiveUserId
         });
@@ -105,7 +107,7 @@ const Experience = ({ viewOnly = false, userId }) => {
         return;
       }
 
-      const response = await axios.post('/api/experiences', {
+      const response = await axios.post(`${API_BASE_URL}/api/experiences`, {
         ...newExperience,
         userId: effectiveUserId
       });
@@ -130,7 +132,7 @@ const Experience = ({ viewOnly = false, userId }) => {
     if (experienceToRemove._id) {
       try {
         setError(null);
-        await axios.delete(`/api/experiences/${experienceToRemove._id}?userId=${effectiveUserId}`);
+        await axios.delete(`${API_BASE_URL}/api/experiences/${experienceToRemove._id}?userId=${effectiveUserId}`);
       } catch (error) {
         console.error('Error deleting experience:', error);
         setError('Failed to delete experience. Please try again.');

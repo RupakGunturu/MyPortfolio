@@ -15,6 +15,8 @@ import {
   CLEAR_ERRORS,
 } from './types';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 const AuthState = (props) => {
   const initialState = {
     token: null,
@@ -32,7 +34,7 @@ const AuthState = (props) => {
       headers: { 'Content-Type': 'application/json' },
     };
     try {
-      const res = await axios.post('/api/register', formData, config);
+      const res = await axios.post(`${API_BASE_URL}/api/register`, formData, config);
       // Don't dispatch REGISTER_SUCCESS - just show success message
       toast.success('🎉 Registration successful! Please log in.');
       return { success: true, data: res.data };
@@ -53,7 +55,7 @@ const AuthState = (props) => {
       headers: { 'Content-Type': 'application/json' },
     };
     try {
-      const res = await axios.post('/api/login', formData, config);
+      const res = await axios.post(`${API_BASE_URL}/api/login`, formData, config);
       dispatch({ type: LOGIN_SUCCESS, payload: res.data });
       localStorage.setItem('isAuthenticated', true);
       localStorage.setItem('user', JSON.stringify(res.data.user || res.data));

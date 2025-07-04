@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { FiUser, FiMail, FiMessageSquare, FiMapPin, FiPhone, FiSend } from 'react-icons/fi';
 import AuthContext from '../context/AuthContext';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 const Contact = ({ userId, ...props }) => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [status, setStatus] = useState('');
@@ -19,7 +21,12 @@ const Contact = ({ userId, ...props }) => {
         setCoords({ latitude, longitude });
         try {
           const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            `${API_BASE_URL}/api/location`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ latitude, longitude }),
+            }
           );
           const data = await response.json();
           setVisitorLocation(data.display_name || 'Location found');
@@ -43,7 +50,7 @@ const Contact = ({ userId, ...props }) => {
     e.preventDefault();
     setStatus('Sending...');
     try {
-      const res = await fetch('/api/contact', { // Using relative path for proxy
+      const res = await fetch(`${API_BASE_URL}/api/contact`, { // Using absolute path for deployed backend
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

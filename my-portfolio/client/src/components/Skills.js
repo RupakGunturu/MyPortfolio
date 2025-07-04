@@ -3,6 +3,7 @@ import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { FaPlus, FaTrash, FaEdit, FaTimes } from 'react-icons/fa';
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
   const authContext = useContext(AuthContext);
@@ -26,7 +27,7 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
   const fetchSkills = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/skills?userId=${effectiveUserId}`);
+      const response = await axios.get(`${API_BASE_URL}/api/skills?userId=${effectiveUserId}`);
       setSkills(response.data);
     } catch (error) {
       console.error('Error fetching skills:', error);
@@ -55,7 +56,7 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
     }
 
     try {
-      const response = await axios.post('/api/skills', {
+      const response = await axios.post(`${API_BASE_URL}/api/skills`, {
         ...newSkill,
         userId: effectiveUserId
       });
@@ -73,7 +74,7 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
   const handleDelete = async (skillId) => {
     setIsDeleting(skillId);
     try {
-      await axios.delete(`/api/skills/${skillId}?userId=${effectiveUserId}`);
+      await axios.delete(`${API_BASE_URL}/api/skills/${skillId}?userId=${effectiveUserId}`);
       
       setSkills(prev => prev.filter(skill => skill._id !== skillId));
       showToast('❌ Skill deleted!');
@@ -87,7 +88,7 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
 
   const handleUpdate = async (skillId, updatedSkill) => {
     try {
-      const response = await axios.put(`/api/skills/${skillId}`, {
+      const response = await axios.put(`${API_BASE_URL}/api/skills/${skillId}`, {
         ...updatedSkill,
         userId: effectiveUserId
       });

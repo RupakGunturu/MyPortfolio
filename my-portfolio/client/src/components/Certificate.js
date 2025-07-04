@@ -3,6 +3,8 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import AuthContext from '../context/AuthContext';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 function Certificates({ viewOnly = false, theme = 'dark', userId }) {
   const authContext = useContext(AuthContext);
   const { user } = authContext || {};
@@ -27,7 +29,7 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
 
   const fetchCertificates = async () => {
     try {
-      const response = await axios.get(`/api/certificates?userId=${effectiveUserId}`);
+      const response = await axios.get(`${API_BASE_URL}/api/certificates?userId=${effectiveUserId}`);
       setCerts(response.data);
     } catch (err) {
       console.error('Failed to fetch certificates:', err);
@@ -72,7 +74,7 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
         formData.append('file', form.file);
       }
 
-      const response = await axios.post('/api/certificates', formData, {
+      const response = await axios.post(`${API_BASE_URL}/api/certificates`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
@@ -101,7 +103,7 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
 const deleteCertificate = async (id) => {
   console.log('Attempting to delete:', id);
   try {
-    const response = await axios.delete(`/api/certificates/${id}?userId=${effectiveUserId}`);
+    const response = await axios.delete(`${API_BASE_URL}/api/certificates/${id}?userId=${effectiveUserId}`);
     
     if (response.data.success) {
       setCerts(prev => prev.filter(cert => cert._id !== id));

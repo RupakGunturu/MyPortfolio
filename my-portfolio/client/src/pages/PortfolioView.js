@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 import './PortfolioView.css';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 const PortfolioView = () => {
   const { username } = useParams();
   const [portfolio, setPortfolio] = useState(null);
@@ -14,7 +16,7 @@ const PortfolioView = () => {
     const fetchPortfolio = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`/api/portfolio/${username}`);
+        const response = await axios.get(`${API_BASE_URL}/api/portfolio/${username}`);
         setPortfolio(response.data);
       } catch (err) {
         console.error('Error fetching portfolio:', err);

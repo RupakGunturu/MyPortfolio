@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 const RegisterPage = () => {
   const [form, setForm] = useState({
     fullname: '',
@@ -27,7 +29,7 @@ const RegisterPage = () => {
     setError('');
     setInfo('');
     try {
-      await axios.post('/api/auth/register-send-otp', { email: form.email });
+      await axios.post(`${API_BASE_URL}/api/auth/register-send-otp`, { email: form.email });
       setStep('otp');
       setInfo('OTP sent to your email. Please check your inbox.');
     } catch (err) {
@@ -41,7 +43,7 @@ const RegisterPage = () => {
     setError('');
     setInfo('');
     try {
-      await axios.post('/api/auth/register-verify-otp', {
+      await axios.post(`${API_BASE_URL}/api/auth/register-verify-otp`, {
         ...form,
         otp,
       });
@@ -57,7 +59,7 @@ const RegisterPage = () => {
     setInfo('');
     setResendLoading(true);
     try {
-      await axios.post('/api/auth/register-send-otp', { email: form.email });
+      await axios.post(`${API_BASE_URL}/api/auth/register-send-otp`, { email: form.email });
       setInfo('A new OTP has been sent to your email.');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to resend OTP');
