@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import AuthContext from '../context/AuthContext';
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
@@ -21,6 +22,7 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
   const [deletingId, setDeletingId] = useState(null);
   const fileInputRef = useRef(null);
   const [filePreview, setFilePreview] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (effectiveUserId) {
@@ -54,6 +56,8 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
 
   const onSubmit = async e => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     setError('');
 
     try {
@@ -87,11 +91,14 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
       });
 
       setCerts(prev => [response.data.certificate, ...prev]);
+      toast.success('Certificate added successfully!');
       resetForm();
       setIsFormVisible(false);
     } catch (err) {
       console.error('Submit error:', err);
       setError(err.message || 'Something went wrong.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -117,6 +124,7 @@ const deleteCertificate = async (id) => {
     if (response.data.success) {
       setCerts(prev => prev.filter(cert => cert._id !== id));
       setDeletingId(null);
+      toast.success('Certificate deleted successfully!');
     } else {
       throw new Error(response.data.message);
     }
@@ -496,8 +504,8 @@ const deleteCertificate = async (id) => {
               >
                 Cancel
               </button>
-              <button type="submit" style={styles.submitBtn}>
-                Save Certificate
+              <button type="submit" style={styles.submitBtn} disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save Certificate'}
               </button>
             </div>
             {error && <div style={styles.error}>{error}</div>}

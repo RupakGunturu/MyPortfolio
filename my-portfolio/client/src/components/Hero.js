@@ -6,6 +6,7 @@ import { removeBackground } from "@imgly/background-removal";
 import "./Hero.css";
 import AuthContext from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
@@ -146,6 +147,7 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
     githubUrl: "",
     linkedinUrl: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const authContext = React.useContext(AuthContext);
   const { user } = authContext || {};
@@ -213,16 +215,20 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
 
   const handleSubmit = async e => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     
     // Check if user is authenticated
     if (!user || !user._id) {
       alert("You must be logged in to update your profile.");
+      setIsSubmitting(false);
       return;
     }
     
     // Validate form data
     if (!form.fullname.trim()) {
       alert("Please enter your name.");
+      setIsSubmitting(false);
       return;
     }
     
@@ -280,7 +286,7 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
       }));
       
       // Show success message
-      alert("Profile updated successfully! Social media icons will now appear.");
+      toast.success("Profile updated successfully !!");
       setEditing(false);
 
       // Update user in AuthContext
@@ -295,6 +301,8 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
       console.error("Update failed:", err);
       console.error("Error response:", err.response?.data);
       alert(`Update failed: ${err.response?.data?.error || err.message}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -864,8 +872,9 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
                   <button 
                     type="submit" 
                     className="primary-button"
+                    disabled={isSubmitting}
                   >
-                    Save Changes
+                    {isSubmitting ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
               </form>

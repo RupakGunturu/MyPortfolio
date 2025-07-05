@@ -28,6 +28,22 @@ const Contact = ({ userId, ...props }) => {
     }
   }, []);
 
+  // Reverse geocode to get address
+  useEffect(() => {
+    if (coords) {
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.latitude}&lon=${coords.longitude}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.display_name) {
+            setVisitorLocation(data.display_name);
+          } else {
+            setVisitorLocation('Location found');
+          }
+        })
+        .catch(() => setVisitorLocation('Location found'));
+    }
+  }, [coords]);
+
   const handleChange = e => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));

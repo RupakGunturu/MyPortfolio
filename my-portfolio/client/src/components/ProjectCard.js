@@ -4,6 +4,7 @@ import { FaPlus, FaEdit, FaTrash, FaTimes, FaExternalLinkAlt } from 'react-icons
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
 import './ProjectCard.css';
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
@@ -110,6 +111,7 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
         console.log('Delete response:', response.data);
         setProjects(projects.filter(project => project._id !== editingProject._id));
         closeModal();
+        toast.success('Project deleted successfully!');
       } catch (err) {
         console.error('Error deleting project:', err);
         console.error('Error response:', err.response?.data);
@@ -173,6 +175,7 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
 
         setProjects([response.data, ...projects]);
         setShowAddModal(false);
+        toast.success('Project created successfully!');
       }
       
       setFormData({ title: '', description: '', link: '', image: '' });
