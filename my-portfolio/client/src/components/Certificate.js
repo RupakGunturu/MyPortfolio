@@ -20,6 +20,7 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const fileInputRef = useRef(null);
+  const [filePreview, setFilePreview] = useState(null);
 
   useEffect(() => {
     if (effectiveUserId) {
@@ -38,10 +39,17 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
   };
 
   const handleFileChange = e => {
+    const file = e.target.files[0];
     setForm(prev => ({
       ...prev,
-      file: e.target.files[0]
+      file: file
     }));
+
+    if (file && file.type.startsWith('image/')) {
+      setFilePreview(URL.createObjectURL(file));
+    } else {
+      setFilePreview(null);
+    }
   };
 
   const onSubmit = async e => {
@@ -89,6 +97,7 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
 
   const resetForm = () => {
     setForm({ title: '', issuer: '', date: '', file: null });
+    setFilePreview(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -469,6 +478,16 @@ const deleteCertificate = async (id) => {
               <p style={styles.fileHint}>Supports JPG, PNG, GIF, or PDF files</p>
             </div>
 
+            {filePreview && (
+              <div style={{ margin: '1rem 0' }}>
+                <img
+                  src={filePreview}
+                  alt="Preview"
+                  style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, border: '1px solid #ccc' }}
+                />
+              </div>
+            )}
+
             <div style={styles.formActions}>
               <button
                 type="button"
@@ -493,85 +512,97 @@ const deleteCertificate = async (id) => {
         </div>
       ) : (
         <div style={styles.grid}>
-          {certs.map(cert => (
-            <motion.div
-              key={cert._id}
-              style={styles.card}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 600, damping: 30, mass: 0.5 }}
-              whileHover={{ 
-                y: -8, 
-                scale: 1.03,
-                boxShadow: theme === 'dark'
-                  ? '0 12px 24px rgba(0,0,0,0.4)'
-                  : '0 12px 24px rgba(30, 41, 59, 0.15)'
-              }}
-            >
-              {!viewOnly && (
-              <button
-                  style={styles.deleteBtn}
-  onClick={(e) => {
-                    e.stopPropagation();
-    confirmDelete(cert._id);
-  }}
-  aria-label="Delete Certificate"
-  title="Delete Certificate"
->
-  ×
-</button>
-              )}
-
-              <div>
-                {cert.url || (cert.file && cert.file.url) || cert.image || cert.imageUrl ? (
-                  <img
-                    src={cert.url || (cert.file && cert.file.url) || cert.image || cert.imageUrl}
-                    alt="Certificate"
-                    style={styles.image}
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = "https://placehold.co/300x200?text=Certificate+Preview";
-                    }}
-                  />
-                ) : (
-                  <div style={styles.noImagePlaceholder}>
-                    <span>No Preview Available</span>
-                  </div>
+          {certs.map(cert => {
+            let imageUrl = null;
+            if (cert.url) {
+              imageUrl = cert.url.startsWith('http')
+                ? cert.url
+                : `${API_BASE_URL}${cert.url}`;
+            } else if (cert.image) {
+              imageUrl = cert.image.startsWith('http')
+                ? cert.image
+                : `${API_BASE_URL}${cert.image}`;
+            }
+            return (
+              <motion.div
+                key={cert._id}
+                style={styles.card}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: 'spring', stiffness: 600, damping: 30, mass: 0.5 }}
+                whileHover={{ 
+                  y: -8, 
+                  scale: 1.03,
+                  boxShadow: theme === 'dark'
+                    ? '0 12px 24px rgba(0,0,0,0.4)'
+                    : '0 12px 24px rgba(30, 41, 59, 0.15)'
+                }}
+              >
+                {!viewOnly && (
+                <button
+                    style={styles.deleteBtn}
+    onClick={(e) => {
+                      e.stopPropagation();
+      confirmDelete(cert._id);
+    }}
+    aria-label="Delete Certificate"
+    title="Delete Certificate"
+  >
+    ×
+  </button>
                 )}
-              </div>
 
-              <div style={styles.details}>
-                <h3 style={styles.title}>{cert.title}</h3>
-                <p style={styles.issuer}>{cert.issuer}</p>
-                <p style={styles.date}>
-                  {new Date(cert.date).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                  })}
-                </p>
+                <div>
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt="Certificate"
+                      style={styles.image}
+                      onError={e => {
+                        e.target.onerror = null;
+                        e.target.src = "https://placehold.co/300x200?text=Certificate+Preview";
+                      }}
+                    />
+                  ) : (
+                    <div style={styles.noImagePlaceholder}>
+                      <span>No Preview Available</span>
+                    </div>
+                  )}
+                </div>
 
-                {deletingId === cert._id && !viewOnly && (
-                  <div style={styles.deleteConfirmOverlay}>
-                    <div style={styles.deleteConfirmBox}>
-                      <p style={styles.confirmText}>Are you sure you want to delete this certificate?</p>
-                      <div style={styles.confirmActions}>
-                        <button onClick={cancelDelete} style={styles.formCancelBtn}>
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => deleteCertificate(cert._id)}
-                          style={styles.confirmDeleteBtn}
-                        >
-                          Yes, Delete
-                        </button>
+                <div style={styles.details}>
+                  <h3 style={styles.title}>{cert.title}</h3>
+                  <p style={styles.issuer}>{cert.issuer}</p>
+                  <p style={styles.date}>
+                    {new Date(cert.date).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </p>
+
+                  {deletingId === cert._id && !viewOnly && (
+                    <div style={styles.deleteConfirmOverlay}>
+                      <div style={styles.deleteConfirmBox}>
+                        <p style={styles.confirmText}>Are you sure you want to delete this certificate?</p>
+                        <div style={styles.confirmActions}>
+                          <button onClick={cancelDelete} style={styles.formCancelBtn}>
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => deleteCertificate(cert._id)}
+                            style={styles.confirmDeleteBtn}
+                          >
+                            Yes, Delete
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          ))}
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       )}
     </section>
