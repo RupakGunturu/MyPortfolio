@@ -73,12 +73,22 @@
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.13);
   transition: background 0.2s, box-shadow 0.2s;
   cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .auth-button:hover, .login-btn:hover, .auth-button:focus, .login-btn:focus {
   background: linear-gradient(90deg, #2563eb 0%, #0ea5e9 100%);
   box-shadow: 0 4px 16px rgba(59, 130, 246, 0.18);
   outline: none;
+}
+
+.auth-button:disabled, .login-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .auth-error {
@@ -124,5 +134,170 @@
 @keyframes underlineIn {
   to {
     transform: scaleX(1);
+  }
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .auth-container {
+    padding: 1rem;
+  }
+  
+  .auth-card {
+    padding: 2rem 1.5rem;
+    border-radius: 20px;
+    margin: 1rem 0;
+  }
+  
+  .auth-title {
+    font-size: 1.75rem;
+  }
+  
+  .auth-subtitle {
+    font-size: 0.95rem;
+  }
+  
+  .auth-form input {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 1rem 1rem;
+    min-height: 48px;
+  }
+  
+  .auth-button, .login-btn {
+    padding: 1rem 0;
+    font-size: 1rem;
+    min-height: 48px;
+  }
+  
+  .auth-switch {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-container {
+    padding: 0.5rem;
+  }
+  
+  .auth-card {
+    padding: 1.5rem 1rem;
+    border-radius: 16px;
+  }
+  
+  .auth-title {
+    font-size: 1.5rem;
+  }
+  
+  .auth-subtitle {
+    font-size: 0.9rem;
+  }
+  
+  .auth-form {
+    gap: 1rem;
+  }
+  
+  .auth-form input {
+    padding: 0.9rem 0.9rem;
+    font-size: 16px;
+    min-height: 44px;
+  }
+  
+  .auth-button, .login-btn {
+    padding: 0.9rem 0;
+    font-size: 0.95rem;
+    min-height: 44px;
+  }
+  
+  .auth-switch {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .auth-card {
+    padding: 1rem 0.8rem;
+  }
+  
+  .auth-title {
+    font-size: 1.3rem;
+  }
+  
+  .auth-form input {
+    padding: 0.8rem 0.8rem;
+  }
+  
+  .auth-button, .login-btn {
+    padding: 0.8rem 0;
+    font-size: 0.9rem;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  .auth-button:hover, .login-btn:hover {
+    background: linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.13);
+  }
+  
+  .auth-button:active, .login-btn:active {
+    background: linear-gradient(90deg, #2563eb 0%, #0ea5e9 100%);
+    transform: scale(0.98);
+  }
+  
+  .auth-switch a:hover {
+    color: #3b82f6;
+  }
+}
+
+/* Loading spinner styles */
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Enhanced accessibility */
+.auth-form input:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.auth-button:focus-visible, .login-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .auth-form input {
+    border-width: 2px;
+  }
+  
+  .auth-button, .login-btn {
+    border: 2px solid #fff;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .auth-button, .login-btn {
+    transition: none;
+  }
+  
+  .login-underline {
+    animation: none;
+    transform: scaleX(1);
+  }
+  
+  .loading-spinner {
+    animation: none;
   }
 } 

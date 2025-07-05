@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import './Navbar.css';
@@ -9,10 +9,20 @@ const Navbar = () => {
   const authContext = useContext(AuthContext);
   const { isAuthenticated, logout, user } = authContext;
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const onLogout = () => {
     logout();
     navigate('/login');
+    setIsMobileMenuOpen(false);
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
   };
 
   return (
@@ -23,12 +33,24 @@ const Navbar = () => {
       transition={{ duration: 0.5, ease: 'easeOut' }}
     >
       <div className="navbar-logo">
-        <Link to="/">
+        <Link to="/" onClick={closeMobileMenu}>
           <img src={process.env.PUBLIC_URL + '/image/devdesk777.jpg'} alt="Dev Desk Logo" className="navbar-logo" />
           <span>DevDesk</span>
         </Link>
       </div>
-      <div className="navbar-links">
+      
+      {/* Mobile Menu Toggle */}
+      <button 
+        className={`mobile-menu-toggle ${isMobileMenuOpen ? 'active' : ''}`}
+        onClick={toggleMobileMenu}
+        aria-label="Toggle mobile menu"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <div className={`navbar-links ${isMobileMenuOpen ? 'active' : ''}`}>
         {isAuthenticated && user ? (
           <>
             <span className="welcome-message">
@@ -40,8 +62,8 @@ const Navbar = () => {
           </>
         ) : (
           <>
-            <Link to="/login" className="nav-link">Login</Link>
-            <Link to="/register" className="nav-link">Register</Link>
+            <Link to="/login" className="nav-link" onClick={closeMobileMenu}>Login</Link>
+            <Link to="/register" className="nav-link" onClick={closeMobileMenu}>Register</Link>
           </>
         )}
       </div>

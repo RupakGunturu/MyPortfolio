@@ -166,4 +166,48 @@
       font-size: 0.93rem;
     }
   }
+
+  @media (max-width: 480px) {
+    .custom-footer {
+      padding: 0.6rem 0.4rem;
+      gap: 0.3rem;
+    }
+    
+    .footer-logo-row {
+      gap: 0.5rem;
+    }
+    
+    .footer-logo {
+      height: 24px;
+      width: 24px;
+    }
+    
+    .footer-center {
+      font-size: 0.85rem;
+      margin: 0 0.8rem;
+    }
+    
+    .footer-right {
+      gap: 1.5rem;
+    }
+    
+    .footer-right a {
+      font-size: 1rem;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .custom-footer {
+      padding: 0.5rem 0.3rem;
+    }
+    
+    .footer-center {
+      font-size: 0.8rem;
+      margin: 0 0.5rem;
+    }
+    
+    .footer-right {
+      gap: 1.2rem;
+    }
+  }
   

@@ -14,6 +14,7 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
   const [newSkill, setNewSkill] = useState({ title: '', level: 'intermediate' });
   const [toastMessage, setToastMessage] = useState('');
   const [isDeleting, setIsDeleting] = useState(null);
+  const [currentStyles, setCurrentStyles] = useState({});
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.2 });
   const [loading, setLoading] = useState(true);
@@ -23,6 +24,123 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
       fetchSkills();
     }
   }, [effectiveUserId]);
+
+  // Handle responsive styles
+  useEffect(() => {
+    const updateStyles = () => {
+      const isMobile = window.innerWidth <= 768;
+      const isSmallMobile = window.innerWidth <= 480;
+      
+      let mobileStyles = {};
+      
+      if (isSmallMobile) {
+        mobileStyles = {
+          section: { padding: '40px 15px' },
+          header: { 
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            gap: '1rem',
+            paddingBottom: '1rem'
+          },
+          heading: { fontSize: '2rem' },
+          subHeading: { fontSize: '1rem' },
+          grid: { 
+            gridTemplateColumns: '1fr',
+            gap: '0.8rem'
+          },
+          card: { 
+            padding: '1.2rem'
+          },
+          form: { 
+            padding: '1.2rem',
+            marginBottom: '1.5rem'
+          },
+          input: { 
+            padding: '0.75rem 0.875rem',
+            fontSize: '16px'
+          },
+          levelSelect: { 
+            padding: '0.75rem',
+            fontSize: '16px'
+          },
+          submitButton: { 
+            padding: '0.75rem 1.2rem',
+            fontSize: '0.9rem',
+            minHeight: '44px'
+          },
+          cancelButton: { 
+            padding: '0.75rem 1.2rem',
+            fontSize: '0.9rem',
+            minHeight: '44px'
+          },
+          addButton: { 
+            padding: '0.6rem 1.2rem',
+            fontSize: '0.9rem',
+            minHeight: '44px'
+          }
+        };
+      } else if (isMobile) {
+        mobileStyles = {
+          section: { padding: '50px 20px' },
+          header: { 
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            gap: '1rem',
+            paddingBottom: '1rem'
+          },
+          heading: { fontSize: '2.5rem' },
+          subHeading: { fontSize: '1.1rem' },
+          grid: { 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '0.9rem'
+          },
+          card: { 
+            padding: '1.3rem'
+          },
+          form: { 
+            padding: '1.3rem',
+            marginBottom: '1.8rem'
+          },
+          input: { 
+            padding: '0.8rem 0.9rem',
+            fontSize: '16px'
+          },
+          levelSelect: { 
+            padding: '0.8rem',
+            fontSize: '16px'
+          },
+          submitButton: { 
+            padding: '0.8rem 1.3rem',
+            fontSize: '0.95rem',
+            minHeight: '44px'
+          },
+          cancelButton: { 
+            padding: '0.8rem 1.3rem',
+            fontSize: '0.95rem',
+            minHeight: '44px'
+          },
+          addButton: { 
+            padding: '0.7rem 1.3rem',
+            fontSize: '0.95rem',
+            minHeight: '44px'
+          }
+        };
+      }
+      
+      const responsiveStyles = { ...styles };
+      Object.keys(mobileStyles).forEach(key => {
+        if (responsiveStyles[key]) {
+          responsiveStyles[key] = { ...responsiveStyles[key], ...mobileStyles[key] };
+        }
+      });
+      
+      setCurrentStyles(responsiveStyles);
+    };
+
+    updateStyles();
+    window.addEventListener('resize', updateStyles);
+    return () => window.removeEventListener('resize', updateStyles);
+  }, []);
 
   const fetchSkills = async () => {
     try {
@@ -187,7 +305,7 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
     },
     grid: {
       display: 'grid',
-      gridTemplateColumns: 'repeat(3, 1fr)',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
       gap: '1rem',
       width: '100%',
       maxWidth: '1200px',
@@ -371,6 +489,121 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
     },
   };
 
+  // Mobile responsive styles
+  const getMobileStyles = () => {
+    const isMobile = window.innerWidth <= 768;
+    const isSmallMobile = window.innerWidth <= 480;
+    
+    if (isSmallMobile) {
+      return {
+        section: { padding: '40px 15px' },
+        header: { 
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          gap: '1rem',
+          paddingBottom: '1rem'
+        },
+        heading: { fontSize: '2rem' },
+        subHeading: { fontSize: '1rem' },
+        grid: { 
+          gridTemplateColumns: '1fr',
+          gap: '0.8rem'
+        },
+        card: { 
+          padding: '1.2rem'
+        },
+        form: { 
+          padding: '1.2rem',
+          marginBottom: '1.5rem'
+        },
+        input: { 
+          padding: '0.75rem 0.875rem',
+          fontSize: '16px' // Prevents zoom on iOS
+        },
+        levelSelect: { 
+          padding: '0.75rem',
+          fontSize: '16px'
+        },
+        submitButton: { 
+          padding: '0.75rem 1.2rem',
+          fontSize: '0.9rem',
+          minHeight: '44px'
+        },
+        cancelButton: { 
+          padding: '0.75rem 1.2rem',
+          fontSize: '0.9rem',
+          minHeight: '44px'
+        },
+        addButton: { 
+          padding: '0.6rem 1.2rem',
+          fontSize: '0.9rem',
+          minHeight: '44px'
+        }
+      };
+    }
+    
+    if (isMobile) {
+      return {
+        section: { padding: '50px 20px' },
+        header: { 
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          gap: '1rem',
+          paddingBottom: '1rem'
+        },
+        heading: { fontSize: '2.5rem' },
+        subHeading: { fontSize: '1.1rem' },
+        grid: { 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '0.9rem'
+        },
+        card: { 
+          padding: '1.3rem'
+        },
+        form: { 
+          padding: '1.3rem',
+          marginBottom: '1.8rem'
+        },
+        input: { 
+          padding: '0.8rem 0.9rem',
+          fontSize: '16px'
+        },
+        levelSelect: { 
+          padding: '0.8rem',
+          fontSize: '16px'
+        },
+        submitButton: { 
+          padding: '0.8rem 1.3rem',
+          fontSize: '0.95rem',
+          minHeight: '44px'
+        },
+        cancelButton: { 
+          padding: '0.8rem 1.3rem',
+          fontSize: '0.95rem',
+          minHeight: '44px'
+        },
+        addButton: { 
+          padding: '0.7rem 1.3rem',
+          fontSize: '0.95rem',
+          minHeight: '44px'
+        }
+      };
+    }
+    
+    return {};
+  };
+
+  // Apply mobile styles
+  const mobileStyles = getMobileStyles();
+  const responsiveStyles = { ...styles };
+
+  // Merge mobile styles with base styles
+  Object.keys(mobileStyles).forEach(key => {
+    if (responsiveStyles[key]) {
+      responsiveStyles[key] = { ...responsiveStyles[key], ...mobileStyles[key] };
+    }
+  });
+
   const toastStyles = {
     position: 'fixed',
     bottom: '30px',
@@ -386,18 +619,18 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
 };
 
   return (
-    <section style={styles.section}>
-      <div style={styles.header}>
-        <div style={{ paddingLeft: '4rem' }}>
-          <h2 style={styles.heading}>Technical Skills</h2>
-          <p style={styles.subHeading}>Manage your skill proficiency levels</p>
+    <section style={currentStyles.section || styles.section}>
+      <div style={currentStyles.header || styles.header}>
+        <div style={{ paddingLeft: window.innerWidth <= 768 ? '0' : '4rem' }}>
+          <h2 style={currentStyles.heading || styles.heading}>Technical Skills</h2>
+          <p style={currentStyles.subHeading || styles.subHeading}>Manage your skill proficiency levels</p>
         </div>
         {!viewOnly && (
         <button 
-          style={styles.addButton}
+          style={currentStyles.addButton || styles.addButton}
           onClick={() => setIsFormOpen(true)}
         >
-          <svg style={styles.plusIcon} viewBox="0 0 24 24">
+          <svg style={currentStyles.plusIcon || styles.plusIcon} viewBox="0 0 24 24">
             <path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
           </svg>
           Add Skill
@@ -406,28 +639,28 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
       </div>
 
       {isFormOpen && (
-        <form style={styles.form} onSubmit={handleSubmit}>
+        <form style={currentStyles.form || styles.form} onSubmit={handleSubmit}>
           <input
             name="title"
             placeholder="Enter skill name..."
             value={newSkill.title}
             onChange={handleChange}
-            style={styles.input}
+            style={currentStyles.input || styles.input}
             autoFocus
           />
           <select
             name="level"
             value={newSkill.level}
             onChange={handleChange}
-            style={styles.levelSelect}
+            style={currentStyles.levelSelect || styles.levelSelect}
           >
             <option value="beginner">Beginner</option>
             <option value="intermediate">Intermediate</option>
             <option value="advanced">Advanced</option>
             <option value="expert">Expert</option>
           </select>
-          <div style={styles.formActions}>
-            <button type="submit" style={styles.submitButton}>
+          <div style={currentStyles.formActions || styles.formActions}>
+            <button type="submit" style={currentStyles.submitButton || styles.submitButton}>
               Save Skill
             </button>
             <button
@@ -436,7 +669,7 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
                 setIsFormOpen(false);
                 setNewSkill({ title: '', level: 'intermediate' });
               }}
-              style={styles.cancelButton}
+              style={currentStyles.cancelButton || styles.cancelButton}
             >
               Discard
             </button>
@@ -444,23 +677,23 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
         </form>
       )}
 
-     <div ref={ref} style={styles.grid}>
+     <div ref={ref} style={currentStyles.grid || styles.grid}>
         {skills.length > 0 ? (
           skills.map((skill, index) => (
             <motion.div
               key={skill._id}
-              style={styles.card}
+              style={currentStyles.card || styles.card}
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.2, delay: index * 0.02 }}
               whileHover={{ y: -4, scale: 1.02, boxShadow: '0 10px 20px -5px rgba(0, 0, 0, 0.1)' }}
             >
-              <div style={styles.cardContent}>
-                <div style={styles.skillHeader}>
-                  <h3 style={styles.title}>{skill.title}</h3>
-                  <div style={styles.actions}>
+              <div style={currentStyles.cardContent || styles.cardContent}>
+                <div style={currentStyles.skillHeader || styles.skillHeader}>
+                  <h3 style={currentStyles.title || styles.title}>{skill.title}</h3>
+                  <div style={currentStyles.actions || styles.actions}>
                     <span style={{
-                      ...styles.levelTag,
+                      ...(currentStyles.levelTag || styles.levelTag),
                       backgroundColor: getProgressColor(skill.level)
                     }}>
                       {skill.level}
@@ -468,13 +701,13 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
                     {!viewOnly && (
                     <button 
                       onClick={() => handleDelete(skill._id)}
-                      style={styles.deleteButton}
+                      style={currentStyles.deleteButton || styles.deleteButton}
                       disabled={isDeleting === skill._id}
                     >
                       {isDeleting === skill._id ? (
-                        <span style={styles.spinner}></span>
+                        <span style={currentStyles.spinner || styles.spinner}></span>
                       ) : (
-                        <svg style={styles.trashIcon} viewBox="0 0 24 24">
+                        <svg style={currentStyles.trashIcon || styles.trashIcon} viewBox="0 0 24 24">
                           <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
                         </svg>
                       )}
@@ -482,7 +715,7 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
                     )}
                   </div>
                 </div>
-                <div style={styles.skillLevel}>
+                <div style={currentStyles.skillLevel || styles.skillLevel}>
                   <div 
                     style={{
                       width: `${getProgressWidth(skill.level)}%`,

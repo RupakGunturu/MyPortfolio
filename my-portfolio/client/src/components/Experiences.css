@@ -278,9 +278,25 @@
 
 /* Responsive adjustments */
 @media screen and (max-width: 768px) {
+  .experience-section {
+    padding: 60px 15px;
+  }
+
+  .experience-heading {
+    font-size: 2.5rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .edit-button {
+    margin: -30px auto 20px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+  }
+
   .experience-timeline::before {
     left: 25px;
   }
+
   .timeline-item, .timeline-item:nth-child(even) {
     width: 100%;
     left: 0;
@@ -288,11 +304,103 @@
     padding-right: 20px;
     text-align: left;
   }
+
   .timeline-item:nth-child(odd) {
     padding-right: 20px;
     text-align: left;
   }
+
   .timeline-icon, .timeline-item:nth-child(even) .timeline-icon {
     left: 0;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+
+  .timeline-content {
+    padding: 20px;
+  }
+
+  .timeline-title {
+    font-size: 1.3rem;
+  }
+
+  .timeline-company {
+    font-size: 1rem;
+  }
+
+  .timeline-description {
+    font-size: 0.9rem;
+  }
+
+  .timeline-content-edit input,
+  .timeline-content-edit textarea,
+  .timeline-icon-edit select {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 10px 12px;
+  }
+
+  .remove-button, .add-button, .save-button, .cancel-button {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    min-height: 36px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .experience-section {
+    padding: 40px 10px;
+  }
+
+  .experience-heading {
+    font-size: 2rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .edit-button {
+    margin: -25px auto 15px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+
+  .timeline-item, .timeline-item:nth-child(even) {
+    padding-left: 50px;
+    padding-right: 15px;
+  }
+
+  .timeline-icon, .timeline-item:nth-child(even) .timeline-icon {
+    left: -5px;
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+  }
+
+  .timeline-content {
+    padding: 15px;
+  }
+
+  .timeline-title {
+    font-size: 1.1rem;
+  }
+
+  .timeline-company {
+    font-size: 0.9rem;
+  }
+
+  .timeline-description {
+    font-size: 0.85rem;
+  }
+
+  .timeline-content-edit input,
+  .timeline-content-edit textarea,
+  .timeline-icon-edit select {
+    padding: 8px 10px;
+    font-size: 16px;
+  }
+
+  .remove-button, .add-button, .save-button, .cancel-button {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    min-height: 32px;
   }
 }
