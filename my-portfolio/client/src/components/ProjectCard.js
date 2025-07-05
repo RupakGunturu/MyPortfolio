@@ -27,6 +27,7 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
   });
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Refs for intersection observer
   const projectsSectionRef = useRef(null);
@@ -65,7 +66,10 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}?userId=${effectiveUserId}`);
+      console.log('Fetching projects for userId:', effectiveUserId);
+      console.log('API URL:', `${API_BASE_URL}/api/projects?userId=${effectiveUserId}`);
+      const response = await axios.get(`${API_BASE_URL}/api/projects?userId=${effectiveUserId}`);
+      console.log('Projects response:', response.data);
       setProjects(response.data);
       setError(null);
     } catch (err) {
@@ -101,7 +105,7 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
 
     if (window.confirm('Are you sure you want to delete this project?')) {
       try {
-        await axios.delete(`${API_BASE_URL}/${editingProject._id}?userId=${effectiveUserId}`);
+        await axios.delete(`${API_BASE_URL}/api/projects/${editingProject._id}?userId=${effectiveUserId}`);
         setProjects(projects.filter(project => project._id !== editingProject._id));
         closeModal();
       } catch (err) {
@@ -133,10 +137,17 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Prevent multiple submissions
+    if (isSubmitting) {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
     try {
       if (showEditModal && editingProject) {
         // Update existing project
-        const response = await axios.put(`${API_BASE_URL}/${editingProject._id}`, {
+        const response = await axios.put(`${API_BASE_URL}/api/projects/${editingProject._id}`, {
           ...formData,
           userId: effectiveUserId
         });
@@ -148,10 +159,12 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
         setEditingProject(null);
       } else {
         // Add new project
+        console.log('Adding new project with data:', { ...formData, userId: effectiveUserId });
         const response = await axios.post(`${API_BASE_URL}/api/projects`, {
           ...formData,
           userId: effectiveUserId
         });
+        console.log('Project created:', response.data);
 
         setProjects([response.data, ...projects]);
         setShowAddModal(false);
@@ -163,6 +176,8 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
     } catch (err) {
       console.error('Error saving project:', err);
       alert(err.response?.data?.message || 'Failed to save project. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -242,7 +257,18 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
           ) : (
             (Array.isArray(projects) ? projects : []).map((project, index) => {
               const projectRawUrl = project.image || project.imageUrl;
-              const projectImageUrl = projectRawUrl ? (projectRawUrl.startsWith('http') ? projectRawUrl : `${API_BASE_URL}${projectRawUrl}`) : null;
+              let projectImageUrl = null;
+              
+              if (projectRawUrl) {
+                if (projectRawUrl.startsWith('http')) {
+                  projectImageUrl = projectRawUrl;
+                } else if (projectRawUrl.startsWith('data:image')) {
+                  projectImageUrl = projectRawUrl; // Base64 image
+                } else {
+                  // For relative URLs, prepend the backend URL
+                  projectImageUrl = `${API_BASE_URL}${projectRawUrl.startsWith('/') ? '' : '/'}${projectRawUrl}`;
+                }
+              }
               return (
                 <div 
                   key={project._id} 
@@ -361,8 +387,8 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
                 <button type="button" onClick={closeModal} className="cancel-btn">
                   Cancel
                 </button>
-                <button type="submit" className="submit-btn">
-                  Add Project
+                <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                  {isSubmitting ? 'Adding...' : 'Add Project'}
                 </button>
               </div>
             </form>
@@ -438,8 +464,8 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
                 <button type="button" onClick={closeModal} className="cancel-btn">
                   Cancel
                 </button>
-                <button type="submit" className="submit-btn">
-                  Update Project
+                <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                  {isSubmitting ? 'Updating...' : 'Update Project'}
                 </button>
               </div>
             </form>

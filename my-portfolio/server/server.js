@@ -833,9 +833,12 @@ app.put('/api/experiences', async (req, res) => {
 
 // Project Schema
 const projectSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  title: { type: String, required: true },
+  description: { type: String, required: true },
   link: { type: String, required: true },
-  image: { type: String, default: "" }
+  image: { type: String, default: "" },
+  file: { type: String, default: "" },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'RegisteredUser', required: true }
 }, { timestamps: true });
 
 const Project = mongoose.models.Project || mongoose.model('Project', projectSchema);
@@ -946,7 +949,8 @@ app.post(
 );
 
 // --- Project Routes ---
-app.get('/api/projects', getProjects);
+// This route is commented out as it conflicts with the user-specific projects route above
+// app.get('/api/projects', getProjects);
 
 // --- Certificate Routes ---
 const certificates = []; // Placeholder
