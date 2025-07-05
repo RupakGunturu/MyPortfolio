@@ -383,6 +383,16 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
     }
   };
 
+  // Prevent background scroll when modal is open
+  useEffect(() => {
+    if (editing) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [editing]);
+
   if (loading) {
     return (
       <div className="hero-section loading" style={{ background: '#fff' }}>
@@ -611,14 +621,16 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
             onClick={() => setEditing(false)}
             style={{
               position: 'fixed',
-              inset: 0,
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
               background: 'rgba(0, 0, 0, 0.6)',
-              zIndex: 49,
+              zIndex: 9999,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '1rem',
-              overflowY: 'auto'
+              overflowY: 'auto',
             }}
           >
             <motion.div
@@ -627,8 +639,17 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
               exit={{ opacity: 0, y: -30, scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
               style={{
-                position: 'relative',
-                zIndex: 50,
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 10000,
+                background: 'white',
+                borderRadius: '16px',
+                padding: '24px',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                minWidth: 'clamp(280px, 80vw, 400px)',
+                maxWidth: '400px',
               }}
             >
               <form
