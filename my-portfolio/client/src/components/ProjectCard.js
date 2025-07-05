@@ -105,12 +105,15 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
 
     if (window.confirm('Are you sure you want to delete this project?')) {
       try {
-        await axios.delete(`${API_BASE_URL}/api/projects/${editingProject._id}?userId=${effectiveUserId}`);
+        console.log('Deleting project:', editingProject._id, 'for user:', effectiveUserId);
+        const response = await axios.delete(`${API_BASE_URL}/api/projects/${editingProject._id}?userId=${effectiveUserId}`);
+        console.log('Delete response:', response.data);
         setProjects(projects.filter(project => project._id !== editingProject._id));
         closeModal();
       } catch (err) {
         console.error('Error deleting project:', err);
-        alert('Failed to delete project. Please try again.');
+        console.error('Error response:', err.response?.data);
+        alert(`Failed to delete project: ${err.response?.data?.error || err.message}`);
       }
     }
   };
@@ -124,9 +127,11 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
         return;
       }
 
+      console.log('Selected image file:', file.name, 'Size:', file.size, 'Type:', file.type);
       setSelectedImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
+        console.log('Image converted to base64, length:', reader.result.length);
         setImagePreview(reader.result);
         setFormData(prev => ({ ...prev, image: reader.result }));
       };
@@ -264,11 +269,16 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
                   projectImageUrl = projectRawUrl;
                 } else if (projectRawUrl.startsWith('data:image')) {
                   projectImageUrl = projectRawUrl; // Base64 image
+                } else if (projectRawUrl.startsWith('/uploads/')) {
+                  // For uploaded files, prepend the backend URL
+                  projectImageUrl = `${API_BASE_URL}${projectRawUrl}`;
                 } else {
-                  // For relative URLs, prepend the backend URL
+                  // For other relative URLs, prepend the backend URL
                   projectImageUrl = `${API_BASE_URL}${projectRawUrl.startsWith('/') ? '' : '/'}${projectRawUrl}`;
                 }
               }
+              
+              console.log('Project:', project.title, 'Image URL:', projectImageUrl);
               return (
                 <div 
                   key={project._id} 
@@ -281,9 +291,11 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
                         src={projectImageUrl}
                         alt={project.title}
                         onError={e => {
+                          console.log('Image failed to load:', projectImageUrl);
                           e.target.onerror = null;
                           e.target.src = "https://placehold.co/300x200?text=Project+Preview";
                         }}
+                        onLoad={() => console.log('Image loaded successfully:', projectImageUrl)}
                       />
                     ) : (
                       <div className="no-image-placeholder">

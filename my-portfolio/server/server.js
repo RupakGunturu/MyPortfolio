@@ -14,6 +14,7 @@ import jwt from 'jsonwebtoken';
 import registerRoute from './routes/register.js';
 import bcrypt from 'bcryptjs';
 import RegisteredUser from './models/registeredUser.js';
+import Project from './models/project.js';
 
 // --- Auth Middleware ---
 const auth = (req, res, next) => {
@@ -831,29 +832,20 @@ app.put('/api/experiences', async (req, res) => {
 
 // ---- Projects ----
 
-// Project Schema
-const projectSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  description: { type: String, required: true },
-  link: { type: String, required: true },
-  image: { type: String, default: "" },
-  file: { type: String, default: "" },
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'RegisteredUser', required: true }
-}, { timestamps: true });
-
-const Project = mongoose.models.Project || mongoose.model('Project', projectSchema);
-
 // Get all projects for a specific user
 app.get("/api/projects", async (req, res) => {
   try {
     const { userId } = req.query;
+    console.log('Fetching projects for userId:', userId);
     if (!userId) {
       return res.status(400).json({ error: 'userId is required' });
     }
     
     const projects = await Project.find({ user: userId }).sort({ createdAt: -1 });
+    console.log('Found projects:', projects.length, 'for user:', userId);
     res.json(projects);
   } catch (error) {
+    console.error('Error fetching projects:', error);
     res.status(500).json({ message: "Failed to fetch projects", error: error.message });
   }
 });
@@ -861,14 +853,17 @@ app.get("/api/projects", async (req, res) => {
 // Add a new project
 app.post("/api/projects", async (req, res) => {
   try {
+    console.log('Creating project with data:', req.body);
     const { title, description, image, file, link, userId } = req.body;
     if (!title || !description || !userId) {
       return res.status(400).json({ message: "Title, description, and userId are required" });
     }
     const newProject = new Project({ title, description, image, file, link, user: userId });
     await newProject.save();
+    console.log('Project created successfully:', newProject);
     res.status(201).json(newProject);
   } catch (error) {
+    console.error('Error creating project:', error);
     res.status(400).json({ message: "Failed to add project", error: error.message });
   }
 });
@@ -877,23 +872,30 @@ app.post("/api/projects", async (req, res) => {
 app.delete("/api/projects/:id", async (req, res) => {
   try {
     const { userId } = req.query;
+    console.log('Deleting project:', req.params.id, 'for user:', userId);
     if (!userId) {
       return res.status(400).json({ error: 'userId is required' });
     }
     
     const project = await Project.findById(req.params.id);
     if (!project) {
+      console.log('Project not found:', req.params.id);
       return res.status(404).json({ error: 'Project not found' });
     }
     
+    console.log('Found project:', project.title, 'belongs to user:', project.user.toString());
+    
     // Check if the project belongs to the user
     if (project.user.toString() !== userId) {
+      console.log('Authorization failed: project user', project.user.toString(), '!= requested user', userId);
       return res.status(403).json({ error: 'Not authorized to delete this project' });
     }
     
-    await Project.findByIdAndDelete(req.params.id);
-    res.json({ message: "Project deleted successfully" });
+    const deletedProject = await Project.findByIdAndDelete(req.params.id);
+    console.log('Project deleted successfully:', deletedProject.title);
+    res.json({ message: "Project deleted successfully", deletedProject });
   } catch (error) {
+    console.error('Error deleting project:', error);
     res.status(400).json({ message: "Failed to delete project", error: error.message });
   }
 });
