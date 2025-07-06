@@ -5,14 +5,20 @@
   align-items: center;
   justify-content: center;
   background: #181a23;
-  padding: 2rem;
+  padding: 0.5rem;
 }
 
 .landing-content {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1200px;
+  max-width: 700px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .landing-title {
@@ -22,6 +28,7 @@
   text-align: center;
   line-height: 1.1;
   color: #fff;
+  white-space: nowrap;
 }
 
 .text-gradient {
@@ -80,7 +87,7 @@
   color: #bfc7d5;
   font-size: 1.25rem;
   text-align: center;
-  max-width: 600px;
+  max-width: 500px;
   margin: 0 auto 2.5rem auto;
   line-height: 1.6;
 }
@@ -89,7 +96,9 @@
   display: flex;
   gap: 1.2rem;
   justify-content: center;
+  align-items: center;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .btn-gradient {
@@ -221,7 +230,7 @@
   }
   
   .landing-title {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
     margin-bottom: 1rem;
   }
   

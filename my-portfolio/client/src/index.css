@@ -7,9 +7,12 @@
 
 /* Remove default body margin and hide horizontal overflow */
 html,
-body {
+body,
+#root {
+  height: 100%;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
   width: 100%;
   overflow-x: hidden;
 }

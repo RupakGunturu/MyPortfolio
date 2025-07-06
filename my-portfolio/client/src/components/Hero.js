@@ -101,29 +101,29 @@ const getDynamicFontSize = (name) => {
   if (nameLength <= 3) {
     fontSize = "clamp(6rem, 20vw, 16rem)";
   }
-  // Short names (4-6 characters) - very large font
+  // Short names (4-6 characters)
   else if (nameLength <= 6) {
-    fontSize = "clamp(5rem, 18vw, 14rem)";
+    fontSize = "clamp(5rem, 20vw, 15rem)";
   }
-  // Medium names (7-10 characters) - large font
+  // Medium names (7-10 characters)
   else if (nameLength <= 10) {
     fontSize = "clamp(4rem, 15vw, 12rem)";
   }
-  // Long names (11-15 characters) - medium font
+  // Long names (11-15 characters)
   else if (nameLength <= 15) {
-    fontSize = "clamp(3.5rem, 13vw, 10rem)";
+    fontSize = "clamp(3.5rem, 12vw, 9rem)";
   }
-  // Very long names (16-20 characters) - smaller font
+  // Very long names (16-20 characters)
   else if (nameLength <= 20) {
-    fontSize = "clamp(2.5rem, 10vw, 7rem)";
+    fontSize = "clamp(2.5rem, 10vw, 6.8rem)";
   }
-  // Extra long names (21-25 characters) - small font
+  // Extra long names (21-25 characters)
   else if (nameLength <= 25) {
-    fontSize = "clamp(2.5rem, 9vw, 6rem)";
+    fontSize = "clamp(2.5rem, 8.5vw, 5.5rem)";
   }
-  // Extremely long names (26+ characters) - smallest font
+  // Extremely long names (26+ characters)
   else {
-    fontSize = "clamp(2rem, 7vw, 5rem)";
+    fontSize = "clamp(2.2rem, 6.5vw, 5rem)";
   }
   
   console.log(`Name: "${name}" (${nameLength} chars) → Font size: ${fontSize}`);
