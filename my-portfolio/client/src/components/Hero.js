@@ -10,6 +10,55 @@ import { toast } from 'react-toastify';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
+// Helper to get the correct image URL
+function getImageUrl(url, imageJustUpdated, API_BASE_URL) {
+  if (!url) return "/images/profile-placeholder.png";
+  if (url.startsWith("http") || url.startsWith("/images/")) return url;
+  if (url.startsWith("/uploads/")) {
+    return imageJustUpdated
+      ? `${API_BASE_URL}${url}?t=${Date.now()}`
+      : `${API_BASE_URL}${url}`;
+  }
+  return url;
+}
+
+// Helper to format social media URLs
+function formatSocialUrl(url, platform) {
+  if (!url) return "";
+  url = url.trim();
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  if (platform === 'github') {
+    if (url.startsWith('github.com/')) {
+      return `https://${url}`;
+    }
+    return `https://github.com/${url}`;
+  }
+  if (platform === 'linkedin') {
+    if (url.startsWith('linkedin.com/')) {
+      return `https://${url}`;
+    }
+    return `https://linkedin.com/in/${url}`;
+  }
+  return url;
+}
+
+// Helper to calculate dynamic font size based on name length
+function getDynamicFontSize(name) {
+  if (!name || name.trim() === "") return "clamp(4rem, 15vw, 12rem)";
+  const nameLength = name.trim().length;
+  let fontSize;
+  if (nameLength <= 3) fontSize = "clamp(6rem, 20vw, 16rem)";
+  else if (nameLength <= 6) fontSize = "clamp(5rem, 20vw, 15rem)";
+  else if (nameLength <= 10) fontSize = "clamp(4rem, 15vw, 12rem)";
+  else if (nameLength <= 15) fontSize = "clamp(3.5rem, 12vw, 9rem)";
+  else if (nameLength <= 20) fontSize = "clamp(2.5rem, 10vw, 6.8rem)";
+  else if (nameLength <= 25) fontSize = "clamp(2.5rem, 8.5vw, 5.5rem)";
+  else fontSize = "clamp(2.2rem, 6.5vw, 5rem)";
+  return fontSize;
+}
+
 const textContainerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -50,86 +99,6 @@ const letterVariants = {
   }
 };
 
-// Helper to get the correct image URL
-const getImageUrl = (url) => {
-  if (!url) return "/images/profile-placeholder.png";
-  if (url.startsWith("http") || url.startsWith("/images/")) return url;
-  if (url.startsWith("/uploads/")) {
-    return `${API_BASE_URL}${url}`;
-  }
-  return url;
-};
-
-// Helper to format social media URLs
-const formatSocialUrl = (url, platform) => {
-  if (!url) return "";
-  
-  // Remove any whitespace
-  url = url.trim();
-  
-  // If it's already a full URL, return as is
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-  
-  // Format based on platform
-  if (platform === 'github') {
-    if (url.startsWith('github.com/')) {
-      return `https://${url}`;
-    }
-    return `https://github.com/${url}`;
-  }
-  
-  if (platform === 'linkedin') {
-    if (url.startsWith('linkedin.com/')) {
-      return `https://${url}`;
-    }
-    return `https://linkedin.com/in/${url}`;
-  }
-  
-  return url;
-};
-
-// Helper to calculate dynamic font size based on name length
-const getDynamicFontSize = (name) => {
-  if (!name || name.trim() === "") return "clamp(4rem, 15vw, 12rem)";
-  
-  const nameLength = name.trim().length;
-  let fontSize;
-  
-  // Very short names (1-3 characters) - largest font
-  if (nameLength <= 3) {
-    fontSize = "clamp(6rem, 20vw, 16rem)";
-  }
-  // Short names (4-6 characters)
-  else if (nameLength <= 6) {
-    fontSize = "clamp(5rem, 20vw, 15rem)";
-  }
-  // Medium names (7-10 characters)
-  else if (nameLength <= 10) {
-    fontSize = "clamp(4rem, 15vw, 12rem)";
-  }
-  // Long names (11-15 characters)
-  else if (nameLength <= 15) {
-    fontSize = "clamp(3.5rem, 12vw, 9rem)";
-  }
-  // Very long names (16-20 characters)
-  else if (nameLength <= 20) {
-    fontSize = "clamp(2.5rem, 10vw, 6.8rem)";
-  }
-  // Extra long names (21-25 characters)
-  else if (nameLength <= 25) {
-    fontSize = "clamp(2.5rem, 8.5vw, 5.5rem)";
-  }
-  // Extremely long names (26+ characters)
-  else {
-    fontSize = "clamp(2.2rem, 6.5vw, 5rem)";
-  }
-  
-  console.log(`Name: "${name}" (${nameLength} chars) → Font size: ${fontSize}`);
-  return fontSize;
-};
-
 const Hero = ({ userId: propUserId, viewOnly = false }) => {
   const [profile, setProfile] = useState({ 
     fullname: "", 
@@ -148,6 +117,7 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
     linkedinUrl: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageJustUpdated, setImageJustUpdated] = useState(false);
 
   const authContext = React.useContext(AuthContext);
   const { user } = authContext || {};
@@ -297,6 +267,10 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
           // ...other fields if needed
         });
       }
+
+      await fetchProfile(); // Refresh profile data after update
+      setImageJustUpdated(true); // Mark that the image was just updated
+      setTimeout(() => setImageJustUpdated(false), 2000); // Reset after 2 seconds
     } catch (err) {
       console.error("Update failed:", err);
       console.error("Error response:", err.response?.data);
@@ -534,7 +508,7 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
                 initial={{ opacity: 0, y: 50, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ delay: 0.2, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                src={getImageUrl(profile.imageUrl)}
+                src={getImageUrl(profile.imageUrl, imageJustUpdated, API_BASE_URL)}
                 alt={profile.fullname}
                 className="hero-profile-image"
                 style={{
@@ -547,7 +521,7 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
                 }}
                 onError={(e) => { e.target.src = "/images/profile-placeholder.png"; }}
                 onLoad={() => {
-                  console.log("Image loaded:", profile.imageUrl, getImageUrl(profile.imageUrl));
+                  console.log("Image loaded:", profile.imageUrl, getImageUrl(profile.imageUrl, imageJustUpdated, API_BASE_URL));
                 }}
               />
             </div>
@@ -580,7 +554,7 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   {profile.githubUrl && (
                     <motion.a 
-                      href={profile.githubUrl} 
+                      href={formatSocialUrl(profile.githubUrl, 'github')} 
                       target="_blank" rel="noopener noreferrer" 
                       aria-label="GitHub"
                       style={{ color: '#1e293b' }}
@@ -592,7 +566,7 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
                   )}
                   {profile.linkedinUrl && (
                     <motion.a 
-                      href={profile.linkedinUrl} 
+                      href={formatSocialUrl(profile.linkedinUrl, 'linkedin')} 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       aria-label="LinkedIn"
@@ -750,7 +724,7 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
                         src={
                           form.imageUrl instanceof File
                             ? URL.createObjectURL(form.imageUrl)
-                            : getImageUrl(form.imageUrl)
+                            : getImageUrl(form.imageUrl, imageJustUpdated, API_BASE_URL)
                         }
                         alt="Profile Preview"
                         style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: '50%' }}

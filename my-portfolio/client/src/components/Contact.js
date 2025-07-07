@@ -171,12 +171,14 @@ const Contact = ({ userId, ...props }) => {
 
   const handleSubmit = async e => {
     e.preventDefault();
+    console.log("Contact form submitted!", formData, effectiveUserId);
     setStatus('Sending...');
     try {
-      const res = await fetch(`${API_BASE_URL}/api/contact`, { // Using absolute path for deployed backend
+      const payload = { ...formData, userId: effectiveUserId };
+      const res = await fetch(`${API_BASE_URL}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {

@@ -15,6 +15,7 @@ import registerRoute from './routes/register.js';
 import bcrypt from 'bcryptjs';
 import RegisteredUser from './models/registeredUser.js';
 import Project from './models/project.js';
+import transporter from './utils/mailer.js';
 
 // --- Auth Middleware ---
 const auth = (req, res, next) => {
@@ -697,15 +698,31 @@ app.put("/api/about", async (req, res) => {
 
 // ---- Contact ----
 app.post("/api/contact", async (req, res) => {
+  console.log("[CONTACT] POST /api/contact body:", req.body); // Debug log
   try {
     const { name, email, message, userId } = req.body;
-    if (!name || !email || !message) {
-      return res.status(400).json({ message: "Name, email, and message are required" });
+    if (!name || !email || !message || !userId) {
+      return res.status(400).json({ message: "Name, email, message, and userId are required" });
     }
-    const contactData = { name, email, message };
-    if (userId) contactData.user = userId;
+    const contactData = { name, email, message, user: userId };
+    // Look up the user's email
+    const user = await RegisteredUser.findById(userId);
+    if (!user || !user.email) {
+      return res.status(400).json({ message: "Portfolio owner not found or missing email." });
+    }
+    const destinationEmail = user.email;
     const newContact = new Contact(contactData);
     await newContact.save();
+
+    // Send email to the portfolio owner
+    await transporter.sendMail({
+      from: process.env.SMTP_USER,
+      to: destinationEmail,
+      subject: `New Contact Form Submission from ${name}`,
+      text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
+      html: `<p><strong>Name:</strong> ${name}</p><p><strong>Email:</strong> ${email}</p><p><strong>Message:</strong><br/>${message}</p>`
+    });
+
     res.status(201).json({ message: "Contact form submitted successfully" });
   } catch (error) {
     res.status(400).json({ message: "Failed to submit contact form", error: error.message });

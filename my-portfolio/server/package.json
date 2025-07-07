@@ -29,5 +29,5 @@
     "nodemailer": "^6.10.0",
     "path": "^0.12.7"
   },
-  "description": ""
+  "description": "Portfolio backend. IMPORTANT: Set CONTACT_EMAIL in your .env file to receive contact form submissions."
 }
