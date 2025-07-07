@@ -1095,8 +1095,16 @@ app.get('/api/portfolio/:username', async (req, res) => {
   if (!user) {
     return res.status(404).json({ error: 'Portfolio not found' });
   }
-  // Build and return the portfolio data here
-  res.json({ user });
+  // Flatten the user object for the frontend
+  res.json({
+    name: user.fullname,
+    imageUrl: user.imageUrl,
+    bio: user.bio,
+    techStackMessage: user.techStackMessage,
+    githubUrl: user.githubUrl,
+    linkedinUrl: user.linkedinUrl,
+    // Add other fields as needed
+  });
 });
 
 // GET /api/users/username/:username (case-insensitive)
