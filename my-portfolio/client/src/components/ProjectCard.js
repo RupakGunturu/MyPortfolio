@@ -368,14 +368,14 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
                 />
               </div>
               <div className="form-group">
-                <label>Vercel URL:</label>
+                <label>Project URL:</label>
                 <input
                   type="url"
                   name="link"
                   value={formData.link}
                   onChange={handleInputChange}
                   required
-                  placeholder="https://your-project.vercel.app"
+                  placeholder="https://your-project-url.com"
                 />
               </div>
               <div className="form-group">
@@ -442,14 +442,14 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
                 />
               </div>
               <div className="form-group">
-                <label>Vercel URL:</label>
+                <label>Project URL:</label>
                 <input
                   type="url"
                   name="link"
                   value={formData.link}
                   onChange={handleInputChange}
                   required
-                  placeholder="https://your-project.vercel.app"
+                  placeholder="https://your-project-url.com"
                 />
               </div>
               <div className="form-group">

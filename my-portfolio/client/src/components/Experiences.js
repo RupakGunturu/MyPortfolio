@@ -38,6 +38,20 @@ const Experience = ({ viewOnly = false, userId }) => {
     }
   };
 
+  // Helper function to get icon color based on type
+  const getIconColor = (iconType) => {
+    switch (iconType) {
+      case 'briefcase': // Work
+        return '#2193b0'; // blue
+      case 'code': // Project
+        return '#a259f7'; // purple
+      case 'graduation': // Education
+        return '#ff9800'; // orange
+      default:
+        return '#2193b0';
+    }
+  };
+
   // Load experiences from backend
   useEffect(() => {
     console.log('Experiences component - user object:', user);
@@ -205,7 +219,7 @@ const Experience = ({ viewOnly = false, userId }) => {
                   transition={{ duration: 0.5, delay: index * 0.2 }}
                   whileHover={{ scale: 1.03 }}
                 >
-                  <div className="timeline-icon">{getIconComponent(exp.iconType)}</div>
+                  <div className="timeline-icon" style={{ color: getIconColor(exp.iconType), borderColor: getIconColor(exp.iconType) }}>{getIconComponent(exp.iconType)}</div>
                   <div className="timeline-content">
                     <span className="timeline-date">{exp.date}</span>
                     <h3 className="timeline-title">{exp.title}</h3>

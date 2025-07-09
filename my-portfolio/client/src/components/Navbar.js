@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import './Navbar.css';
@@ -10,6 +10,23 @@ const Navbar = () => {
   const { isAuthenticated, logout, user } = authContext;
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showNavbar, setShowNavbar] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(window.scrollY);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY < 10) {
+        setShowNavbar(true);
+      } else if (window.scrollY > lastScrollY) {
+        setShowNavbar(false); // scrolling down
+      } else {
+        setShowNavbar(true); // scrolling up
+      }
+      setLastScrollY(window.scrollY);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   const onLogout = () => {
     logout();
@@ -27,7 +44,7 @@ const Navbar = () => {
 
   return (
     <motion.nav
-      className="navbar"
+      className={`navbar${showNavbar ? '' : ' navbar--hidden'}`}
       initial={{ y: -40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}

@@ -679,7 +679,10 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
 
      <div ref={ref} style={currentStyles.grid || styles.grid}>
         {skills.length > 0 ? (
-          skills.map((skill, index) => (
+          [...skills].sort((a, b) => {
+            const order = { expert: 0, advanced: 1, intermediate: 2, beginner: 3 };
+            return (order[a.level] ?? 4) - (order[b.level] ?? 4);
+          }).map((skill, index) => (
             <motion.div
               key={skill._id}
               style={currentStyles.card || styles.card}

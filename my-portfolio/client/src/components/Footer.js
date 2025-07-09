@@ -13,7 +13,7 @@ const Footer = () => (
       This web application was developed and designed by Rupak Gunturu
     </div>
     <div className="footer-right" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-      <a href="https://linkedin.com/in/rupakgunturu" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+      <a href="https://www.linkedin.com/in/rupak-gunturu-52568a2b9/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
         <FaLinkedin />
       </a>
       <a href="https://github.com/rupakgunturu" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
