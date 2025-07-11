@@ -100,8 +100,21 @@
   box-shadow: 0 4px 25px rgba(0, 0, 0, 0.05);
   position: relative;
   transition: all 0.3s ease;
-  border-top: 4px solid #6dd5ed;
+
 }
+
+.timeline-item[data-type='work'] .timeline-content {
+  border-top: 4px solid #2193b0; /* Blue */
+}
+
+.timeline-item[data-type='education'] .timeline-content {
+  border-top: 4px solid #ff9800; /* Orange */
+}
+
+.timeline-item[data-type='project'] .timeline-content {
+  border-top: 4px solid #a259f7; /* Purple */
+}
+
 
 .timeline-item:hover .timeline-content {
   transform: translateY(-5px);
@@ -397,6 +410,52 @@
     padding: 8px 10px;
     font-size: 16px;
   }
+  
+.timeline-item[data-type='education'] {
+  position: relative;
+}
+
+.timeline-item[data-type='education']::before {
+  content: '';
+  position: absolute;
+  width: 2px;
+  background: #ff9800; /* Orange for education */
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  margin-left: -1px;
+}
+
+.timeline-item[data-type='project'] {
+  position: relative;
+}
+
+.timeline-item[data-type='project']::before {
+  content: '';
+  position: absolute;
+  width: 2px;
+  background: #a259f7; /* Purple for projects */
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  margin-left: -1px;
+}
+
+/* Default color for 'work' items */
+.timeline-item[data-type='work'] {
+  position: relative;
+}
+
+.timeline-item[data-type='work']::before {
+  content: '';
+  position: absolute;
+  width: 2px;
+  background: #2193b0; /* Blue for work */
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  margin-left: -1px;
+}
 
   .remove-button, .add-button, .save-button, .cancel-button {
     padding: 6px 10px;

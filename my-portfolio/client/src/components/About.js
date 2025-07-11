@@ -202,7 +202,7 @@ const About = ({ viewOnly = false, userId }) => {
                 lineHeight: 1.5
               }}
             >
-              I'm a passionate developer with a love for creating beautiful and functional web applications.
+Passionate about technology and continuous learning, I strive to solve real-world problems through innovation.
             </motion.p>
           </motion.div>
 
@@ -421,197 +421,208 @@ const About = ({ viewOnly = false, userId }) => {
             zIndex: 1
           }}>
             <AnimatePresence>
-              {selectedFields.map((field, index) => (
-                <motion.div
-                  key={field}
-                  layout
-                  initial={{ 
-                    opacity: 0, 
-                    y: 20,
-                    rotateX: -30,
-                    scale: 0.95
-                  }}
-                  animate={{ 
-                    opacity: 1, 
-                    y: 0,
-                    rotateX: 0,
-                    scale: 1
-                  }}
-                  exit={{ 
-                    opacity: 0, 
-                    y: -20,
-                    rotateX: 30,
-                    scale: 0.95
-                  }}
-                  transition={{ 
-                    duration: 0.4,
-                    delay: index * 0.05,
-                    type: 'spring'
-                  }}
-                  whileHover={{
-                    scale: 1.02,
-                    boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
-                  }}
-                  style={{
-                    background: 'rgba(255,255,255,0.95)',
-                    padding: '32px',
-                    borderRadius: '24px',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    backdropFilter: 'blur(8px)',
-                    WebkitBackdropFilter: 'blur(8px)',
-                    border: '1px solid rgba(255,255,255,0.3)'
-                  }}
-                >
-                  {/* Gradient Border Animation */}
+              {selectedFields.map((field, index) => {
+                let accentGradient = 'linear-gradient(90deg, rgba(74, 144, 226, 0.8), rgba(108, 92, 231, 0.8))';
+                if (field === 'Name') accentGradient = 'linear-gradient(90deg, rgba(74, 144, 226, 0.8), rgba(108, 92, 231, 0.8))';
+                else if (field === 'Interests') accentGradient = 'linear-gradient(90deg, rgba(161, 140, 209, 0.8), rgba(251, 194, 235, 0.8))';
+                else if (field === 'Achievements') accentGradient = 'linear-gradient(90deg, rgba(247, 151, 30, 0.8), rgba(255, 210, 0, 0.8))';
+                else if (field === 'Bio') accentGradient = 'linear-gradient(90deg, rgba(252, 182, 159, 0.8), rgba(255, 236, 210, 0.8))';
+                else if (field === 'Social Links') accentGradient = 'linear-gradient(90deg, rgba(67, 233, 123, 0.8), rgba(56, 249, 215, 0.8))';
+                else if (field === 'Hobbies') accentGradient = 'linear-gradient(90deg, rgba(255, 106, 0, 0.8), rgba(238, 9, 121, 0.8))'; // orange to pink
+                else if (field === 'Skills') accentGradient = 'linear-gradient(90deg, rgba(67, 206, 162, 0.8), rgba(24, 90, 157, 0.8))';
+
+                return (
                   <motion.div
+                    key={field}
+                    layout
+                    initial={{ 
+                      opacity: 0, 
+                      y: 20,
+                      rotateX: -30,
+                      scale: 0.95
+                    }}
+                    animate={{ 
+                      opacity: 1, 
+                      y: 0,
+                      rotateX: 0,
+                      scale: 1
+                    }}
+                    exit={{ 
+                      opacity: 0, 
+                      y: -20,
+                      rotateX: 30,
+                      scale: 0.95
+                    }}
+                    transition={{ 
+                      duration: 0.4,
+                      delay: index * 0.05,
+                      type: 'spring'
+                    }}
+                    whileHover={{
+                      scale: 1.02,
+                      boxShadow: '0 12px 32px rgba(0,0,0,0.1)'
+                    }}
                     style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: '4px',
-                      background: 'linear-gradient(90deg, #4A90E2, #6C5CE7)',
-                      transformOrigin: 'left center'
-                    }}
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ duration: 1, delay: 0.5 }}
-                  />
-                  
-                  {/* Rotating Avatar Badge */}
-                  <motion.div
-                    style={{
-                      position: 'absolute',
-                      top: '-20px',
-                      right: '-20px',
-                      width: '80px',
-                      height: '80px',
-                      background: 'linear-gradient(45deg, #4A90E2, #6C5CE7)',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                      fontSize: '24px',
-                      boxShadow: '0 8px 24px rgba(74,144,226,0.3)'
-                    }}
-                    animate={{
-                      rotate: [0, 360],
-                      scale: [1, 1.1, 1]
-                    }}
-                    transition={{
-                      duration: 8,
-                      repeat: Infinity,
-                      ease: 'linear'
+                      background: 'rgba(255,255,255,0.95)',
+                      padding: '32px',
+                      borderRadius: '24px',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      border: '1px solid rgba(255,255,255,0.3)'
                     }}
                   >
-                    {field[0]}
-                  </motion.div>
+                    {/* Gradient Border Animation */}
+                    <motion.div
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '4px',
+                        background: accentGradient,
+                        transformOrigin: 'left center'
+                      }}
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      transition={{ duration: 1, delay: 0.5 }}
+                    />
+                    
+                    {/* Rotating Avatar Badge */}
+                    <motion.div
+                      style={{
+                        position: 'absolute',
+                        top: '-20px',
+                        right: '-20px',
+                        width: '80px',
+                        height: '80px',
+                        background: accentGradient,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontSize: '24px',
+                        boxShadow: '0 8px 24px rgba(74,144,226,0.3)'
+                      }}
+                      animate={{
+                        rotate: [0, 360],
+                        scale: [1, 1.1, 1]
+                      }}
+                      transition={{
+                        duration: 8,
+                        repeat: Infinity,
+                        ease: 'linear'
+                      }}
+                    >
+                      {field[0]}
+                    </motion.div>
 
-                  {/* Content Display */}
-                  <h3 style={{
-                    margin: '0 0 16px',
-                    color: '#2A2D43',
-                    fontSize: '1.4rem',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                    fontWeight: '600',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '16px',
-                    position: 'relative',
-                    zIndex: 1
-                  }}>
-                    <span style={{
-                      width: '48px',
-                      height: '48px',
-                      background: 'linear-gradient(45deg, #4A90E2, #6C5CE7)',
-                      borderRadius: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                      boxShadow: '0 4px 12px rgba(74,144,226,0.3)',
+                    {/* Content Display */}
+                    <h3 style={{
+                      margin: '0 0 16px',
+                      color: '#2A2D43',
+                      fontSize: '1.4rem',
                       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
                       fontWeight: '600',
-                      fontSize: '1.2rem'
-                    }}>
-                      {field[0]}
-                    </span>
-                    {field}
-                  </h3>
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    style={{
-                      margin: 0,
-                      color: '#636E72',
-                      lineHeight: 1.7,
-                      fontSize: '1rem',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                      fontWeight: '400',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '16px',
                       position: 'relative',
                       zIndex: 1
-                    }}
-                  >
-                    {isLoading ? (
-                      <span style={{ 
-                        background: 'linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%)',
-                        color: 'transparent',
-                        borderRadius: '8px',
-                        animation: 'shimmer 2s infinite linear',
-                        backgroundSize: '200% 100%',
-                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                    }}>
+                      <span style={{
+                        width: '48px',
+                        height: '48px',
+                        background: accentGradient,
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        boxShadow: '0 4px 12px rgba(74,144,226,0.3)',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                        fontWeight: '600',
+                        fontSize: '1.2rem'
                       }}>
-                        Loading content...
+                        {field[0]}
                       </span>
-                    ) : (
-                      (() => {
-                        const isMulti = multiValueFields.includes(field);
-                        const value = userData[field];
-
-                        if (isMulti && Array.isArray(value)) {
-                          return (
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                              {value.length > 0 ? (
-                                value.map((item, i) => (
-                                  <motion.span
-                                    key={i}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: i * 0.1 }}
-                                    style={{
-                                      background: 'rgba(74,144,226,0.1)',
-                                      color: '#4A90E2',
-                                      padding: '6px 14px',
-                                      borderRadius: '12px',
-                                      fontSize: '0.9rem',
-                                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                                      fontWeight: '500',
-                                    }}
-                                  >
-                                    {item}
-                                  </motion.span>
-                                ))
-                              ) : (
-                                <span style={{ 
-                                  opacity: 0.5,
-                                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-                                }}>Not specified</span>
-                              )}
-                            </div>
-                          );
-                        }
-                        return value || <span style={{ 
-                          opacity: 0.5,
+                      {field}
+                    </h3>
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      style={{
+                        margin: 0,
+                        color: '#636E72',
+                        lineHeight: 1.7,
+                        fontSize: '1rem',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                        fontWeight: '400',
+                        position: 'relative',
+                        zIndex: 1
+                      }}
+                    >
+                      {isLoading ? (
+                        <span style={{ 
+                          background: 'linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%)',
+                          color: 'transparent',
+                          borderRadius: '8px',
+                          animation: 'shimmer 2s infinite linear',
+                          backgroundSize: '200% 100%',
                           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-                        }}>Not specified</span>;
-                      })()
-                    )}
-                  </motion.p>
-                </motion.div>
-              ))}
+                        }}>
+                          Loading content...
+                        </span>
+                      ) : (
+                        (() => {
+                          const isMulti = multiValueFields.includes(field);
+                          const value = userData[field];
+
+                          if (isMulti && Array.isArray(value)) {
+                            return (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                {value.length > 0 ? (
+                                  value.map((item, i) => (
+                                    <motion.span
+                                      key={i}
+                                      initial={{ opacity: 0, y: 10 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      transition={{ delay: i * 0.1 }}
+                                      style={{
+                                        background: 'rgba(74,144,226,0.1)',
+                                        color: '#4A90E2',
+                                        padding: '6px 14px',
+                                        borderRadius: '12px',
+                                        fontSize: '0.9rem',
+                                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                                        fontWeight: '500',
+                                      }}
+                                    >
+                                      {item}
+                                    </motion.span>
+                                  ))
+                                ) : (
+                                  <span style={{ 
+                                    opacity: 0.5,
+                                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                                  }}>Not specified</span>
+                                )}
+                              </div>
+                            );
+                          }
+                          return value || <span style={{ 
+                            opacity: 0.5,
+                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                          }}>Not specified</span>;
+                        })()
+                      )}
+                    </motion.p>
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
           </div>
         </LayoutGroup>
