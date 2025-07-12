@@ -37,6 +37,8 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
   const [pdfPreview, setPdfPreview] = useState(null);
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
+  const [selectedCert, setSelectedCert] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     if (effectiveUserId) {
@@ -662,6 +664,7 @@ const deleteCertificate = async (id) => {
                     ? '0 12px 24px rgba(0,0,0,0.4)'
                     : '0 12px 24px rgba(30, 41, 59, 0.15)'
                 }}
+                onClick={() => { setSelectedCert(cert); setShowModal(true); }}
               >
                 {!viewOnly && (
                 <button
@@ -797,6 +800,94 @@ const deleteCertificate = async (id) => {
               </motion.div>
             );
           })}
+        </div>
+      )}
+      {/* Modal for certificate preview */}
+      {showModal && selectedCert && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(30,41,59,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
+        }}
+          onClick={() => setShowModal(false)}
+        >
+          <div style={{
+            background: theme === 'dark' ? '#1E293B' : '#fff',
+            borderRadius: 12,
+            padding: '48px 24px 24px 24px', // extra top padding for the close button
+            maxWidth: 600,
+            width: '90vw',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            position: 'relative',
+            boxShadow: '0 8px 32px rgba(30,41,59,0.18)'
+          }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowModal(false)}
+              style={{
+                position: 'absolute',
+                top: 18,
+                right: 18,
+                background: theme === 'dark' ? 'rgba(30,41,59,0.85)' : 'rgba(255,255,255,0.85)',
+                border: 'none',
+                fontSize: 32,
+                color: theme === 'dark' ? '#64748B' : '#1E293B',
+                cursor: 'pointer',
+                fontWeight: 700,
+                transition: 'color 0.18s',
+                lineHeight: 1,
+                borderRadius: '50%',
+                width: 44,
+                height: 44,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(30,41,59,0.10)'
+              }}
+              onMouseEnter={e => e.target.style.color = '#ef4444'}
+              onMouseLeave={e => e.target.style.color = theme === 'dark' ? '#64748B' : '#1E293B'}
+              aria-label="Close"
+            >×</button>
+            {/* Show image or PDF */}
+            {(() => {
+              let fileUrl = null;
+              let isPdf = false;
+              if (selectedCert.url) {
+                fileUrl = selectedCert.url.startsWith('http') ? selectedCert.url : `${API_BASE_URL}${selectedCert.url}`;
+                isPdf = selectedCert.contentType === 'application/pdf' || selectedCert.url.toLowerCase().includes('.pdf');
+              } else if (selectedCert.image) {
+                fileUrl = selectedCert.image.startsWith('http') ? selectedCert.image : `${API_BASE_URL}${selectedCert.image}`;
+                isPdf = selectedCert.contentType === 'application/pdf' || selectedCert.image.toLowerCase().includes('.pdf');
+              } else if (selectedCert.file) {
+                fileUrl = selectedCert.file.startsWith('http') ? selectedCert.file : `${API_BASE_URL}${selectedCert.file}`;
+                isPdf = selectedCert.contentType === 'application/pdf' || selectedCert.file.toLowerCase().includes('.pdf');
+              } else if (selectedCert.filename) {
+                fileUrl = `${API_BASE_URL}/uploads/${selectedCert.filename}`;
+                isPdf = selectedCert.contentType === 'application/pdf' || selectedCert.filename.toLowerCase().includes('.pdf');
+              }
+              if (fileUrl) {
+                if (isPdf) {
+                  return (
+                    <div style={{ width: '100%', minHeight: 400, background: theme === 'dark' ? '#334155' : '#F1F5F9', borderRadius: 8, marginBottom: 16 }}>
+                      <Document file={fileUrl} loading={<div style={{ color: '#64748B', textAlign: 'center', marginTop: 20 }}>Loading PDF...</div>}>
+                        <Page pageNumber={1} width={500} renderTextLayer={false} renderAnnotationLayer={false} />
+                      </Document>
+                    </div>
+                  );
+                } else {
+                  return (
+                    <img src={fileUrl} alt={selectedCert.title} style={{ maxWidth: '100%', maxHeight: 500, borderRadius: 8, marginBottom: 16 }} />
+                  );
+                }
+              } else {
+                return <div style={{ color: '#64748B', textAlign: 'center', marginBottom: 16 }}>No Preview Available</div>;
+              }
+            })()}
+            <h3 style={{ color: theme === 'dark' ? '#F8FAFC' : '#1E293B', margin: '0 0 8px 0' }}>{selectedCert.title}</h3>
+            <p style={{ color: theme === 'dark' ? '#94A3B8' : '#64748B', margin: '0 0 4px 0' }}>{selectedCert.issuer}</p>
+            <p style={{ color: theme === 'dark' ? '#94A3B8' : '#64748B', margin: 0 }}>{new Date(selectedCert.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+          </div>
         </div>
       )}
     </section>

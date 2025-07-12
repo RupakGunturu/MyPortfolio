@@ -37,6 +37,8 @@ const About = ({ viewOnly = false, userId }) => {
   const [showAdditionalFields, setShowAdditionalFields] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editingField, setEditingField] = useState(null);
+  const [editingValue, setEditingValue] = useState('');
 
   useEffect(() => {
     if (effectiveUserId) {
@@ -101,29 +103,31 @@ const About = ({ viewOnly = false, userId }) => {
     );
   };
 
-  const handleEditField = async (field) => {
+  const handleEditField = (field) => {
     const isMulti = multiValueFields.includes(field);
     const currentValue = userData[field];
-    const promptDefault = isMulti && Array.isArray(currentValue)
-      ? currentValue.join(', ')
-      : currentValue || '';
-      
-    const newValue = prompt(`Edit ${field}:${isMulti ? ' (separate with commas)' : ''}`, promptDefault);
-    
-    if (newValue !== null) {
-      const finalValue = isMulti ? newValue.split(',').map(s => s.trim()).filter(Boolean) : newValue;
-      const updatedData = { ...userData, [field]: finalValue };
-      setUserData(updatedData);
+    setEditingField(field);
+    setEditingValue(isMulti && Array.isArray(currentValue) ? currentValue.join(', ') : currentValue || '');
+  };
 
-      try {
-        await axios.put(`${API_BASE_URL}/api/about`, {
-          data: updatedData,
-          userId: effectiveUserId
-        });
-        fetchAbout(); // Refresh data after update
-      } catch (err) {
-        console.error('Save error:', err);
-      }
+  const handleSaveEdit = async () => {
+    if (!editingField) return;
+    const isMulti = multiValueFields.includes(editingField);
+    const finalValue = isMulti
+      ? editingValue.split(',').map(s => s.trim()).filter(Boolean)
+      : editingValue;
+    const updatedData = { ...userData, [editingField]: finalValue };
+    setUserData(updatedData);
+    setEditingField(null);
+    setEditingValue('');
+    try {
+      await axios.put(`${API_BASE_URL}/api/about`, {
+        data: updatedData,
+        userId: effectiveUserId
+      });
+      fetchAbout(); // Refresh data after update
+    } catch (err) {
+      console.error('Save error:', err);
     }
   };
 
@@ -370,7 +374,7 @@ Passionate about technology and continuous learning, I strive to solve real-worl
               marginBottom: '32px',
               flexWrap: 'wrap'
             }}>
-              {['Hobbies', 'Skills', 'Bio', 'Social Links'].map(field => {
+              {['Hobbies', 'Skills', 'Bio', 'Social Links', 'Achievements'].map(field => {
                 const hasData = userData[field] && (Array.isArray(userData[field]) ? userData[field].length > 0 : !!userData[field]);
                 const isVisible = selectedFields.includes(field);
                 
@@ -627,6 +631,129 @@ Passionate about technology and continuous learning, I strive to solve real-worl
           </div>
         </LayoutGroup>
       </motion.div>
+      {/* Modal for editing fields */}
+      {editingField && (
+        <div className="modal-overlay" style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(30, 41, 59, 0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999,
+          backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)'
+        }}>
+          <div className="modal-content" style={{
+            background: 'linear-gradient(135deg, #f8fafc 0%, #e0e7ef 100%)',
+            padding: 32,
+            borderRadius: 18,
+            minWidth: 340,
+            maxWidth: 420,
+            boxShadow: '0 8px 32px rgba(30,41,59,0.18)',
+            border: '1px solid #e0e7ef',
+            display: 'flex', flexDirection: 'column', alignItems: 'stretch',
+            position: 'relative',
+            animation: 'modalPopIn 0.3s cubic-bezier(0.4,0,0.2,1)'
+          }}>
+            <h3 style={{
+              margin: '0 0 18px',
+              color: '#2A2D43',
+              fontSize: '1.35rem',
+              fontWeight: 700,
+              letterSpacing: '-0.01em',
+              textAlign: 'center',
+              fontFamily: 'Montserrat, -apple-system, BlinkMacSystemFont, sans-serif'
+            }}>Edit {editingField}</h3>
+            {multiValueFields.includes(editingField) ? (
+              <>
+                <textarea
+                  value={editingValue}
+                  onChange={e => setEditingValue(e.target.value)}
+                  rows={4}
+                  style={{
+                    width: '100%',
+                    marginBottom: 8,
+                    borderRadius: 10,
+                    border: '1px solid #cbd5e1',
+                    padding: '12px 14px',
+                    fontSize: '1rem',
+                    fontFamily: 'inherit',
+                    background: '#f8fafc',
+                    color: '#2A2D43',
+                    boxShadow: '0 2px 8px rgba(30,41,59,0.04)',
+                    outline: 'none',
+                    transition: 'border 0.2s'
+                  }}
+                  placeholder="Separate values with commas"
+                />
+                <div style={{
+                  fontSize: '0.92rem',
+                  color: '#64748b',
+                  marginBottom: 12,
+                  marginTop: -2,
+                  fontStyle: 'italic',
+                  textAlign: 'left'
+                }}>
+                  <span>Tip: Separate each value with a comma (e.g. <b>Reading, Coding, Music</b>).</span>
+                </div>
+              </>
+            ) : (
+              <input
+                type="text"
+                value={editingValue}
+                onChange={e => setEditingValue(e.target.value)}
+                style={{
+                  width: '100%',
+                  marginBottom: 20,
+                  borderRadius: 10,
+                  border: '1px solid #cbd5e1',
+                  padding: '12px 14px',
+                  fontSize: '1rem',
+                  fontFamily: 'inherit',
+                  background: '#f8fafc',
+                  color: '#2A2D43',
+                  boxShadow: '0 2px 8px rgba(30,41,59,0.04)',
+                  outline: 'none',
+                  transition: 'border 0.2s'
+                }}
+              />
+            )}
+            <div style={{ display: 'flex', gap: 14, justifyContent: 'flex-end', marginTop: 8 }}>
+              <button onClick={() => { setEditingField(null); setEditingValue(''); }}
+                style={{
+                  background: 'none',
+                  border: '1.5px solid #cbd5e1',
+                  color: '#64748b',
+                  borderRadius: 8,
+                  padding: '8px 20px',
+                  fontWeight: 500,
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.18s',
+                  fontFamily: 'inherit',
+                  boxShadow: '0 1px 4px rgba(30,41,59,0.04)'
+                }}
+              >Cancel</button>
+              <button onClick={handleSaveEdit}
+                style={{
+                  background: 'linear-gradient(90deg, #4A90E2 0%, #6C5CE7 100%)',
+                  border: 'none',
+                  color: 'white',
+                  borderRadius: 8,
+                  padding: '8px 24px',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  boxShadow: '0 2px 8px rgba(76,72,181,0.10)',
+                  transition: 'background 0.18s'
+                }}
+              >Save</button>
+            </div>
+            <style>{`
+              @keyframes modalPopIn {
+                0% { transform: scale(0.92) translateY(30px); opacity: 0; }
+                100% { transform: scale(1) translateY(0); opacity: 1; }
+              }
+            `}</style>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

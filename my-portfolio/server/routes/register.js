@@ -246,4 +246,10 @@ router.post('/auth/register-verify-otp', async (req, res) => {
   }
 });
 
+// Debug route to confirm backend logging
+router.all('/test-log', (req, res) => {
+  console.log('Test route HIT', req.method, req.body);
+  res.json({ message: 'Test route hit' });
+});
+
 export default router; 

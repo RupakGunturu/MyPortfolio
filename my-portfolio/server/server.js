@@ -16,6 +16,26 @@ import bcrypt from 'bcryptjs';
 import RegisteredUser from './models/registeredUser.js';
 import Project from './models/project.js';
 import transporter from './utils/mailer.js';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import streamifier from 'streamifier';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const cloudinaryStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'profile_images',
+    allowed_formats: ['jpg', 'jpeg', 'png'],
+    transformation: [{ width: 500, height: 500, crop: 'limit' }]
+  },
+});
+
+const cloudinaryParser = multer({ storage: cloudinaryStorage });
 
 // --- Auth Middleware ---
 const auth = (req, res, next) => {
@@ -125,6 +145,19 @@ const uploadUserImage = multer({
 
 // Multer for certificate uploads — use memory storage for GridFS
 const uploadCertificate = multerMemory;
+
+// Multer setup for registered user profile updates
+const uploadRegisteredUser = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'), false);
+    }
+  }
+});
 
 // -------------------- Schemas & Models --------------------
 
@@ -380,82 +413,84 @@ app.get("/api/user", async (req, res) => {
   }
 });
 
-// Update user with optional user image upload (disk)
-app.put("/api/user", uploadUserImage.single("image"), async (req, res) => {
+// Cloudinary-based profile image upload route for registered_users
+app.put('/api/registered_user', uploadRegisteredUser.single('image'), async (req, res) => {
   try {
-    console.log('=== USER UPDATE REQUEST ===');
-    console.log('REQ.FILE:', req.file);
-    console.log('REQ.BODY:', req.body);
-    console.log('REQ.BODY KEYS:', Object.keys(req.body));
-    console.log('REQ.BODY VALUES:', {
-      userId: req.body.userId,
-      fullname: req.body.fullname,
-      githubUrl: req.body.githubUrl,
-      linkedinUrl: req.body.linkedinUrl
-    });
-    const { userId, fullname, username, email, bio, techStackMessage, githubUrl, linkedinUrl } = req.body;
+    console.log('PUT /api/registered_user called');
+    console.log('Request body:', req.body);
+    console.log('Request file:', req.file ? 'File received' : 'No file');
+    
+    const { userId, fullname, githubUrl, linkedinUrl } = req.body;
+    
     if (!userId) {
-      return res.status(400).json({ error: 'userId is required to update profile.' });
+      console.log('Missing userId');
+      return res.status(400).json({ error: 'userId is required' });
     }
     
-    // Check if user exists
-    const existingUser = await RegisteredUser.findById(userId);
-    if (!existingUser) {
-      console.log('[USER IMAGE UPLOAD] User not found:', userId);
-      return res.status(404).json({ error: 'User not found' });
-    }
-    console.log('[USER IMAGE UPLOAD] Found existing user:', existingUser.fullname);
+    const updateFields = { fullname, githubUrl, linkedinUrl };
     
-    let finalImageUrl;
     if (req.file) {
-      console.log('[USER IMAGE UPLOAD] Received file:', req.file);
-      finalImageUrl = `/uploads/${req.file.filename}`;
-      console.log('[USER IMAGE UPLOAD] finalImageUrl:', finalImageUrl);
+      console.log('Processing file upload to Cloudinary:', req.file.originalname);
+      
+      // Upload the file buffer to Cloudinary
+      const stream = cloudinary.uploader.upload_stream({
+        folder: 'profile_images',
+        resource_type: 'image',
+      }, async (error, result) => {
+        if (error) {
+          console.error('Cloudinary upload failed:', error);
+          return res.status(500).json({ error: 'Cloudinary upload failed', details: error.message });
+        }
+        
+        console.log('Cloudinary upload successful:', result.secure_url);
+        updateFields.imageUrl = result.secure_url;
+        
+        try {
+          const updatedUser = await RegisteredUser.findByIdAndUpdate(
+            userId,
+            updateFields,
+            { new: true }
+          );
+          
+          if (!updatedUser) {
+            console.log('User not found:', userId);
+            return res.status(404).json({ error: 'User not found' });
+          }
+          
+          console.log('User updated successfully:', updatedUser._id);
+          res.json(updatedUser);
+        } catch (dbError) {
+          console.error('Database update error:', dbError);
+          res.status(500).json({ error: 'Database update failed', details: dbError.message });
+        }
+      });
+      
+      streamifier.createReadStream(req.file.buffer).pipe(stream);
+    } else {
+      console.log('No file uploaded, updating other fields only');
+      
+      try {
+        const updatedUser = await RegisteredUser.findByIdAndUpdate(
+          userId,
+          updateFields,
+          { new: true }
+        );
+        
+        if (!updatedUser) {
+          console.log('User not found:', userId);
+          return res.status(404).json({ error: 'User not found' });
+        }
+        
+        console.log('User updated successfully (no image):', updatedUser._id);
+        res.json(updatedUser);
+      } catch (dbError) {
+        console.error('Database update error:', dbError);
+        res.status(500).json({ error: 'Database update failed', details: dbError.message });
+      }
     }
-    
-    // Build update data - include all fields that are provided (even empty strings)
-    const updateData = {};
-    
-    if (fullname !== undefined) updateData.fullname = fullname;
-    if (username !== undefined) updateData.username = username;
-    if (bio !== undefined) updateData.bio = bio;
-    if (techStackMessage !== undefined) updateData.techStackMessage = techStackMessage;
-    if (githubUrl !== undefined) updateData.githubUrl = githubUrl;
-    if (linkedinUrl !== undefined) updateData.linkedinUrl = linkedinUrl;
-    
-    // Force imageUrl to be set if a new file is uploaded
-    if (finalImageUrl !== undefined) {
-      updateData.imageUrl = finalImageUrl;
-    }
-    
-    console.log('[USER IMAGE UPLOAD] Update data:', updateData);
-    
-    // Use $set to guarantee the field is written
-    const updated = await RegisteredUser.findByIdAndUpdate(
-      userId,
-      { $set: updateData },
-      { new: true, runValidators: true }
-    );
-    if (!updated) {
-      return res.status(404).json({ error: 'User not found or not authorized' });
-    }
-    console.log('[USER IMAGE UPLOAD] Updated user:', updated);
-    console.log('[USER IMAGE UPLOAD] Updated user data:', {
-      fullname: updated.fullname,
-      githubUrl: updated.githubUrl,
-      linkedinUrl: updated.linkedinUrl,
-      imageUrl: updated.imageUrl
-    });
-    // Always include imageUrl in the response
-    const updatedObj = updated.toObject();
-    if (!updatedObj.imageUrl) updatedObj.imageUrl = "";
-    res.json(updatedObj);
-  } catch (err) {
-    console.error('[USER IMAGE UPLOAD] Error:', err);
-    res.status(500).json({ 
-      error: err.message,
-      details: "Image upload failed. Please check server logs."
-    });
+  } catch (error) {
+    console.error('Route error:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
 
@@ -1001,6 +1036,7 @@ app.get('/api/auth', async (req, res) => {
 });
 
 // --- Register Route ---
+// Register all /api routes (including Cloudinary image upload)
 app.use('/api', registerRoute);
 
 // Registration route
@@ -1119,6 +1155,19 @@ app.get('/api/users/username/:username', async (req, res) => {
     res.json({ user });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Test Cloudinary upload route
+app.post('/api/test-upload', async (req, res) => {
+  try {
+    const uploadResult = await cloudinary.uploader.upload(
+      'https://res.cloudinary.com/demo/image/upload/getting-started/shoes.jpg',
+      { public_id: 'shoes' }
+    );
+    res.json({ url: uploadResult.secure_url, result: uploadResult });
+  } catch (error) {
+    res.status(500).json({ error: 'Upload failed', details: error.message });
   }
 });
 

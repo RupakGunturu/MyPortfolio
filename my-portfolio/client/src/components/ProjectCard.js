@@ -104,19 +104,17 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
   const handleDeleteProject = async () => {
     if (!editingProject) return;
 
-    if (window.confirm('Are you sure you want to delete this project?')) {
-      try {
-        console.log('Deleting project:', editingProject._id, 'for user:', effectiveUserId);
-        const response = await axios.delete(`${API_BASE_URL}/api/projects/${editingProject._id}?userId=${effectiveUserId}`);
-        console.log('Delete response:', response.data);
-        setProjects(projects.filter(project => project._id !== editingProject._id));
-        closeModal();
-        toast.success('Project deleted successfully!');
-      } catch (err) {
-        console.error('Error deleting project:', err);
-        console.error('Error response:', err.response?.data);
-        alert(`Failed to delete project: ${err.response?.data?.error || err.message}`);
-      }
+    try {
+      console.log('Deleting project:', editingProject._id, 'for user:', effectiveUserId);
+      const response = await axios.delete(`${API_BASE_URL}/api/projects/${editingProject._id}?userId=${effectiveUserId}`);
+      console.log('Delete response:', response.data);
+      setProjects(projects.filter(project => project._id !== editingProject._id));
+      closeModal();
+      toast.success('Project deleted successfully!');
+    } catch (err) {
+      console.error('Error deleting project:', err);
+      console.error('Error response:', err.response?.data);
+      alert(`Failed to delete project: ${err.response?.data?.error || err.message}`);
     }
   };
 

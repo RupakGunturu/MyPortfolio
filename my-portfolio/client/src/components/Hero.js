@@ -188,8 +188,17 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     
+    // Debug logging
+    console.log("=== DEBUG: Profile Update ===");
+    console.log("AuthContext user:", user);
+    console.log("propUserId:", propUserId);
+    console.log("userId variable:", userId);
+    console.log("user._id:", user?._id);
+    console.log("isAuthenticated:", authContext?.isAuthenticated);
+    
     // Check if user is authenticated
     if (!user || !user._id) {
+      console.error("User not authenticated or missing _id");
       alert("You must be logged in to update your profile.");
       setIsSubmitting(false);
       return;
@@ -212,7 +221,9 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
         linkedinUrl: formatSocialUrl(form.linkedinUrl, 'linkedin')
       };
       
-      console.log("Test data:", testData);
+      console.log("Test data being sent:", testData);
+      console.log("userId type:", typeof user._id);
+      console.log("userId length:", user._id?.length);
       
       // Test with simple JSON endpoint first
       const testRes = await axios.post(`${API_BASE_URL}/api/test-update`, testData);
@@ -228,7 +239,22 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
       formData.append('linkedinUrl', formatSocialUrl(form.linkedinUrl, 'linkedin'));
       formData.append('userId', user._id);
       
-      const res = await axios.put(`${API_BASE_URL}/api/user`, formData, {
+      console.log("FormData userId:", user._id);
+      
+      // If no new image is selected, but the current image is a local upload, fetch it and re-upload to Cloudinary
+      if (!(form.imageUrl instanceof File) && typeof form.imageUrl === 'string' && form.imageUrl.startsWith('/uploads/')) {
+        try {
+          const response = await fetch(`${API_BASE_URL}${form.imageUrl}`);
+          const blob = await response.blob();
+          const filename = form.imageUrl.split('/').pop() || 'profile-image.png';
+          const file = new File([blob], filename, { type: blob.type });
+          formData.append('image', file);
+        } catch (fetchErr) {
+          console.error('Failed to fetch and re-upload local image:', fetchErr);
+        }
+      }
+
+      const res = await axios.put(`${API_BASE_URL}/api/registered_user`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -274,6 +300,12 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
     } catch (err) {
       console.error("Update failed:", err);
       console.error("Error response:", err.response?.data);
+      console.error("Request data that failed:", {
+        userId: user._id,
+        fullname: form.fullname,
+        githubUrl: form.githubUrl,
+        linkedinUrl: form.linkedinUrl
+      });
       alert(`Update failed: ${err.response?.data?.error || err.message}`);
     } finally {
       setIsSubmitting(false);
