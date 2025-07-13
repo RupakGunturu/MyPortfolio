@@ -151,6 +151,12 @@ router.post('/auth/reset-password', async (req, res) => {
   const user = await RegisteredUser.findOne({ email, otp, otpExpires: { $gt: new Date() } });
   if (!user) return res.status(400).json({ message: 'Invalid or expired OTP' });
 
+  // Check if new password is the same as the old password
+  const isSame = await bcrypt.compare(newPassword, user.password);
+  if (isSame) {
+    return res.status(400).json({ message: 'You entered the same password as before.' });
+  }
+
   // Hash the new password
   const hashedPassword = await bcrypt.hash(newPassword, 10);
   user.password = hashedPassword;
@@ -241,21 +247,4 @@ router.post('/auth/register-verify-otp', async (req, res) => {
     const user = new RegisteredUser({ fullname, username, email, password: hashedPassword });
     await user.save();
 
-    console.log(`User registered successfully: ${email}`);
-    res.json({ message: 'Registration successful' });
-  } catch (error) {
-    console.error('Error creating user:', error);
-    if (error.code === 11000) {
-      return res.status(400).json({ message: 'Username or email already exists' });
-    }
-    res.status(500).json({ message: 'Registration failed. Please try again.' });
-  }
-});
-
-// Debug route to confirm backend logging
-router.all('/test-log', (req, res) => {
-  console.log('Test route HIT', req.method, req.body);
-  res.json({ message: 'Test route hit' });
-});
-
-export default router; 
+    console.log(`

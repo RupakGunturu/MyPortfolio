@@ -7,7 +7,6 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const fieldOptions = [
   'Name',
-  'Bio',
   'Interests',
   'Skills',
   'Achievements',
@@ -70,7 +69,7 @@ const About = ({ viewOnly = false, userId }) => {
         ? userData.selectedFields.filter(field => allFieldsWithData.includes(field))
         : null;
       const defaultFields = ['Name', 'Interests', 'Achievements'];
-      const additionalFields = [ 'Hobbies', 'Skills', 'Social Links'];
+      const additionalFields = ['Hobbies', 'Skills', 'Social Links']; // 'Bio' removed
       let fieldsToShow = defaultFields.filter(field => allFieldsWithData.includes(field));
       if (showAdditionalFields) {
         if (backendSelectedFields && backendSelectedFields.length > 0) {
@@ -83,7 +82,7 @@ const About = ({ viewOnly = false, userId }) => {
       setSelectedFields(fieldsToShow);
     } else {
       // In edit mode, show only default fields by default
-      const defaultFields = ['Name', 'Interests', 'Achievements'];
+      const defaultFields = ['Name', 'Interests', 'Achievements']; // 'Bio' removed
       const fieldsToShow = defaultFields.filter(field => allFieldsWithData.includes(field));
       setSelectedFields(fieldsToShow);
     }
@@ -392,7 +391,7 @@ const About = ({ viewOnly = false, userId }) => {
               marginBottom: '32px',
               flexWrap: 'wrap'
             }}>
-              {['Hobbies', 'Skills', 'Bio', 'Social Links', 'Achievements'].map(field => {
+              {['Hobbies', 'Skills', 'Social Links', 'Achievements'].map(field => {
                 const hasData = userData[field] && (Array.isArray(userData[field]) ? userData[field].length > 0 : !!userData[field]);
                 const isVisible = selectedFields.includes(field);
                 
@@ -650,7 +649,7 @@ const About = ({ viewOnly = false, userId }) => {
         </LayoutGroup>
       </motion.div>
       {/* Modal for editing fields */}
-      {editingField === 'Bio' && (
+      {editingField && (
         <div className="modal-overlay" style={{
           position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
           background: 'rgba(30, 41, 59, 0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999,
@@ -676,30 +675,71 @@ const About = ({ viewOnly = false, userId }) => {
               letterSpacing: '-0.01em',
               textAlign: 'center',
               fontFamily: 'Montserrat, -apple-system, BlinkMacSystemFont, sans-serif'
-            }}>Edit Bio</h3>
-            <textarea
-              value={editingValue}
-              onChange={e => setEditingValue(e.target.value)}
-              rows={5}
-              style={{
-                width: '100%',
-                marginBottom: 16,
-                borderRadius: 12,
-                border: '1.5px solid #cbd5e1',
-                padding: '14px 16px',
-                fontSize: '1.08rem',
-                fontFamily: 'inherit',
-                background: '#f8fafc',
-                color: '#2A2D43',
-                boxShadow: '0 2px 8px rgba(30,41,59,0.04)',
-                outline: 'none',
-                transition: 'border 0.2s',
-                resize: 'vertical',
-                minHeight: 90
-              }}
-              placeholder="Write something about yourself..."
-              autoFocus
-            />
+            }}>Edit {editingField}</h3>
+            {multiValueFields.includes(editingField) ? (
+              <>
+                <textarea
+                  value={editingValue}
+                  onChange={e => setEditingValue(e.target.value)}
+                  rows={4}
+                  style={{
+                    width: '100%',
+                    marginBottom: 8,
+                    borderRadius: 10,
+                    border: '1px solid #cbd5e1',
+                    padding: '12px 14px',
+                    fontSize: '1rem',
+                    fontFamily: 'inherit',
+                    background: '#f8fafc',
+                    color: '#2A2D43',
+                    boxShadow: '0 2px 8px rgba(30,41,59,0.04)',
+                    outline: 'none',
+                    transition: 'border 0.2s'
+                  }}
+                  placeholder="Separate values with commas"
+                />
+                <div style={{
+                  fontSize: '1rem',
+                  color: '#f59e42',
+                  marginBottom: 12,
+                  marginTop: -2,
+                  fontStyle: 'italic',
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <span role="img" aria-label="sparkles">✨</span>
+                  <span style={{ color: '#64748b' }}>
+                    <b>Example:</b> Reading, Coding, Music <span role="img" aria-label="books">📚</span><span role="img" aria-label="laptop">💻</span><span role="img" aria-label="musical note">🎵</span>
+                  </span>
+                </div>
+              </>
+            ) : (
+              <textarea
+                value={editingValue}
+                onChange={e => setEditingValue(e.target.value)}
+                rows={5}
+                style={{
+                  width: '100%',
+                  marginBottom: 16,
+                  borderRadius: 12,
+                  border: '1.5px solid #cbd5e1',
+                  padding: '14px 16px',
+                  fontSize: '1.08rem',
+                  fontFamily: 'inherit',
+                  background: '#f8fafc',
+                  color: '#2A2D43',
+                  boxShadow: '0 2px 8px rgba(30,41,59,0.04)',
+                  outline: 'none',
+                  transition: 'border 0.2s',
+                  resize: 'vertical',
+                  minHeight: 90
+                }}
+                placeholder="Write something about yourself..."
+                autoFocus
+              />
+            )}
             <div style={{ display: 'flex', gap: 14, justifyContent: 'flex-end', marginTop: 8 }}>
               <button onClick={() => { setEditingField(null); setEditingValue(''); }}
                 style={{

@@ -92,7 +92,11 @@ const ForgotPasswordPage = () => {
         setInfo('🎉 Password updated successfully! You can now login.');
         setTimeout(() => navigate('/login'), 1500);
       } else {
-        setError(data.message || 'Failed to update password.');
+        if (data.message === 'You entered the same password as before.') {
+          setError('You entered the same password as before. Please choose a new password.');
+        } else {
+          setError(data.message || 'Failed to update password.');
+        }
       }
     } catch (err) {
       setError('Failed to update password.');
