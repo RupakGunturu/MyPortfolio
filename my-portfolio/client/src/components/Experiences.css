@@ -463,3 +463,8 @@
     min-height: 32px;
   }
 }
+
+.timeline-content,
+.timeline-description {
+  text-align: left !important;
+}

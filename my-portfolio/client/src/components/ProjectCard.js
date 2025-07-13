@@ -305,12 +305,14 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
                     )}
                   </div>
                   <div className="project-details">
-                    <h3>{project.title}</h3>
-                    {project.description && (
-                      <div className="project-bio">
-                        <p>{project.description}</p>
-                      </div>
-                    )}
+                    <div className="project-main-content">
+                      <h3>{project.title}</h3>
+                      {project.description && (
+                        <div className="project-bio">
+                          <p>{project.description}</p>
+                        </div>
+                      )}
+                    </div>
                     <div className="project-actions">
                       <button 
                         className="view-btn"
