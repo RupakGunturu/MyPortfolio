@@ -247,4 +247,21 @@ router.post('/auth/register-verify-otp', async (req, res) => {
     const user = new RegisteredUser({ fullname, username, email, password: hashedPassword });
     await user.save();
 
-    console.log(`
+    console.log(`User registered successfully: ${email}`);
+    res.json({ message: 'Registration successful' });
+  } catch (error) {
+    console.error('Error creating user:', error);
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'Username or email already exists' });
+    }
+    res.status(500).json({ message: 'Registration failed. Please try again.' });
+  }
+});
+
+// Debug route to confirm backend logging
+router.all('/test-log', (req, res) => {
+  console.log('Test route HIT', req.method, req.body);
+  res.json({ message: 'Test route hit' });
+});
+
+export default router;
