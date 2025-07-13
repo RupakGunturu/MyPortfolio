@@ -158,19 +158,33 @@ const About = ({ viewOnly = false, userId }) => {
               overflow: 'hidden'
             }}
           >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              style={{
-                position: 'absolute',
-                top: -50,
-                right: -50,
-                width: '120px',
-                height: '120px',
-                background: 'rgba(255,255,255,0.1)',
-                borderRadius: '50%'
-              }}
-            />
+            {/* Edit button (top right) */}
+            {!viewOnly && (
+              <button
+                onClick={() => handleEditField('Bio')}
+                style={{
+                  position: 'absolute',
+                  top: 24,
+                  right: 32,
+                  background: 'rgba(255,255,255,0.15)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: 44,
+                  height: 44,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(76, 72, 181, 0.10)',
+                  zIndex: 10,
+                  transition: 'background 0.2s',
+                  outline: 'none'
+                }}
+                title="Edit bio"
+              >
+                <FiEdit size={22} color="#fff" />
+              </button>
+            )}
             <motion.h2
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -206,7 +220,11 @@ const About = ({ viewOnly = false, userId }) => {
                 lineHeight: 1.5
               }}
             >
-Passionate about technology and continuous learning, I strive to solve real-world problems through innovation.
+              {userData.Bio || (
+                <span style={{ opacity: 0.7 }}>
+                  Passionate about technology and continuous learning, I strive to solve real-world problems through innovation.
+                </span>
+              )}
             </motion.p>
           </motion.div>
 
@@ -632,7 +650,7 @@ Passionate about technology and continuous learning, I strive to solve real-worl
         </LayoutGroup>
       </motion.div>
       {/* Modal for editing fields */}
-      {editingField && (
+      {editingField === 'Bio' && (
         <div className="modal-overlay" style={{
           position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
           background: 'rgba(30, 41, 59, 0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999,
@@ -643,7 +661,7 @@ Passionate about technology and continuous learning, I strive to solve real-worl
             padding: 32,
             borderRadius: 18,
             minWidth: 340,
-            maxWidth: 420,
+            maxWidth: 480,
             boxShadow: '0 8px 32px rgba(30,41,59,0.18)',
             border: '1px solid #e0e7ef',
             display: 'flex', flexDirection: 'column', alignItems: 'stretch',
@@ -658,61 +676,30 @@ Passionate about technology and continuous learning, I strive to solve real-worl
               letterSpacing: '-0.01em',
               textAlign: 'center',
               fontFamily: 'Montserrat, -apple-system, BlinkMacSystemFont, sans-serif'
-            }}>Edit {editingField}</h3>
-            {multiValueFields.includes(editingField) ? (
-              <>
-                <textarea
-                  value={editingValue}
-                  onChange={e => setEditingValue(e.target.value)}
-                  rows={4}
-                  style={{
-                    width: '100%',
-                    marginBottom: 8,
-                    borderRadius: 10,
-                    border: '1px solid #cbd5e1',
-                    padding: '12px 14px',
-                    fontSize: '1rem',
-                    fontFamily: 'inherit',
-                    background: '#f8fafc',
-                    color: '#2A2D43',
-                    boxShadow: '0 2px 8px rgba(30,41,59,0.04)',
-                    outline: 'none',
-                    transition: 'border 0.2s'
-                  }}
-                  placeholder="Separate values with commas"
-                />
-                <div style={{
-                  fontSize: '0.92rem',
-                  color: '#64748b',
-                  marginBottom: 12,
-                  marginTop: -2,
-                  fontStyle: 'italic',
-                  textAlign: 'left'
-                }}>
-                  <span>Tip: Separate each value with a comma (e.g. <b>Reading, Coding, Music</b>).</span>
-                </div>
-              </>
-            ) : (
-              <input
-                type="text"
-                value={editingValue}
-                onChange={e => setEditingValue(e.target.value)}
-                style={{
-                  width: '100%',
-                  marginBottom: 20,
-                  borderRadius: 10,
-                  border: '1px solid #cbd5e1',
-                  padding: '12px 14px',
-                  fontSize: '1rem',
-                  fontFamily: 'inherit',
-                  background: '#f8fafc',
-                  color: '#2A2D43',
-                  boxShadow: '0 2px 8px rgba(30,41,59,0.04)',
-                  outline: 'none',
-                  transition: 'border 0.2s'
-                }}
-              />
-            )}
+            }}>Edit Bio</h3>
+            <textarea
+              value={editingValue}
+              onChange={e => setEditingValue(e.target.value)}
+              rows={5}
+              style={{
+                width: '100%',
+                marginBottom: 16,
+                borderRadius: 12,
+                border: '1.5px solid #cbd5e1',
+                padding: '14px 16px',
+                fontSize: '1.08rem',
+                fontFamily: 'inherit',
+                background: '#f8fafc',
+                color: '#2A2D43',
+                boxShadow: '0 2px 8px rgba(30,41,59,0.04)',
+                outline: 'none',
+                transition: 'border 0.2s',
+                resize: 'vertical',
+                minHeight: 90
+              }}
+              placeholder="Write something about yourself..."
+              autoFocus
+            />
             <div style={{ display: 'flex', gap: 14, justifyContent: 'flex-end', marginTop: 8 }}>
               <button onClick={() => { setEditingField(null); setEditingValue(''); }}
                 style={{
