@@ -35,9 +35,15 @@ router.post(
     }
     const { fullname, username, email, password } = req.body;
     try {
-      let user = await RegisteredUser.findOne({ $or: [{ username }, { email }] });
+      // Check for existing username (case-insensitive)
+      let user = await RegisteredUser.findOne({ username: { $regex: `^${username}$`, $options: 'i' } });
       if (user) {
-        return res.status(400).json({ msg: 'Username or email already exists' });
+        return res.status(400).json({ msg: 'Username already exists. Please use a different username. 💡 You can try adding numbers or symbols to make it unique!' });
+      }
+      // Check for existing email (case-insensitive)
+      let emailUser = await RegisteredUser.findOne({ email: { $regex: `^${email}$`, $options: 'i' } });
+      if (emailUser) {
+        return res.status(400).json({ msg: 'Email already exists. Please use a different email.' });
       }
       const hashedPassword = await bcrypt.hash(password, 10);
       user = new RegisteredUser({ fullname, username, email, password: hashedPassword });
