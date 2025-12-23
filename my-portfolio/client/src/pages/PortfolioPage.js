@@ -12,6 +12,8 @@ import Skills from '../components/Skills';
 import Contact from '../components/Contact';
 import ProjectCard from '../components/ProjectCard';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 const PortfolioPage = () => {
   const [searchParams] = useSearchParams();
   const { username } = useParams();
@@ -48,7 +50,7 @@ const PortfolioPage = () => {
   React.useEffect(() => {
     if (!isOwner && username) {
       setViewLoading(true);
-      fetch(`/api/users/username/${username}`)
+      fetch(`${API_BASE_URL}/api/users/username/${username}`)
         .then(res => {
           if (!res.ok) throw new Error('User not found');
           return res.json();

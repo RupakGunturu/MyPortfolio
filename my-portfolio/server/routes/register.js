@@ -35,9 +35,15 @@ router.post(
     }
     const { fullname, username, email, password } = req.body;
     try {
-      let user = await RegisteredUser.findOne({ $or: [{ username }, { email }] });
+      // Check for existing username (case-insensitive)
+      let user = await RegisteredUser.findOne({ username: { $regex: `^${username}$`, $options: 'i' } });
       if (user) {
-        return res.status(400).json({ msg: 'Username or email already exists' });
+        return res.status(400).json({ msg: 'Username already exists. Please use a different username. 💡 You can try adding numbers or symbols to make it unique!' });
+      }
+      // Check for existing email (case-insensitive)
+      let emailUser = await RegisteredUser.findOne({ email: { $regex: `^${email}$`, $options: 'i' } });
+      if (emailUser) {
+        return res.status(400).json({ msg: 'Email already exists. Please use a different email.' });
       }
       const hashedPassword = await bcrypt.hash(password, 10);
       user = new RegisteredUser({ fullname, username, email, password: hashedPassword });
@@ -145,6 +151,12 @@ router.post('/auth/reset-password', async (req, res) => {
   const user = await RegisteredUser.findOne({ email, otp, otpExpires: { $gt: new Date() } });
   if (!user) return res.status(400).json({ message: 'Invalid or expired OTP' });
 
+  // Check if new password is the same as the old password
+  const isSame = await bcrypt.compare(newPassword, user.password);
+  if (isSame) {
+    return res.status(400).json({ message: 'You entered the same password as before.' });
+  }
+
   // Hash the new password
   const hashedPassword = await bcrypt.hash(newPassword, 10);
   user.password = hashedPassword;
@@ -246,4 +258,10 @@ router.post('/auth/register-verify-otp', async (req, res) => {
   }
 });
 
-export default router; 
+// Debug route to confirm backend logging
+router.all('/test-log', (req, res) => {
+  console.log('Test route HIT', req.method, req.body);
+  res.json({ message: 'Test route hit' });
+});
+
+export default router;

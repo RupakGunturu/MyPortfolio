@@ -9,7 +9,7 @@ import './Dashboard.css';
 
 const Dashboard = () => {
   const authContext = useContext(AuthContext);
-  const { user, isAuthenticated } = authContext;
+  const { user, isAuthenticated, logout } = authContext;
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
@@ -19,6 +19,15 @@ const Dashboard = () => {
       navigate('/login');
     }
   }, [isAuthenticated, navigate]);
+
+  // Auto-logout after 10 minutes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      logout();
+      navigate('/login');
+    }, 600000); // 10 minutes in ms
+    return () => clearTimeout(timer);
+  }, [logout, navigate]);
 
   // Show loading if user data is not available yet
   if (!isAuthenticated || !user) {

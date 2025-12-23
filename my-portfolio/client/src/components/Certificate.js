@@ -2,6 +2,20 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import AuthContext from '../context/AuthContext';
+import { toast } from 'react-toastify';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+
+// Set up PDF.js worker with multiple fallbacks
+if (typeof window !== 'undefined') {
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.js',
+    import.meta.url,
+  ).toString();
+}
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 function Certificates({ viewOnly = false, theme = 'dark', userId }) {
   const authContext = useContext(AuthContext);
@@ -18,6 +32,13 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const fileInputRef = useRef(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pdfPreview, setPdfPreview] = useState(null);
+  const [numPages, setNumPages] = useState(null);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [selectedCert, setSelectedCert] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     if (effectiveUserId) {
@@ -27,7 +48,7 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
 
   const fetchCertificates = async () => {
     try {
-      const response = await axios.get(`/api/certificates?userId=${effectiveUserId}`);
+      const response = await axios.get(`${API_BASE_URL}/api/certificates?userId=${effectiveUserId}`);
       setCerts(response.data);
     } catch (err) {
       console.error('Failed to fetch certificates:', err);
@@ -36,14 +57,29 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
   };
 
   const handleFileChange = e => {
+    const file = e.target.files[0];
     setForm(prev => ({
       ...prev,
-      file: e.target.files[0]
+      file: file
     }));
+
+    if (file && file.type.startsWith('image/')) {
+      setFilePreview(URL.createObjectURL(file));
+      setPdfPreview(null);
+    } else if (file && file.type === 'application/pdf') {
+      setPdfPreview(URL.createObjectURL(file));
+      setFilePreview(null);
+      setPageNumber(1);
+    } else {
+      setFilePreview(null);
+      setPdfPreview(null);
+    }
   };
 
   const onSubmit = async e => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     setError('');
 
     try {
@@ -72,21 +108,32 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
         formData.append('file', form.file);
       }
 
-      const response = await axios.post('/api/certificates', formData, {
+      const response = await axios.post(`${API_BASE_URL}/api/certificates`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       setCerts(prev => [response.data.certificate, ...prev]);
+      toast.success('Certificate added successfully!');
       resetForm();
       setIsFormVisible(false);
     } catch (err) {
       console.error('Submit error:', err);
       setError(err.message || 'Something went wrong.');
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const onDocumentLoadSuccess = ({ numPages }) => {
+    setNumPages(numPages);
   };
 
   const resetForm = () => {
     setForm({ title: '', issuer: '', date: '', file: null });
+    setFilePreview(null);
+    setPdfPreview(null);
+    setNumPages(null);
+    setPageNumber(1);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -101,11 +148,12 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
 const deleteCertificate = async (id) => {
   console.log('Attempting to delete:', id);
   try {
-    const response = await axios.delete(`/api/certificates/${id}?userId=${effectiveUserId}`);
+    const response = await axios.delete(`${API_BASE_URL}/api/certificates/${id}?userId=${effectiveUserId}`);
     
     if (response.data.success) {
       setCerts(prev => prev.filter(cert => cert._id !== id));
       setDeletingId(null);
+      toast.success('Certificate deleted successfully!');
     } else {
       throw new Error(response.data.message);
     }
@@ -395,6 +443,41 @@ const deleteCertificate = async (id) => {
       fontSize: '0.875rem',
       transition: 'background-color 0.15s ease',
     },
+    pdfPreviewContainer: {
+      margin: '1rem 0',
+      border: '1px solid #ccc',
+      borderRadius: '8px',
+      padding: '1rem',
+      backgroundColor: theme === 'dark' ? '#334155' : '#F8FAFC',
+      textAlign: 'center',
+    },
+    pdfPreview: {
+      border: '1px solid #ddd',
+      borderRadius: '4px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    },
+    pdfControls: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: '1rem',
+      marginTop: '0.5rem',
+    },
+    pdfButton: {
+      padding: '0.25rem 0.5rem',
+      backgroundColor: theme === 'dark' ? '#475569' : '#E2E8F0',
+      color: theme === 'dark' ? '#F8FAFC' : '#1E293B',
+      border: 'none',
+      borderRadius: '4px',
+      cursor: 'pointer',
+      fontSize: '0.875rem',
+      fontWeight: '500',
+    },
+    pdfInfo: {
+      color: theme === 'dark' ? '#94A3B8' : '#64748B',
+      fontSize: '0.875rem',
+      margin: '0',
+    },
   };
 
   return (
@@ -467,6 +550,59 @@ const deleteCertificate = async (id) => {
               <p style={styles.fileHint}>Supports JPG, PNG, GIF, or PDF files</p>
             </div>
 
+            {filePreview && (
+              <div style={{ margin: '1rem 0' }}>
+                <img
+                  src={filePreview}
+                  alt="Preview"
+                  style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, border: '1px solid #ccc' }}
+                />
+              </div>
+            )}
+
+            {pdfPreview && (
+              <div style={styles.pdfPreviewContainer}>
+                <Document
+                  file={pdfPreview}
+                  onLoadSuccess={onDocumentLoadSuccess}
+                  loading={<div style={styles.pdfInfo}>Loading PDF...</div>}
+                  error={<div style={styles.pdfInfo}>Error loading PDF</div>}
+                >
+                  <Page 
+                    pageNumber={pageNumber} 
+                    width={Math.min(400, window.innerWidth - 100)}
+                    renderTextLayer={false}
+                    renderAnnotationLayer={false}
+                    className="pdf-page"
+                    style={styles.pdfPreview}
+                  />
+                </Document>
+                {numPages && numPages > 1 && (
+                  <div style={styles.pdfControls}>
+                    <button
+                      type="button"
+                      onClick={() => setPageNumber(Math.max(1, pageNumber - 1))}
+                      disabled={pageNumber <= 1}
+                      style={styles.pdfButton}
+                    >
+                      Previous
+                    </button>
+                    <p style={styles.pdfInfo}>
+                      Page {pageNumber} of {numPages}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setPageNumber(Math.min(numPages, pageNumber + 1))}
+                      disabled={pageNumber >= numPages}
+                      style={styles.pdfButton}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div style={styles.formActions}>
               <button
                 type="button"
@@ -475,8 +611,8 @@ const deleteCertificate = async (id) => {
               >
                 Cancel
               </button>
-              <button type="submit" style={styles.submitBtn}>
-                Save Certificate
+              <button type="submit" style={styles.submitBtn} disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save Certificate'}
               </button>
             </div>
             {error && <div style={styles.error}>{error}</div>}
@@ -491,85 +627,267 @@ const deleteCertificate = async (id) => {
         </div>
       ) : (
         <div style={styles.grid}>
-          {certs.map(cert => (
-            <motion.div
-              key={cert._id}
-              style={styles.card}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 600, damping: 30, mass: 0.5 }}
-              whileHover={{ 
-                y: -8, 
-                scale: 1.03,
-                boxShadow: theme === 'dark'
-                  ? '0 12px 24px rgba(0,0,0,0.4)'
-                  : '0 12px 24px rgba(30, 41, 59, 0.15)'
-              }}
-            >
-              {!viewOnly && (
-              <button
-                  style={styles.deleteBtn}
-  onClick={(e) => {
-                    e.stopPropagation();
-    confirmDelete(cert._id);
-  }}
-  aria-label="Delete Certificate"
-  title="Delete Certificate"
->
-  ×
-</button>
-              )}
-
-              <div>
-                {cert.url ? (
-                  <img
-                    src={cert.url}
-                    alt="Certificate"
-                    style={styles.image}
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = "https://via.placeholder.com/300x200?text=Certificate+Preview";
-                    }}
-                  />
-                ) : (
-                  <div style={styles.noImagePlaceholder}>
-                    <span>No Preview Available</span>
-                  </div>
+          {certs.map(cert => {
+            console.log('Certificate data:', cert); // Debug log
+            
+            let fileUrl = null;
+            let isPdf = false;
+            
+            // Check different possible field names for the file URL
+            if (cert.url) {
+              fileUrl = cert.url.startsWith('http') ? cert.url : `${API_BASE_URL}${cert.url}`;
+              isPdf = cert.contentType === 'application/pdf' || cert.url.toLowerCase().includes('.pdf');
+            } else if (cert.image) {
+              fileUrl = cert.image.startsWith('http') ? cert.image : `${API_BASE_URL}${cert.image}`;
+              isPdf = cert.contentType === 'application/pdf' || cert.image.toLowerCase().includes('.pdf');
+            } else if (cert.file) {
+              fileUrl = cert.file.startsWith('http') ? cert.file : `${API_BASE_URL}${cert.file}`;
+              isPdf = cert.contentType === 'application/pdf' || cert.file.toLowerCase().includes('.pdf');
+            } else if (cert.filename) {
+              fileUrl = `${API_BASE_URL}/uploads/${cert.filename}`;
+              isPdf = cert.contentType === 'application/pdf' || cert.filename.toLowerCase().includes('.pdf');
+            }
+            
+            console.log('File URL:', fileUrl, 'isPDF:', isPdf, 'contentType:', cert.contentType); // Debug log
+            
+            return (
+              <motion.div
+                key={cert._id}
+                style={styles.card}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: 'spring', stiffness: 600, damping: 30, mass: 0.5 }}
+                whileHover={{ 
+                  y: -8, 
+                  scale: 1.03,
+                  boxShadow: theme === 'dark'
+                    ? '0 12px 24px rgba(0,0,0,0.4)'
+                    : '0 12px 24px rgba(30, 41, 59, 0.15)'
+                }}
+                onClick={() => { setSelectedCert(cert); setShowModal(true); }}
+              >
+                {!viewOnly && (
+                <button
+                    style={styles.deleteBtn}
+    onClick={(e) => {
+                      e.stopPropagation();
+      confirmDelete(cert._id);
+    }}
+    aria-label="Delete Certificate"
+    title="Delete Certificate"
+  >
+    ×
+  </button>
                 )}
-              </div>
 
-              <div style={styles.details}>
-                <h3 style={styles.title}>{cert.title}</h3>
-                <p style={styles.issuer}>{cert.issuer}</p>
-                <p style={styles.date}>
-                  {new Date(cert.date).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                  })}
-                </p>
-
-                {deletingId === cert._id && !viewOnly && (
-                  <div style={styles.deleteConfirmOverlay}>
-                    <div style={styles.deleteConfirmBox}>
-                      <p style={styles.confirmText}>Are you sure you want to delete this certificate?</p>
-                      <div style={styles.confirmActions}>
-                        <button onClick={cancelDelete} style={styles.formCancelBtn}>
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => deleteCertificate(cert._id)}
-                          style={styles.confirmDeleteBtn}
+                <div>
+                  {fileUrl ? (
+                    isPdf ? (
+                      <div style={{ width: '100%', height: '200px', overflow: 'hidden', backgroundColor: theme === 'dark' ? '#334155' : '#F1F5F9' }}>
+                        <Document
+                          file={fileUrl}
+                          options={{
+                            cMapUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/cmaps/',
+                            cMapPacked: true,
+                            standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/standard_fonts/',
+                          }}
+                          loading={
+                            <div style={styles.noImagePlaceholder}>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                                <span style={{ fontSize: '2rem' }}>📄</span>
+                                <span>Loading PDF...</span>
+                              </div>
+                            </div>
+                          }
+                          error={
+                            <div style={styles.noImagePlaceholder}>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                                <span style={{ fontSize: '2rem' }}>📄</span>
+                                <span style={{ fontSize: '0.875rem' }}>PDF Certificate</span>
+                                <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Preview not available</span>
+                              </div>
+                            </div>
+                          }
+                          onLoadError={(error) => {
+                            console.error('PDF Load Error:', error);
+                          }}
                         >
-                          Yes, Delete
-                        </button>
+                          <Page 
+                            pageNumber={1}
+                            width={320}
+                            renderTextLayer={false}
+                            renderAnnotationLayer={false}
+                            loading={
+                              <div style={styles.noImagePlaceholder}>
+                                <span>Loading page...</span>
+                              </div>
+                            }
+                            error={
+                              <div style={styles.noImagePlaceholder}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                                  <span style={{ fontSize: '2rem' }}>📄</span>
+                                  <span style={{ fontSize: '0.875rem' }}>PDF Certificate</span>
+                                </div>
+                              </div>
+                            }
+                          />
+                        </Document>
+                      </div>
+                    ) : (
+                      <img
+                        src={fileUrl}
+                        alt={`${cert.title} Certificate`}
+                        style={styles.image}
+                        onLoad={() => console.log('Image loaded successfully:', fileUrl)}
+                        onError={e => {
+                          console.error('Image failed to load:', fileUrl);
+                          // Instead of replacing innerHTML, show a fallback
+                          e.target.style.display = 'none';
+                          const fallbackDiv = document.createElement('div');
+                          fallbackDiv.style.cssText = `
+                            width: 100%; 
+                            height: 200px; 
+                            background-color: ${theme === 'dark' ? '#334155' : '#F1F5F9'}; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center; 
+                            color: ${theme === 'dark' ? '#94A3B8' : '#64748B'}; 
+                            font-size: 0.9rem;
+                            border-radius: 0.5rem;
+                          `;
+                          fallbackDiv.innerHTML = '<span>Image not available</span>';
+                          e.target.parentElement.appendChild(fallbackDiv);
+                        }}
+                      />
+                    )
+                  ) : (
+                    <div style={styles.noImagePlaceholder}>
+                      <span>No Preview Available</span>
+                    </div>
+                  )}
+                </div>
+
+                <div style={styles.details}>
+                  <h3 style={styles.title}>{cert.title}</h3>
+                  <p style={styles.issuer}>{cert.issuer}</p>
+                  <p style={styles.date}>
+                    {new Date(cert.date).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </p>
+
+                  {deletingId === cert._id && !viewOnly && (
+                    <div style={styles.deleteConfirmOverlay}>
+                      <div style={styles.deleteConfirmBox}>
+                        <p style={styles.confirmText}>Are you sure you want to delete this certificate?</p>
+                        <div style={styles.confirmActions}>
+                          <button onClick={cancelDelete} style={styles.formCancelBtn}>
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => deleteCertificate(cert._id)}
+                            style={styles.confirmDeleteBtn}
+                          >
+                            Yes, Delete
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          ))}
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+      {/* Modal for certificate preview */}
+      {showModal && selectedCert && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(30,41,59,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
+        }}
+          onClick={() => setShowModal(false)}
+        >
+          <div style={{
+            background: theme === 'dark' ? '#1E293B' : '#fff',
+            borderRadius: 12,
+            padding: '48px 24px 24px 24px', // extra top padding for the close button
+            maxWidth: 600,
+            width: '90vw',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            position: 'relative',
+            boxShadow: '0 8px 32px rgba(30,41,59,0.18)'
+          }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowModal(false)}
+              style={{
+                position: 'absolute',
+                top: 18,
+                right: 18,
+                background: theme === 'dark' ? 'rgba(30,41,59,0.85)' : 'rgba(255,255,255,0.85)',
+                border: 'none',
+                fontSize: 32,
+                color: theme === 'dark' ? '#64748B' : '#1E293B',
+                cursor: 'pointer',
+                fontWeight: 700,
+                transition: 'color 0.18s',
+                lineHeight: 1,
+                borderRadius: '50%',
+                width: 44,
+                height: 44,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(30,41,59,0.10)'
+              }}
+              onMouseEnter={e => e.target.style.color = '#ef4444'}
+              onMouseLeave={e => e.target.style.color = theme === 'dark' ? '#64748B' : '#1E293B'}
+              aria-label="Close"
+            >×</button>
+            {/* Show image or PDF */}
+            {(() => {
+              let fileUrl = null;
+              let isPdf = false;
+              if (selectedCert.url) {
+                fileUrl = selectedCert.url.startsWith('http') ? selectedCert.url : `${API_BASE_URL}${selectedCert.url}`;
+                isPdf = selectedCert.contentType === 'application/pdf' || selectedCert.url.toLowerCase().includes('.pdf');
+              } else if (selectedCert.image) {
+                fileUrl = selectedCert.image.startsWith('http') ? selectedCert.image : `${API_BASE_URL}${selectedCert.image}`;
+                isPdf = selectedCert.contentType === 'application/pdf' || selectedCert.image.toLowerCase().includes('.pdf');
+              } else if (selectedCert.file) {
+                fileUrl = selectedCert.file.startsWith('http') ? selectedCert.file : `${API_BASE_URL}${selectedCert.file}`;
+                isPdf = selectedCert.contentType === 'application/pdf' || selectedCert.file.toLowerCase().includes('.pdf');
+              } else if (selectedCert.filename) {
+                fileUrl = `${API_BASE_URL}/uploads/${selectedCert.filename}`;
+                isPdf = selectedCert.contentType === 'application/pdf' || selectedCert.filename.toLowerCase().includes('.pdf');
+              }
+              if (fileUrl) {
+                if (isPdf) {
+                  return (
+                    <div style={{ width: '100%', minHeight: 400, background: theme === 'dark' ? '#334155' : '#F1F5F9', borderRadius: 8, marginBottom: 16 }}>
+                      <Document file={fileUrl} loading={<div style={{ color: '#64748B', textAlign: 'center', marginTop: 20 }}>Loading PDF...</div>}>
+                        <Page pageNumber={1} width={500} renderTextLayer={false} renderAnnotationLayer={false} />
+                      </Document>
+                    </div>
+                  );
+                } else {
+                  return (
+                    <img src={fileUrl} alt={selectedCert.title} style={{ maxWidth: '100%', maxHeight: 500, borderRadius: 8, marginBottom: 16 }} />
+                  );
+                }
+              } else {
+                return <div style={{ color: '#64748B', textAlign: 'center', marginBottom: 16 }}>No Preview Available</div>;
+              }
+            })()}
+            <h3 style={{ color: theme === 'dark' ? '#F8FAFC' : '#1E293B', margin: '0 0 8px 0' }}>{selectedCert.title}</h3>
+            <p style={{ color: theme === 'dark' ? '#94A3B8' : '#64748B', margin: '0 0 4px 0' }}>{selectedCert.issuer}</p>
+            <p style={{ color: theme === 'dark' ? '#94A3B8' : '#64748B', margin: 0 }}>{new Date(selectedCert.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+          </div>
         </div>
       )}
     </section>

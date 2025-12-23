@@ -4,8 +4,21 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #fafbfc;
-  padding: 2rem;
+  background: #181a23;
+  padding: 0.5rem;
+}
+
+.landing-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .landing-title {
@@ -14,10 +27,12 @@
   margin-bottom: 0.5rem;
   text-align: center;
   line-height: 1.1;
+  color: #fff;
+  white-space: nowrap;
 }
 
 .text-gradient {
-  background: linear-gradient(90deg, #a259c9 0%, #f24e1e 50%, #3b82f6 100%);
+  background: linear-gradient(90deg, #ff7e5f 0%, #feb47b 50%, #6a82fb 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -43,14 +58,14 @@
   display: inline-flex;
   align-items: center;
   gap: 0.7rem;
-  background: linear-gradient(90deg, #f3e8ff 0%, #fde2ff 100%);
-  color: #8b5cf6;
+  background: linear-gradient(90deg, #23243a 0%, #2d2e48 100%);
+  color: #ffb86c;
   font-weight: 500;
   font-size: 1.1rem;
   padding: 0.7rem 2rem;
   border-radius: 999px;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 12px 0 rgba(130, 88, 159, 0.07);
+  box-shadow: 0 2px 12px 0 rgba(30, 30, 40, 0.12);
 }
 
 .badge-icon {
@@ -69,21 +84,25 @@
 }
 
 .landing-desc {
-  color: #5b6478;
+  color: #bfc7d5;
   font-size: 1.25rem;
   text-align: center;
-  max-width: 600px;
-  margin-bottom: 2.5rem;
+  max-width: 500px;
+  margin: 0 auto 2.5rem auto;
+  line-height: 1.6;
 }
 
 .landing-actions {
   display: flex;
   gap: 1.2rem;
   justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
 }
 
 .btn-gradient {
-  background: linear-gradient(90deg, #a259c9 0%, #f24e1e 100%);
+  background: linear-gradient(90deg, #6a82fb 0%, #fc5c7d 100%);
   color: #fff;
   font-weight: 600;
   font-size: 1.1rem;
@@ -91,29 +110,39 @@
   border: none;
   border-radius: 999px;
   cursor: pointer;
-  box-shadow: 0 2px 12px 0 rgba(130, 88, 159, 0.07);
+  box-shadow: 0 2px 12px 0 rgba(30, 30, 40, 0.12);
   transition: background 0.2s, transform 0.2s;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 .btn-gradient:hover {
-  background: linear-gradient(90deg, #f24e1e 0%, #a259c9 100%);
+  background: linear-gradient(90deg, #fc5c7d 0%, #6a82fb 100%);
   transform: translateY(-2px) scale(1.04);
 }
 
 .btn-outline {
-  background: #fff;
-  color: #a259c9;
+  background: transparent;
+  color: #ffb86c;
   font-weight: 600;
   font-size: 1.1rem;
   padding: 0.9rem 2.2rem;
-  border: 2px solid #a259c9;
+  border: 2px solid #ffb86c;
   border-radius: 999px;
   cursor: pointer;
   transition: background 0.2s, color 0.2s, transform 0.2s;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 .btn-outline:hover {
-  background: #f3e8ff;
-  color: #f24e1e;
-  border-color: #f24e1e;
+  background: #23243a;
+  color: #fc5c7d;
+  border-color: #fc5c7d;
   transform: translateY(-2px) scale(1.04);
 }
 
@@ -122,23 +151,24 @@
   align-items: center;
   justify-content: center;
   gap: 0.7rem;
-  background: #fff;
-  border: 2px solid #a259c9;
+  background: #23243a;
+  border: 2px solid #6a82fb;
   border-radius: 1.5rem;
   padding: 0.7rem 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 12px 0 rgba(130, 88, 159, 0.07);
+  box-shadow: 0 2px 12px 0 rgba(30, 30, 40, 0.12);
+  flex-wrap: wrap;
 }
 
 .user-count-number {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #a259c9;
+  color: #6a82fb;
 }
 
 .user-count-label {
   font-size: 1.1rem;
-  color: #5b6478;
+  color: #bfc7d5;
   font-weight: 500;
 }
 
@@ -148,18 +178,285 @@
   justify-content: center;
   gap: 1rem;
   margin-top: 2.5rem;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .portfolio-search-input {
   padding: 0.8rem 1.2rem;
   font-size: 1.1rem;
-  border: 2px solid #a259c9;
+  border: 2px solid #6a82fb;
   border-radius: 999px;
   outline: none;
   min-width: 200px;
+  background: #181a23;
+  color: #fff;
   transition: border 0.2s;
+  flex: 1;
+  min-height: 44px;
 }
 
 .portfolio-search-input:focus {
-  border-color: #f24e1e;
+  border-color: #fc5c7d;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 1024px) {
+  .landing-root {
+    padding: 1.5rem;
+  }
+  
+  .landing-title {
+    font-size: 3.5rem;
+  }
+  
+  .landing-desc {
+    font-size: 1.2rem;
+    max-width: 500px;
+  }
+}
+
+@media (max-width: 768px) {
+  .landing-root {
+    padding: 1rem;
+    min-height: 100vh;
+  }
+  
+  .landing-content {
+    padding: 1rem 0;
+  }
+  
+  .landing-title {
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .landing-badge {
+    font-size: 1rem;
+    padding: 0.6rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .badge-text {
+    font-size: 1.1rem;
+  }
+  
+  .landing-desc {
+    font-size: 1.1rem;
+    max-width: 100%;
+    margin-bottom: 2rem;
+    padding: 0 1rem;
+  }
+  
+  .landing-actions {
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+  
+  .btn-gradient, .btn-outline {
+    width: 100%;
+    font-size: 1rem;
+    padding: 1rem 2rem;
+    min-height: 48px;
+  }
+  
+  .user-count-box {
+    padding: 0.6rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .user-count-number {
+    font-size: 1.3rem;
+  }
+  
+  .user-count-label {
+    font-size: 1rem;
+  }
+  
+  .portfolio-search-box {
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 2rem;
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .portfolio-search-input {
+    width: 100%;
+    min-width: unset;
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 1rem 1.2rem;
+    min-height: 48px;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-root {
+    padding: 0.8rem;
+  }
+  
+  .landing-title {
+    font-size: 2rem;
+    line-height: 1.2;
+  }
+  
+  .landing-badge {
+    font-size: 0.9rem;
+    padding: 0.5rem 1.2rem;
+    margin-bottom: 1.2rem;
+  }
+  
+  .badge-text {
+    font-size: 1rem;
+  }
+  
+  .landing-desc {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0 0.5rem;
+  }
+  
+  .landing-actions {
+    max-width: 280px;
+  }
+  
+  .btn-gradient, .btn-outline {
+    font-size: 0.95rem;
+    padding: 0.9rem 1.8rem;
+    min-height: 44px;
+  }
+  
+  .user-count-box {
+    padding: 0.5rem 1.2rem;
+    margin-bottom: 1.2rem;
+  }
+  
+  .user-count-number {
+    font-size: 1.2rem;
+  }
+  
+  .user-count-label {
+    font-size: 0.9rem;
+  }
+  
+  .portfolio-search-box {
+    max-width: 280px;
+    margin-top: 1.5rem;
+  }
+  
+  .portfolio-search-input {
+    font-size: 16px;
+    padding: 0.9rem 1.2rem;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 360px) {
+  .landing-title {
+    font-size: 1.8rem;
+  }
+  
+  .landing-badge {
+    font-size: 0.85rem;
+    padding: 0.4rem 1rem;
+  }
+  
+  .badge-text {
+    font-size: 0.9rem;
+  }
+  
+  .landing-desc {
+    font-size: 0.95rem;
+  }
+  
+  .btn-gradient, .btn-outline {
+    font-size: 0.9rem;
+    padding: 0.8rem 1.5rem;
+  }
+  
+  .user-count-box {
+    padding: 0.4rem 1rem;
+  }
+  
+  .user-count-number {
+    font-size: 1.1rem;
+  }
+  
+  .user-count-label {
+    font-size: 0.85rem;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  .btn-gradient:hover, .btn-outline:hover {
+    transform: none;
+  }
+  
+  .btn-gradient:active, .btn-outline:active {
+    transform: scale(0.98);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .landing-title {
+    color: #ffffff;
+  }
+  
+  .btn-gradient, .btn-outline {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .text-gradient {
+    animation: none;
+  }
+  
+  .btn-gradient, .btn-outline {
+    transition: none;
+  }
+  
+  .btn-gradient:hover, .btn-outline:hover {
+    transform: none;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+  .landing-root {
+    min-height: 100vh;
+    padding: 1rem 2rem;
+  }
+  
+  .landing-title {
+    font-size: 2rem;
+  }
+  
+  .landing-actions {
+    flex-direction: row;
+    max-width: 600px;
+  }
+  
+  .btn-gradient, .btn-outline {
+    width: auto;
+  }
+  
+  .portfolio-search-box {
+    flex-direction: row;
+    max-width: 500px;
+  }
+  
+  .portfolio-search-input {
+    width: auto;
+    flex: 1;
+  }
 }

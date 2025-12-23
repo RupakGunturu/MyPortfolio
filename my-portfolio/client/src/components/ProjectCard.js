@@ -4,6 +4,9 @@ import { FaPlus, FaEdit, FaTrash, FaTimes, FaExternalLinkAlt } from 'react-icons
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
 import './ProjectCard.css';
+import { toast } from 'react-toastify';
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const ProjectCard = ({ viewOnly = false, userId }) => {
   const authContext = useContext(AuthContext);
@@ -25,12 +28,10 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
   });
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Refs for intersection observer
   const projectsSectionRef = useRef(null);
-
-  // API Base URL
-  const API_BASE_URL = '/api/projects';
 
   // Intersection Observer for scroll animations
   useEffect(() => {
@@ -66,7 +67,10 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}?userId=${effectiveUserId}`);
+      console.log('Fetching projects for userId:', effectiveUserId);
+      console.log('API URL:', `${API_BASE_URL}/api/projects?userId=${effectiveUserId}`);
+      const response = await axios.get(`${API_BASE_URL}/api/projects?userId=${effectiveUserId}`);
+      console.log('Projects response:', response.data);
       setProjects(response.data);
       setError(null);
     } catch (err) {
@@ -100,15 +104,17 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
   const handleDeleteProject = async () => {
     if (!editingProject) return;
 
-    if (window.confirm('Are you sure you want to delete this project?')) {
-      try {
-        await axios.delete(`${API_BASE_URL}/${editingProject._id}?userId=${effectiveUserId}`);
-        setProjects(projects.filter(project => project._id !== editingProject._id));
-        closeModal();
-      } catch (err) {
-        console.error('Error deleting project:', err);
-        alert('Failed to delete project. Please try again.');
-      }
+    try {
+      console.log('Deleting project:', editingProject._id, 'for user:', effectiveUserId);
+      const response = await axios.delete(`${API_BASE_URL}/api/projects/${editingProject._id}?userId=${effectiveUserId}`);
+      console.log('Delete response:', response.data);
+      setProjects(projects.filter(project => project._id !== editingProject._id));
+      closeModal();
+      toast.success('Project deleted successfully!');
+    } catch (err) {
+      console.error('Error deleting project:', err);
+      console.error('Error response:', err.response?.data);
+      alert(`Failed to delete project: ${err.response?.data?.error || err.message}`);
     }
   };
 
@@ -121,9 +127,11 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
         return;
       }
 
+      console.log('Selected image file:', file.name, 'Size:', file.size, 'Type:', file.type);
       setSelectedImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
+        console.log('Image converted to base64, length:', reader.result.length);
         setImagePreview(reader.result);
         setFormData(prev => ({ ...prev, image: reader.result }));
       };
@@ -134,10 +142,17 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Prevent multiple submissions
+    if (isSubmitting) {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
     try {
       if (showEditModal && editingProject) {
         // Update existing project
-        const response = await axios.put(`${API_BASE_URL}/${editingProject._id}`, {
+        const response = await axios.put(`${API_BASE_URL}/api/projects/${editingProject._id}`, {
           ...formData,
           userId: effectiveUserId
         });
@@ -149,13 +164,16 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
         setEditingProject(null);
       } else {
         // Add new project
-        const response = await axios.post('/api/projects', {
+        console.log('Adding new project with data:', { ...formData, userId: effectiveUserId });
+        const response = await axios.post(`${API_BASE_URL}/api/projects`, {
           ...formData,
           userId: effectiveUserId
         });
+        console.log('Project created:', response.data);
 
         setProjects([response.data, ...projects]);
         setShowAddModal(false);
+        toast.success('Project created successfully!');
       }
       
       setFormData({ title: '', description: '', link: '', image: '' });
@@ -164,6 +182,8 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
     } catch (err) {
       console.error('Error saving project:', err);
       alert(err.response?.data?.message || 'Failed to save project. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -241,54 +261,78 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
               <p>No projects yet. Add your first project!</p>
             </div>
           ) : (
-            projects.map((project, index) => (
-              <div 
-                key={project._id} 
-                className={`project-card ${isVisible ? 'animate-in' : ''}`}
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-    <div className="project-image">
-                  {project.image ? (
-        <img
-                      src={project.image}
-                      alt={project.title}
-          onError={e => {
-            e.target.onerror = null;
-            e.target.src = "https://via.placeholder.com/300x200?text=Project+Preview";
-          }}
-        />
-      ) : (
-        <div className="no-image-placeholder">
-          <span>No Preview Available</span>
-        </div>
-      )}
-    </div>
-    <div className="project-details">
-                  <h3>{project.title}</h3>
-                  {project.description && (
-                    <div className="project-bio">
-                      <p>{project.description}</p>
-                    </div>
-                  )}
-                  <div className="project-actions">
-                    <button 
-                      className="view-btn"
-                      onClick={() => handleViewClick(project.link)}
-      >
-        View Project
-                    </button>
-                    {!viewOnly && (
-                      <button 
-                        className="edit-btn"
-                        onClick={() => handleEditProject(project)}
-                      >
-                        Edit
-                      </button>
+            (Array.isArray(projects) ? projects : []).map((project, index) => {
+              const projectRawUrl = project.image || project.imageUrl;
+              let projectImageUrl = null;
+              
+              if (projectRawUrl) {
+                if (projectRawUrl.startsWith('http')) {
+                  projectImageUrl = projectRawUrl;
+                } else if (projectRawUrl.startsWith('data:image')) {
+                  projectImageUrl = projectRawUrl; // Base64 image
+                } else if (projectRawUrl.startsWith('/uploads/')) {
+                  // For uploaded files, prepend the backend URL
+                  projectImageUrl = `${API_BASE_URL}${projectRawUrl}`;
+                } else {
+                  // For other relative URLs, prepend the backend URL
+                  projectImageUrl = `${API_BASE_URL}${projectRawUrl.startsWith('/') ? '' : '/'}${projectRawUrl}`;
+                }
+              }
+              
+              console.log('Project:', project.title, 'Image URL:', projectImageUrl);
+              return (
+                <div 
+                  key={project._id} 
+                  className={`project-card ${isVisible ? 'animate-in' : ''}`}
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="project-image">
+                    {projectImageUrl ? (
+                      <img
+                        src={projectImageUrl}
+                        alt={project.title}
+                        onError={e => {
+                          console.log('Image failed to load:', projectImageUrl);
+                          e.target.onerror = null;
+                          e.target.src = "https://placehold.co/300x200?text=Project+Preview";
+                        }}
+                        onLoad={() => console.log('Image loaded successfully:', projectImageUrl)}
+                      />
+                    ) : (
+                      <div className="no-image-placeholder">
+                        <span>No Preview Available</span>
+                      </div>
                     )}
                   </div>
+                  <div className="project-details">
+                    <div className="project-main-content">
+                      <h3>{project.title}</h3>
+                      {project.description && (
+                        <div className="project-bio">
+                          <p>{project.description}</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="project-actions">
+                      <button 
+                        className="view-btn"
+                        onClick={() => handleViewClick(project.link)}
+                      >
+                        View Project
+                      </button>
+                      {!viewOnly && (
+                        <button 
+                          className="edit-btn"
+                          onClick={() => handleEditProject(project)}
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
@@ -324,14 +368,14 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
                 />
               </div>
               <div className="form-group">
-                <label>Vercel URL:</label>
+                <label>Project URL:</label>
                 <input
                   type="url"
                   name="link"
                   value={formData.link}
                   onChange={handleInputChange}
                   required
-                  placeholder="https://your-project.vercel.app"
+                  placeholder="https://your-project-url.com"
                 />
               </div>
               <div className="form-group">
@@ -358,8 +402,8 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
                 <button type="button" onClick={closeModal} className="cancel-btn">
                   Cancel
                 </button>
-                <button type="submit" className="submit-btn">
-                  Add Project
+                <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                  {isSubmitting ? 'Adding...' : 'Add Project'}
                 </button>
               </div>
             </form>
@@ -398,14 +442,14 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
                 />
               </div>
               <div className="form-group">
-                <label>Vercel URL:</label>
+                <label>Project URL:</label>
                 <input
                   type="url"
                   name="link"
                   value={formData.link}
                   onChange={handleInputChange}
                   required
-                  placeholder="https://your-project.vercel.app"
+                  placeholder="https://your-project-url.com"
                 />
               </div>
               <div className="form-group">
@@ -435,16 +479,16 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
                 <button type="button" onClick={closeModal} className="cancel-btn">
                   Cancel
                 </button>
-                <button type="submit" className="submit-btn">
-                  Update Project
+                <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                  {isSubmitting ? 'Updating...' : 'Update Project'}
                 </button>
               </div>
             </form>
-    </div>
-  </div>
+          </div>
+        </div>
       )}
     </section>
-);
+  );
 };
 
 export default ProjectCard; 

@@ -104,6 +104,10 @@
   letter-spacing: 0.5px;
   position: relative;
   overflow: hidden;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-view {
@@ -182,6 +186,7 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
   transition: all 0.3s ease;
+  flex-wrap: wrap;
 }
 
 .share-link-container:hover {
@@ -197,50 +202,55 @@
   padding: 16px 20px;
   outline: none;
   font-family: 'Roboto Mono', monospace;
+  min-height: 44px;
 }
 
 .btn-copy {
   background: linear-gradient(135deg, #00aaff, #0088ff);
   color: white;
-  padding: 0 24px;
-  border-radius: 0;
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.2s ease;
+  padding: 16px 24px;
+  border-radius: 0 14px 14px 0;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 80px;
 }
 
 .btn-copy:hover {
-  background: linear-gradient(135deg, #0088ff, #0066ff);
+  background: linear-gradient(135deg, #0088ff, #0066cc);
+  transform: translateY(-1px);
 }
 
 .social-icons {
   display: flex;
   justify-content: center;
-  gap: 1.25rem;
+  gap: 1rem;
   margin-top: 2rem;
 }
 
 .social-icons .icon {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
   display: flex;
-  justify-content: center;
   align-items: center;
-  background-color: rgba(52, 73, 94, 0.4);
-  color: #ecf0f1;
-  cursor: pointer;
+  justify-content: center;
+  color: #f0f2f5;
+  text-decoration: none;
   transition: all 0.3s ease;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .social-icons .icon:hover {
+  background: rgba(0, 170, 255, 0.2);
+  border-color: rgba(0, 170, 255, 0.5);
   transform: translateY(-3px);
-  background-color: rgba(78, 106, 133, 0.6);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  color: #00aaff;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
+/* Mobile Responsive Styles */
+@media (max-width: 1024px) {
   .dashboard-container {
     padding: 1.5rem;
   }
@@ -250,36 +260,280 @@
   }
   
   .dashboard-title {
-    font-size: 2.2rem;
+    font-size: 2.4rem;
+  }
+  
+  .dashboard-description {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+  
+  .dashboard-card {
+    padding: 2rem 1.5rem;
+    border-radius: 20px;
+  }
+  
+  .dashboard-logo img {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .dashboard-title {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .dashboard-description {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    padding: 0 0.5rem;
   }
   
   .dashboard-buttons {
     flex-direction: column;
     gap: 1rem;
+    align-items: center;
   }
   
   .btn-view, .btn-update, .btn-copy {
     width: 100%;
+    max-width: 280px;
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    min-height: 48px;
+  }
+  
+  .dashboard-share-section {
+    padding: 1.5rem;
+    margin-top: 2rem;
+  }
+  
+  .share-title {
+    font-size: 1.4rem;
+  }
+  
+  .share-description {
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
   }
   
   .share-link-container {
     flex-direction: column;
+    border-radius: 12px;
+  }
+  
+  .share-link-input {
+    border-radius: 12px 12px 0 0;
+    padding: 1rem 1.2rem;
+    font-size: 16px; /* Prevents zoom on iOS */
+    min-height: 48px;
   }
   
   .btn-copy {
-    padding: 12px;
-    border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0 0 12px 12px;
+    padding: 1rem 2rem;
+    min-height: 48px;
+  }
+  
+  .social-icons {
+    gap: 0.8rem;
+    margin-top: 1.5rem;
+  }
+  
+  .social-icons .icon {
+    width: 45px;
+    height: 45px;
   }
 }
 
-/* Animation for the copy button */
+@media (max-width: 480px) {
+  .dashboard-container {
+    padding: 0.8rem;
+  }
+  
+  .dashboard-card {
+    padding: 1.5rem 1rem;
+    border-radius: 16px;
+  }
+  
+  .dashboard-logo img {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .dashboard-title {
+    font-size: 1.8rem;
+  }
+  
+  .dashboard-description {
+    font-size: 0.95rem;
+    padding: 0;
+  }
+  
+  .btn-view, .btn-update, .btn-copy {
+    max-width: 260px;
+    padding: 0.9rem 1.8rem;
+    font-size: 0.95rem;
+    min-height: 44px;
+  }
+  
+  .dashboard-share-section {
+    padding: 1.2rem;
+    margin-top: 1.5rem;
+  }
+  
+  .share-title {
+    font-size: 1.3rem;
+  }
+  
+  .share-description {
+    font-size: 0.9rem;
+    margin-bottom: 1.2rem;
+  }
+  
+  .share-link-input {
+    padding: 0.9rem 1.2rem;
+    font-size: 16px;
+    min-height: 44px;
+  }
+  
+  .btn-copy {
+    padding: 0.9rem 1.8rem;
+    min-height: 44px;
+  }
+  
+  .social-icons .icon {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 360px) {
+  .dashboard-card {
+    padding: 1rem 0.8rem;
+  }
+  
+  .dashboard-title {
+    font-size: 1.6rem;
+  }
+  
+  .dashboard-description {
+    font-size: 0.9rem;
+  }
+  
+  .btn-view, .btn-update, .btn-copy {
+    max-width: 240px;
+    padding: 0.8rem 1.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .share-title {
+    font-size: 1.2rem;
+  }
+  
+  .share-description {
+    font-size: 0.85rem;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  .dashboard-card:hover {
+    transform: none;
+  }
+  
+  .btn-view:hover, .btn-update:hover, .btn-copy:hover {
+    transform: none;
+  }
+  
+  .btn-view:active, .btn-update:active, .btn-copy:active {
+    transform: scale(0.98);
+  }
+  
+  .dashboard-logo img:hover {
+    transform: none;
+  }
+  
+  .social-icons .icon:hover {
+    transform: none;
+  }
+  
+  .social-icons .icon:active {
+    transform: scale(0.95);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .dashboard-card {
+    border: 2px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .btn-view, .btn-update, .btn-copy {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-card,
+  .btn-view, .btn-update, .btn-copy,
+  .dashboard-logo img,
+  .social-icons .icon {
+    transition: none;
+  }
+  
+  .dashboard-card:hover,
+  .btn-view:hover, .btn-update:hover, .btn-copy:hover,
+  .dashboard-logo img:hover,
+  .social-icons .icon:hover {
+    transform: none;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+  .dashboard-container {
+    padding: 1rem 2rem;
+  }
+  
+  .dashboard-card {
+    padding: 2rem 2.5rem;
+  }
+  
+  .dashboard-buttons {
+    flex-direction: row;
+    max-width: 600px;
+  }
+  
+  .btn-view, .btn-update, .btn-copy {
+    width: auto;
+    max-width: none;
+  }
+  
+  .share-link-container {
+    flex-direction: row;
+  }
+  
+  .share-link-input {
+    border-radius: 12px 0 0 12px;
+  }
+  
+  .btn-copy {
+    border-radius: 0 12px 12px 0;
+  }
+}
+
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 .copied-animation {
-  animation: pulse 0.4s ease;
+  animation: pulse 0.5s ease-in-out;
 }

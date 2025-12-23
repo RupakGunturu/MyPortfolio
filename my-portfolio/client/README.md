@@ -68,3 +68,20 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+## Contact Form Email Logic
+
+When someone fills out the contact form on your portfolio, the message will be sent to the email address you used when you registered your account.
+
+- **Each user who deploys this portfolio must register with their preferred contact email.**
+- The backend will send all contact form submissions to the registered email for the portfolio owner (looked up by userId).
+- If the userId is missing or invalid, the backend will return an error and will not send the email.
+
+**No need to set any contact email in a .env file.**
+
+### How to Use
+1. Deploy your own version of this portfolio.
+2. Register an account using the email address where you want to receive contact form messages.
+3. All contact form submissions will be sent to that email address automatically.
+
+---

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
@@ -15,6 +17,9 @@ const ForgotPasswordPage = () => {
   const [otpCooldown, setOtpCooldown] = useState(0);
   const [info, setInfo] = useState('');
   const [error, setError] = useState('');
+  const [sendOtpLoading, setSendOtpLoading] = useState(false);
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -29,9 +34,9 @@ const ForgotPasswordPage = () => {
     }
     setError('');
     setInfo('Sending OTP...');
+    setSendOtpLoading(true);
     try {
-      // Replace with your API endpoint
-      const res = await fetch('/api/auth/send-forgot-otp', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/send-forgot-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -58,6 +63,8 @@ const ForgotPasswordPage = () => {
     } catch (err) {
       setError('Failed to send OTP.');
       setInfo('');
+    } finally {
+      setSendOtpLoading(false);
     }
   };
 
@@ -72,9 +79,10 @@ const ForgotPasswordPage = () => {
       setError('Passwords do not match.');
       return;
     }
+    setUpdateLoading(true);
     // Call backend to verify OTP and update password
     try {
-      const res = await fetch('/api/auth/reset-password', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp, newPassword: password }),
@@ -82,12 +90,18 @@ const ForgotPasswordPage = () => {
       const data = await res.json();
       if (res.ok) {
         setInfo('🎉 Password updated successfully! You can now login.');
-        // Optionally redirect to login after a delay
+        setTimeout(() => navigate('/login'), 1500);
       } else {
-        setError(data.message || 'Failed to update password.');
+        if (data.message === 'You entered the same password as before.') {
+          setError('You entered the same password as before. Please choose a new password.');
+        } else {
+          setError(data.message || 'Failed to update password.');
+        }
       }
     } catch (err) {
       setError('Failed to update password.');
+    } finally {
+      setUpdateLoading(false);
     }
   };
 
@@ -100,6 +114,7 @@ const ForgotPasswordPage = () => {
           align-items: center;
           justify-content: center;
           background: #f5f7fa;
+          padding: 0 2vw;
         }
         .forgot-card {
           background: #fff;
@@ -171,17 +186,21 @@ const ForgotPasswordPage = () => {
           font-weight: 600;
           cursor: pointer;
           transition: background 0.2s;
+          min-height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .forgot-btn {
           background: #2563eb;
           color: #fff;
         }
-        .forgot-btn:hover { background: #1742a0; }
+        .forgot-btn:hover:not(:disabled) { background: #1742a0; }
         .verify-btn {
           background: #22c55e;
           color: #fff;
         }
-        .verify-btn:hover { background: #15803d; }
+        .verify-btn:hover:not(:disabled) { background: #15803d; }
         .update-btn {
           width: 100%;
           padding: 0.7rem 0;
@@ -194,8 +213,17 @@ const ForgotPasswordPage = () => {
           margin-bottom: 0.7rem;
           cursor: pointer;
           transition: background 0.2s;
+          min-height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
         }
-        .update-btn:hover { background: #0ea5e9; }
+        .update-btn:hover:not(:disabled) { background: #0ea5e9; }
+        .update-btn:disabled {
+          background: #94a3b8;
+          cursor: not-allowed;
+        }
         .forgot-switch {
           margin-top: 1.2rem;
           font-size: 0.98rem;
@@ -218,9 +246,13 @@ const ForgotPasswordPage = () => {
           font-weight: 600;
           cursor: pointer;
           font-size: 1rem;
-          padding: 0;
+          padding: 8px 12px;
           min-width: 80px;
+          min-height: 44px;
           transition: color 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .send-otp-btn:disabled {
           color: #94a3b8;
@@ -228,6 +260,134 @@ const ForgotPasswordPage = () => {
         }
         .send-otp-btn:hover:enabled {
           color: #AFE1AF;
+        }
+        .loading-spinner {
+          width: 20px;
+          height: 20px;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          border-radius: 50%;
+          border-top-color: #fff;
+          animation: spin 1s ease-in-out infinite;
+          margin-right: 8px;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        .eye-icon {
+          position: absolute;
+          right: 0.8rem;
+          top: 50%;
+          transform: translateY(-50%);
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: #2563eb;
+          font-size: 1.1rem;
+          padding: 8px;
+          min-height: 44px;
+          min-width: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: color 0.2s;
+        }
+        .eye-icon:hover {
+          color: #1742a0;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .forgot-container {
+            padding: 0 1rem;
+          }
+          .forgot-card {
+            padding: 2rem 1.5rem;
+            margin: 1rem 0;
+          }
+          .forgot-title {
+            font-size: 1.75rem;
+          }
+          .forgot-form input[type="email"],
+          .forgot-form input[type="password"],
+          .forgot-form input[type="text"] {
+            font-size: 16px; /* Prevents zoom on iOS */
+            padding: 1rem 1rem;
+            min-height: 48px;
+          }
+          .update-btn {
+            padding: 1rem 0;
+            font-size: 1rem;
+            min-height: 48px;
+          }
+          .send-otp-btn {
+            font-size: 0.9rem;
+            padding: 10px 14px;
+            min-height: 48px;
+          }
+          .forgot-switch {
+            font-size: 0.9rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .forgot-container {
+            padding: 0 0.5rem;
+          }
+          .forgot-card {
+            padding: 1.5rem 1rem;
+            border-radius: 12px;
+          }
+          .forgot-title {
+            font-size: 1.5rem;
+          }
+          .forgot-form input[type="email"],
+          .forgot-form input[type="password"],
+          .forgot-form input[type="text"] {
+            padding: 0.9rem 0.9rem;
+            font-size: 16px;
+            min-height: 44px;
+          }
+          .update-btn {
+            padding: 0.9rem 0;
+            font-size: 0.95rem;
+            min-height: 44px;
+          }
+          .send-otp-btn {
+            font-size: 0.85rem;
+            padding: 8px 10px;
+            min-height: 44px;
+          }
+          .forgot-switch {
+            font-size: 0.85rem;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .forgot-card {
+            padding: 1rem 0.8rem;
+          }
+          .forgot-title {
+            font-size: 1.3rem;
+          }
+          .forgot-form input[type="email"],
+          .forgot-form input[type="password"],
+          .forgot-form input[type="text"] {
+            padding: 0.8rem 0.8rem;
+          }
+          .update-btn {
+            padding: 0.8rem 0;
+            font-size: 0.9rem;
+          }
+        }
+
+        /* Touch-friendly improvements */
+        @media (hover: none) and (pointer: coarse) {
+          .update-btn:hover {
+            background: #38bdf8;
+          }
+          .send-otp-btn:hover {
+            color: #2563eb;
+          }
         }
       `}</style>
       <div className="forgot-container">
@@ -262,18 +422,7 @@ const ForgotPasswordPage = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                style={{
-                  position: "absolute",
-                  right: "0.8rem",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#2563eb",
-                  fontSize: "1.1rem",
-                  padding: 0,
-                }}
+                className="eye-icon"
                 tabIndex={-1}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
@@ -294,18 +443,7 @@ const ForgotPasswordPage = () => {
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword((prev) => !prev)}
-                style={{
-                  position: "absolute",
-                  right: "0.8rem",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#2563eb",
-                  fontSize: "1.1rem",
-                  padding: 0,
-                }}
+                className="eye-icon"
                 tabIndex={-1}
                 aria-label={showConfirmPassword ? "Hide password" : "Show password"}
               >
@@ -326,16 +464,34 @@ const ForgotPasswordPage = () => {
               <button
                 type="button"
                 onClick={handleSendOtp}
-                disabled={otpCooldown > 0}
+                disabled={otpCooldown > 0 || sendOtpLoading}
                 className="send-otp-btn"
               >
-                {otpCooldown > 0 ? `Resend (${otpCooldown})` : 'Send OTP'}
+                {sendOtpLoading ? (
+                  <>
+                    <div className="loading-spinner"></div>
+                    Sending...
+                  </>
+                ) : otpCooldown > 0 ? (
+                  `Resend (${otpCooldown})`
+                ) : (
+                  'Send OTP'
+                )}
               </button>
             </div>
-            {error && <div style={{ color: '#ef4444', marginBottom: '0.7rem', fontWeight: 500 }}>{error}</div>}
-            {info && <div style={{ color: '#2563eb', marginBottom: '0.7rem', fontWeight: 500 }}>{info}</div>}
+            {error && <div style={{ color: '#ef4444', marginBottom: '0.7rem', fontWeight: 500, textAlign: 'center', fontSize: '0.9rem' }}>{error}</div>}
+            {info && <div style={{ color: '#2563eb', marginBottom: '0.7rem', fontWeight: 500, textAlign: 'center', fontSize: '0.9rem' }}>{info}</div>}
 
-            <button type="button" className="update-btn" onClick={handleUpdate}>Update</button>
+            <button type="button" className="update-btn" onClick={handleUpdate} disabled={updateLoading}>
+              {updateLoading ? (
+                <>
+                  <div className="loading-spinner"></div>
+                  Updating...
+                </>
+              ) : (
+                'Update'
+              )}
+            </button>
           </form>
           <div className="forgot-switch">
             I know my password? <Link to="/login">Login</Link>

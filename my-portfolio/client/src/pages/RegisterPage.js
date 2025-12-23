@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 const RegisterPage = () => {
   const [form, setForm] = useState({
     fullname: '',
@@ -16,6 +18,8 @@ const RegisterPage = () => {
   const [info, setInfo] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
+  const [registerLoading, setRegisterLoading] = useState(false);
+  const [verifyLoading, setVerifyLoading] = useState(false);
   const navigate = useNavigate();
 
   // Handle input changes
@@ -26,12 +30,15 @@ const RegisterPage = () => {
     e.preventDefault();
     setError('');
     setInfo('');
+    setRegisterLoading(true);
     try {
-      await axios.post('/api/auth/register-send-otp', { email: form.email });
+      await axios.post(`${API_BASE_URL}/api/auth/register-send-otp`, { email: form.email });
       setStep('otp');
       setInfo('OTP sent to your email. Please check your inbox.');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to send OTP');
+    } finally {
+      setRegisterLoading(false);
     }
   };
 
@@ -40,8 +47,9 @@ const RegisterPage = () => {
     e.preventDefault();
     setError('');
     setInfo('');
+    setVerifyLoading(true);
     try {
-      await axios.post('/api/auth/register-verify-otp', {
+      await axios.post(`${API_BASE_URL}/api/auth/register-verify-otp`, {
         ...form,
         otp,
       });
@@ -49,6 +57,8 @@ const RegisterPage = () => {
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
       setError(err.response?.data?.message || 'OTP verification failed');
+    } finally {
+      setVerifyLoading(false);
     }
   };
 
@@ -57,7 +67,7 @@ const RegisterPage = () => {
     setInfo('');
     setResendLoading(true);
     try {
-      await axios.post('/api/auth/register-send-otp', { email: form.email });
+      await axios.post(`${API_BASE_URL}/api/auth/register-send-otp`, { email: form.email });
       setInfo('A new OTP has been sent to your email.');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to resend OTP');
@@ -165,14 +175,36 @@ const RegisterPage = () => {
           transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
           box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
           will-change: transform;
+          position: relative;
+          min-height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
-        .register-btn:hover {
+        .register-btn:hover:not(:disabled) {
           background: #1742a0;
           box-shadow: 0 4px 16px rgba(37, 99, 235, 0.12);
           transform: translateY(-2px) scale(1.03);
         }
-        .register-btn:active {
+        .register-btn:active:not(:disabled) {
           transform: scale(0.97);
+        }
+        .register-btn:disabled {
+          background: #94a3b8;
+          cursor: not-allowed;
+          transform: none;
+        }
+        .loading-spinner {
+          width: 20px;
+          height: 20px;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          border-radius: 50%;
+          border-top-color: #fff;
+          animation: spin 1s ease-in-out infinite;
+          margin-right: 8px;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
         .register-links {
           margin-top: 1.2rem;
@@ -190,31 +222,6 @@ const RegisterPage = () => {
         .register-links a:hover {
           color: #059669;
           text-decoration: underline;
-        }
-        @media (max-width: 600px) {
-          .register-card {
-            padding: 1.5rem 0.5rem;
-            min-height: 400px;
-          }
-        }
-        .typewriter {
-          overflow: hidden;
-          border-right: .15em solid #2563eb;
-          white-space: nowrap;
-          margin: 0 auto 0.5rem auto;
-          letter-spacing: 1px;
-          width: 0;
-          animation:
-            typing 1.1s steps(12, end) forwards,
-            blink-caret 0.7s step-end 1.1;
-        }
-        @keyframes typing {
-          from { width: 0 }
-          to { width: 12ch }
-        }
-        @keyframes blink-caret {
-          from, to { border-color: transparent }
-          50% { border-color: #2563eb; }
         }
         .password-wrapper {
           position: relative;
@@ -236,6 +243,11 @@ const RegisterPage = () => {
           font-size: 1.2rem;
           user-select: none;
           transition: color 0.2s;
+          min-height: 44px;
+          min-width: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .eye-icon:hover {
           color: #2563eb;
@@ -248,6 +260,7 @@ const RegisterPage = () => {
           margin: 0.5rem 0 1rem 0;
           font-size: 0.98rem;
           color: #64748b;
+          flex-wrap: wrap;
         }
         .resend-otp-btn {
           background: none;
@@ -257,8 +270,13 @@ const RegisterPage = () => {
           font-weight: 600;
           font-size: 0.98rem;
           text-decoration: underline;
-          padding: 0;
+          padding: 8px 12px;
           transition: color 0.2s;
+          min-height: 44px;
+          min-width: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .resend-otp-btn:disabled {
           color: #b0b3b8;
@@ -283,13 +301,133 @@ const RegisterPage = () => {
           width: 100%;
           transition: border 0.2s, box-shadow 0.2s;
         }
+        .typewriter {
+          overflow: hidden;
+          border-right: .15em solid #2563eb;
+          white-space: nowrap;
+          margin: 0 auto 0.5rem auto;
+          letter-spacing: 1px;
+          width: 0;
+          animation:
+            typing 1.1s steps(12, end) forwards,
+            blink-caret 0.7s step-end 1.1;
+        }
+        @keyframes typing {
+          from { width: 0 }
+          to { width: 12ch }
+        }
+        @keyframes blink-caret {
+          from, to { border-color: transparent }
+          50% { border-color: #2563eb; }
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .register-main-wrapper {
+            padding: 0 1rem;
+          }
+          .register-card {
+            padding: 2rem 1.5rem;
+            min-height: 480px;
+            margin: 1rem 0;
+          }
+          .register-title {
+            font-size: 1.75rem;
+          }
+          .register-form input,
+          .register-form input[type="text"],
+          .otp-input {
+            font-size: 16px; /* Prevents zoom on iOS */
+            padding: 1rem 1rem;
+          }
+          .register-btn {
+            padding: 1rem 0;
+            font-size: 1rem;
+            min-height: 48px;
+          }
+          .resend-otp-row {
+            font-size: 0.9rem;
+            text-align: center;
+          }
+          .resend-otp-btn {
+            font-size: 0.9rem;
+            padding: 10px 14px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .register-main-wrapper {
+            padding: 0 0.5rem;
+          }
+          .register-card {
+            padding: 1.5rem 1rem;
+            min-height: 450px;
+            border-radius: 20px;
+          }
+          .register-title {
+            font-size: 1.5rem;
+          }
+          .register-form {
+            gap: 0.9rem;
+          }
+          .register-form input,
+          .register-form input[type="text"],
+          .otp-input {
+            padding: 0.9rem 0.9rem;
+            font-size: 16px;
+          }
+          .register-btn {
+            padding: 0.9rem 0;
+            font-size: 0.95rem;
+            min-height: 44px;
+          }
+          .register-links {
+            font-size: 0.9rem;
+          }
+          .resend-otp-row {
+            font-size: 0.85rem;
+          }
+          .resend-otp-btn {
+            font-size: 0.85rem;
+            padding: 8px 10px;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .register-card {
+            padding: 1rem 0.8rem;
+            min-height: 420px;
+          }
+          .register-title {
+            font-size: 1.3rem;
+          }
+          .register-form input,
+          .register-form input[type="text"],
+          .otp-input {
+            padding: 0.8rem 0.8rem;
+          }
+          .register-btn {
+            padding: 0.8rem 0;
+            font-size: 0.9rem;
+          }
+        }
+
+        /* Touch-friendly improvements */
+        @media (hover: none) and (pointer: coarse) {
+          .register-btn:hover {
+            transform: none;
+          }
+          .register-btn:active {
+            transform: scale(0.98);
+          }
+        }
       `}</style>
       <div className="register-main-wrapper">
         <div className="register-card">
           <div className="register-title typewriter">Registration</div>
           <span className="register-underline"></span>
-          {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
-          {info && <div style={{ color: '#2563eb', marginBottom: 8 }}>{info}</div>}
+          {error && <div style={{ color: 'red', marginBottom: 8, textAlign: 'center', fontSize: '0.9rem' }}>{error}</div>}
+          {info && <div style={{ color: '#2563eb', marginBottom: 8, textAlign: 'center', fontSize: '0.9rem' }}>{info}</div>}
 
           {step === 'form' && (
             <form onSubmit={handleSendOtp} className="register-form">
@@ -336,8 +474,15 @@ const RegisterPage = () => {
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </span>
           </div>
-              <button type="submit" className="register-btn">
-                Register & Get OTP
+              <button type="submit" className="register-btn" disabled={registerLoading}>
+                {registerLoading ? (
+                  <>
+                    <div className="loading-spinner"></div>
+                    Registering...
+                  </>
+                ) : (
+                  'Register & Get OTP'
+                )}
               </button>
             </form>
           )}
@@ -361,11 +506,18 @@ const RegisterPage = () => {
                   onClick={handleResendOtp}
                   disabled={resendLoading}
                 >
-                  Resend OTP
+                  {resendLoading ? 'Sending...' : 'Resend OTP'}
                 </button>
               </div>
-              <button type="submit" className="register-btn">
-                Verify OTP & Register
+              <button type="submit" className="register-btn" disabled={verifyLoading}>
+                {verifyLoading ? (
+                  <>
+                    <div className="loading-spinner"></div>
+                    Verifying...
+                  </>
+                ) : (
+                  'Verify OTP & Register'
+                )}
               </button>
             </form>
           )}

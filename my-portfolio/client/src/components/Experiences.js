@@ -4,6 +4,7 @@ import { FaBriefcase, FaCode, FaGraduationCap, FaEdit, FaSave, FaTimes } from 'r
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import './Experiences.css';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const Experience = ({ viewOnly = false, userId }) => {
   const authContext = useContext(AuthContext);
@@ -37,6 +38,20 @@ const Experience = ({ viewOnly = false, userId }) => {
     }
   };
 
+  // Helper function to get icon color based on type
+  const getIconColor = (iconType) => {
+    switch (iconType) {
+      case 'briefcase': // Work
+        return '#2193b0'; // blue
+      case 'code': // Project
+        return '#a259f7'; // purple
+      case 'graduation': // Education
+        return '#ff9800'; // orange
+      default:
+        return '#2193b0';
+    }
+  };
+
   // Load experiences from backend
   useEffect(() => {
     console.log('Experiences component - user object:', user);
@@ -51,7 +66,7 @@ const Experience = ({ viewOnly = false, userId }) => {
       setLoading(true);
       setError(null);
       
-      const response = await axios.get(`/api/experiences?userId=${effectiveUserId}`);
+      const response = await axios.get(`${API_BASE_URL}/api/experiences?userId=${effectiveUserId}`);
       setExperiences(response.data);
     } catch (error) {
       console.error('Error fetching experiences:', error);
@@ -66,7 +81,7 @@ const Experience = ({ viewOnly = false, userId }) => {
       // Save changes when exiting edit mode
       try {
         setError(null);
-        await axios.put('/api/experiences', { 
+        await axios.put(`${API_BASE_URL}/api/experiences`, { 
           experiences: editData,
           userId: effectiveUserId
         });
@@ -105,7 +120,7 @@ const Experience = ({ viewOnly = false, userId }) => {
         return;
       }
 
-      const response = await axios.post('/api/experiences', {
+      const response = await axios.post(`${API_BASE_URL}/api/experiences`, {
         ...newExperience,
         userId: effectiveUserId
       });
@@ -130,7 +145,7 @@ const Experience = ({ viewOnly = false, userId }) => {
     if (experienceToRemove._id) {
       try {
         setError(null);
-        await axios.delete(`/api/experiences/${experienceToRemove._id}?userId=${effectiveUserId}`);
+        await axios.delete(`${API_BASE_URL}/api/experiences/${experienceToRemove._id}?userId=${effectiveUserId}`);
       } catch (error) {
         console.error('Error deleting experience:', error);
         setError('Failed to delete experience. Please try again.');
@@ -191,155 +206,188 @@ const Experience = ({ viewOnly = false, userId }) => {
         )}
 
         <div className="experience-timeline">
-          <AnimatePresence>
-            {!isEditing ? (
-              // View Mode
-              experiences.map((exp, index) => (
-                <motion.div
-                  key={exp._id || index}
-                  className="timeline-item"
-                  custom={index}
-                  initial={{ opacity: 0, y: 50, x: index % 2 === 0 ? -50 : 50 }}
-                  animate={{ opacity: 1, y: 0, x: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.2 }}
-                  whileHover={{ scale: 1.03 }}
-                >
-                  <div className="timeline-icon">{getIconComponent(exp.iconType)}</div>
-                  <div className="timeline-content">
-                    <span className="timeline-date">{exp.date}</span>
-                    <h3 className="timeline-title">{exp.title}</h3>
-                    <p className="timeline-company">{exp.company}</p>
-                    <p className="timeline-description">{exp.description}</p>
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-              // Edit Mode
-              <>
-                {editData.map((exp, index) => (
-                  <motion.div
-                    key={exp._id || index}
-                    className="timeline-item edit-mode"
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                  >
-                    <div className="timeline-icon-edit">
-                      <select
-                        value={exp.iconType}
-                        onChange={(e) => handleIconChange(index, e.target.value)}
-                      >
-                        <option value="briefcase">Work</option>
-                        <option value="code">Project</option>
-                        <option value="graduation">Education</option>
-                      </select>
-                    </div>
-                    <div className="timeline-content-edit">
-                      <input
-                        type="text"
-                        value={exp.date}
-                        onChange={(e) => handleInputChange(index, 'date', e.target.value)}
-                        placeholder="Date/Time Period"
-                      />
-                      <input
-                        type="text"
-                        value={exp.title}
-                        onChange={(e) => handleInputChange(index, 'title', e.target.value)}
-                        placeholder="Title/Role"
-                      />
-                      <input
-                        type="text"
-                        value={exp.company}
-                        onChange={(e) => handleInputChange(index, 'company', e.target.value)}
-                        placeholder="Company/Institution"
-                      />
-                      <textarea
-                        value={exp.description}
-                        onChange={(e) => handleInputChange(index, 'description', e.target.value)}
-                        placeholder="Description"
-                      />
-                    </div>
-                    <button 
-                      className="remove-button"
-                      onClick={() => handleRemoveExperience(index)}
-                    >
-                      <FaTimes />
-                    </button>
-                  </motion.div>
-                ))}
+<AnimatePresence>
+  {!isEditing ? (
+    // View Mode
+    experiences.map((exp, index) => (
+      <motion.div
+        key={exp._id || index}
+        className="timeline-item"
+        data-type={
+          exp.iconType === 'graduation'
+            ? 'education'
+            : exp.iconType === 'code'
+            ? 'project'
+            : 'work'
+        }
+        custom={index}
+        initial={{ opacity: 0, y: 50, x: index % 2 === 0 ? -50 : 50 }}
+        animate={{ opacity: 1, y: 0, x: 0 }}
+        transition={{ duration: 0.5, delay: index * 0.2 }}
+        whileHover={{ scale: 1.03 }}
+      >
+        <div
+          className="timeline-icon"
+          style={{
+            color: getIconColor(exp.iconType),
+            borderColor: getIconColor(exp.iconType),
+          }}
+        >
+          {getIconComponent(exp.iconType)}
+        </div>
+        <div className="timeline-content">
+          <span className="timeline-date">{exp.date}</span>
+          <h3 className="timeline-title">{exp.title}</h3>
+          <p className="timeline-company">{exp.company}</p>
+          <p className="timeline-description">{exp.description}</p>
+        </div>
+      </motion.div>
+    ))
+  ) : (
+    <>
+      {editData.map((exp, index) => (
+        <motion.div
+          key={exp._id || index}
+          className="timeline-item edit-mode"
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: index * 0.1 }}
+        >
+          <div className="timeline-icon-edit">
+            <select
+              value={exp.iconType}
+              onChange={(e) => handleIconChange(index, e.target.value)}
+            >
+              <option value="briefcase">Work</option>
+              <option value="code">Project</option>
+              <option value="graduation">Education</option>
+            </select>
+          </div>
+          <div className="timeline-content-edit">
+            <input
+              type="text"
+              value={exp.date}
+              onChange={(e) =>
+                handleInputChange(index, 'date', e.target.value)
+              }
+              placeholder="Date/Time Period"
+            />
+            <input
+              type="text"
+              value={exp.title}
+              onChange={(e) =>
+                handleInputChange(index, 'title', e.target.value)
+              }
+              placeholder="Title/Role"
+            />
+            <input
+              type="text"
+              value={exp.company}
+              onChange={(e) =>
+                handleInputChange(index, 'company', e.target.value)
+              }
+              placeholder="Company/Institution"
+            />
+            <textarea
+              value={exp.description}
+              onChange={(e) =>
+                handleInputChange(index, 'description', e.target.value)
+              }
+              placeholder="Description"
+            />
+          </div>
+          <button
+            className="remove-button"
+            onClick={() => handleRemoveExperience(index)}
+          >
+            <FaTimes />
+          </button>
+        </motion.div>
+      ))}
 
-                {isAdding ? (
-                  <motion.div
-                    className="timeline-item edit-mode new-item"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
-                    <div className="timeline-icon-edit">
-                      <select
-                        value={newExperience.iconType}
-                        onChange={(e) => setNewExperience({
-                          ...newExperience,
-                          iconType: e.target.value
-                        })}
-                      >
-                        <option value="briefcase">Work</option>
-                        <option value="code">Project</option>
-                        <option value="graduation">Education</option>
-                      </select>
-                    </div>
-                    <div className="timeline-content-edit">
-                      <input
-                        type="text"
-                        value={newExperience.date}
-                        onChange={(e) => setNewExperience({...newExperience, date: e.target.value})}
-                        placeholder="Date/Time Period"
-                      />
-                      <input
-                        type="text"
-                        value={newExperience.title}
-                        onChange={(e) => setNewExperience({...newExperience, title: e.target.value})}
-                        placeholder="Title/Role"
-                      />
-                      <input
-                        type="text"
-                        value={newExperience.company}
-                        onChange={(e) => setNewExperience({...newExperience, company: e.target.value})}
-                        placeholder="Company/Institution"
-                      />
-                      <textarea
-                        value={newExperience.description}
-                        onChange={(e) => setNewExperience({...newExperience, description: e.target.value})}
-                        placeholder="Description"
-                      />
-                    </div>
-                    <div className="new-item-buttons">
-                      <button 
-                        className="save-button"
-                        onClick={handleAddExperience}
-                      >
-                        <FaSave /> Save
-                      </button>
-                      <button 
-                        className="cancel-button"
-                        onClick={() => setIsAdding(false)}
-                      >
-                        <FaTimes /> Cancel
-                      </button>
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.button
-                    className="add-button"
-                    onClick={() => setIsAdding(true)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    + Add New Experience
-                  </motion.button>
-                )}
-              </>
-            )}
-          </AnimatePresence>
+      {isAdding ? (
+        <motion.div
+          className="timeline-item edit-mode new-item"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <div className="timeline-icon-edit">
+            <select
+              value={newExperience.iconType}
+              onChange={(e) =>
+                setNewExperience({
+                  ...newExperience,
+                  iconType: e.target.value,
+                })
+              }
+            >
+              <option value="briefcase">Work</option>
+              <option value="code">Project</option>
+              <option value="graduation">Education</option>
+            </select>
+          </div>
+          <div className="timeline-content-edit">
+            <input
+              type="text"
+              value={newExperience.date}
+              onChange={(e) =>
+                setNewExperience({ ...newExperience, date: e.target.value })
+              }
+              placeholder="Date/Time Period"
+            />
+            <input
+              type="text"
+              value={newExperience.title}
+              onChange={(e) =>
+                setNewExperience({ ...newExperience, title: e.target.value })
+              }
+              placeholder="Title/Role"
+            />
+            <input
+              type="text"
+              value={newExperience.company}
+              onChange={(e) =>
+                setNewExperience({ ...newExperience, company: e.target.value })
+              }
+              placeholder="Company/Institution"
+            />
+            <textarea
+              value={newExperience.description}
+              onChange={(e) =>
+                setNewExperience({
+                  ...newExperience,
+                  description: e.target.value,
+                })
+              }
+              placeholder="Description"
+            />
+          </div>
+          <div className="new-item-buttons">
+            <button className="save-button" onClick={handleAddExperience}>
+              <FaSave /> Save
+            </button>
+            <button
+              className="cancel-button"
+              onClick={() => setIsAdding(false)}
+            >
+              <FaTimes /> Cancel
+            </button>
+          </div>
+        </motion.div>
+      ) : (
+        <motion.button
+          className="add-button"
+          onClick={() => setIsAdding(true)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          + Add New Experience
+        </motion.button>
+      )}
+    </>
+  )}
+</AnimatePresence>
+
         </div>
       </motion.div>
     </section>
