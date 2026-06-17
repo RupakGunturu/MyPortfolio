@@ -64,7 +64,12 @@ const PORT = process.env.PORT || 9000;
 // Set JWT_SECRET
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'a-very-secret-key-that-should-be-in-a-dotenv-file';
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://dev-desk-18.vercel.app',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -749,13 +754,21 @@ app.post("/api/contact", async (req, res) => {
     const newContact = new Contact(contactData);
     await newContact.save();
 
-    // Send email to the portfolio owner
+    // Send email to the portfolio owner via Resend
     await transporter.sendMail({
-      from: process.env.SMTP_USER,
+      from: `Portfolio App <${process.env.FROM_EMAIL}>`,
       to: destinationEmail,
       subject: `New Contact Form Submission from ${name}`,
       text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
-      html: `<p><strong>Name:</strong> ${name}</p><p><strong>Email:</strong> ${email}</p><p><strong>Message:</strong><br/>${message}</p>`
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">New Contact Form Submission</h2>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Message:</strong></p>
+          <p style="background: #f3f4f6; padding: 1rem; border-radius: 8px; white-space: pre-wrap;">${message}</p>
+        </div>
+      `
     });
 
     res.status(201).json({ message: "Contact form submitted successfully" });
