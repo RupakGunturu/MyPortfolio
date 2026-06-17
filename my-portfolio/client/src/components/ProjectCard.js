@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaPlus, FaEdit, FaTrash, FaTimes, FaExternalLinkAlt } from 'react-icons/fa';
+
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
 import './ProjectCard.css';
@@ -62,7 +61,7 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
     if (effectiveUserId) {
       fetchProjects();
     }
-  }, [effectiveUserId]);
+  }, [effectiveUserId, fetchProjects]);
 
   const fetchProjects = async () => {
     try {

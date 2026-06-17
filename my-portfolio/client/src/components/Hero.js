@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaGithub, FaLinkedin, FaArrowRight } from "react-icons/fa";
+import { FaGithub, FaLinkedin } from "react-icons/fa";
 import axios from "axios";
 import { removeBackground } from "@imgly/background-removal";
 import "./Hero.css";
 import AuthContext from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
@@ -122,12 +121,7 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
   const authContext = React.useContext(AuthContext);
   const { user } = authContext || {};
 
-  const navigate = useNavigate();
   const userId = propUserId || (user && user._id);
-
-  // Split the name for left/right layout
-  const [lastName, ...restNameArr] = (profile.fullname || "").trim().split(' ').reverse();
-  const firstName = restNameArr.reverse().join(' ');
 
   const animationDelay = (profile.fullname || "").length * 0.08 + 0.5;
 
@@ -174,7 +168,7 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
   };
   useEffect(() => {
     fetchProfile();
-  }, [userId]);
+  }, [userId, fetchProfile]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

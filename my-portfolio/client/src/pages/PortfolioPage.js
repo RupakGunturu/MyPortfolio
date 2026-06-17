@@ -2,7 +2,6 @@ import React, { useContext } from 'react';
 import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import CursorTrail from '../components/CursorTrail';
 import Hero from '../components/Hero';
 import About from '../components/About';
@@ -100,15 +99,6 @@ const PortfolioPage = () => {
   const userIdToUse = isEditMode
     ? (user && user._id)
     : (!isOwner && viewedUser ? viewedUser._id : undefined);
-
-  const onUpdatePortfolio = () => {
-    console.log('User in onUpdatePortfolio:', user);
-    if (user) {
-      navigate(`/portfolio/${user.username}?edit=true`);
-    } else {
-      alert('User not loaded!');
-    }
-  };
 
   return (
     <>

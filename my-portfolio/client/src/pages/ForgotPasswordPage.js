@@ -12,8 +12,6 @@ const ForgotPasswordPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [otp, setOtp] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
   const [otpCooldown, setOtpCooldown] = useState(0);
   const [info, setInfo] = useState('');
   const [error, setError] = useState('');
@@ -23,7 +21,6 @@ const ForgotPasswordPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setSubmitted(true);
     // Here you would send a request to your backend to send OTP
   };
 
@@ -44,7 +41,6 @@ const ForgotPasswordPage = () => {
       const data = await res.json();
       if (res.ok) {
         setInfo('OTP sent to your email!');
-        setOtpSent(true);
         setOtpCooldown(30);
         // Start cooldown timer
         const interval = setInterval(() => {

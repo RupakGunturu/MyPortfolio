@@ -59,7 +59,7 @@ const Experience = ({ viewOnly = false, userId }) => {
     if (effectiveUserId) {
       fetchExperiences();
     }
-  }, [effectiveUserId]);
+  }, [effectiveUserId, fetchExperiences, user]);
 
   const fetchExperiences = async () => {
     try {

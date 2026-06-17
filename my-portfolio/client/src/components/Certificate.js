@@ -44,7 +44,7 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
     if (effectiveUserId) {
       fetchCertificates();
     }
-  }, [effectiveUserId]);
+  }, [effectiveUserId, fetchCertificates]);
 
   const fetchCertificates = async () => {
     try {

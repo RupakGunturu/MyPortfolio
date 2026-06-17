@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
-import { motion, useInView, AnimatePresence } from 'framer-motion';
-import { FaPlus, FaTrash, FaEdit, FaTimes } from 'react-icons/fa';
+import { motion, useInView } from 'framer-motion';
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
@@ -17,13 +16,13 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
   const [currentStyles, setCurrentStyles] = useState({});
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.2 });
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     if (effectiveUserId) {
       fetchSkills();
     }
-  }, [effectiveUserId]);
+  }, [effectiveUserId, fetchSkills]);
 
   // Handle responsive styles
   useEffect(() => {
@@ -140,7 +139,7 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
     updateStyles();
     window.addEventListener('resize', updateStyles);
     return () => window.removeEventListener('resize', updateStyles);
-  }, []);
+  }, [styles]);
 
   const fetchSkills = async () => {
     try {
@@ -201,23 +200,6 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
       showToast('❌ Error deleting skill!');
     } finally {
       setIsDeleting(null);
-    }
-  };
-
-  const handleUpdate = async (skillId, updatedSkill) => {
-    try {
-      const response = await axios.put(`${API_BASE_URL}/api/skills/${skillId}`, {
-        ...updatedSkill,
-        userId: effectiveUserId
-      });
-      
-      setSkills(prev => prev.map(skill => 
-        skill._id === skillId ? response.data : skill
-      ));
-      showToast('✅ Skill updated!');
-    } catch (err) {
-      console.error('Update error:', err);
-      showToast('❌ Error updating skill!');
     }
   };
 

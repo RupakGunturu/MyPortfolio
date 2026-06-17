@@ -35,7 +35,7 @@ const About = ({ viewOnly = false, userId }) => {
   const [showEditDropdown, setShowEditDropdown] = useState(false);
   const [showAdditionalFields, setShowAdditionalFields] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [, setError] = useState(null);
   const [editingField, setEditingField] = useState(null);
   const [editingValue, setEditingValue] = useState('');
 
@@ -43,7 +43,7 @@ const About = ({ viewOnly = false, userId }) => {
     if (effectiveUserId) {
       fetchAbout();
     }
-  }, [effectiveUserId]);
+  }, [effectiveUserId, fetchAbout]);
 
   const fetchAbout = async () => {
     try {
