@@ -1,539 +1,429 @@
+/* ============================================================
+   Dashboard.css — Light Modern Style
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* ── Base container ──────────────────────────────────────────── */
 .dashboard-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
-  background: radial-gradient(ellipse at top, #1e2030, #151722);
-  color: #f0f2f5;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  color: #1e293b;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
   padding: 2rem;
   position: relative;
-  overflow: hidden;
+  box-sizing: border-box;
 }
 
-.dashboard-container::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at center, rgba(0, 170, 255, 0.1) 0%, transparent 70%);
-  pointer-events: none;
-}
-
+/* ── Content wrapper ─────────────────────────────────────────── */
 .dashboard-content {
   width: 100%;
-  max-width: 900px;
+  max-width: 600px;
   text-align: center;
   z-index: 1;
+  margin-top: 80px;
 }
 
+/* ── Main card ───────────────────────────────────────────────── */
 .dashboard-card {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 24px;
-  padding: 4rem 3rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.36);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 3rem 2.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
   width: 100%;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+  transition: all 0.3s ease;
 }
 
 .dashboard-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
 }
 
+/* ── Logo ────────────────────────────────────────────────────── */
 .dashboard-logo {
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
 }
 
 .dashboard-logo img {
-  width: 120px;
-  height: 120px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
-  border: 3px solid rgba(0, 170, 255, 0.7);
-  box-shadow: 0 0 30px rgba(0, 170, 255, 0.3);
+  border: 3px solid #3b82f6;
+  box-shadow: 0 4px 15px rgba(59,130,246,0.25);
   object-fit: cover;
-  transition: all 0.4s ease;
+  transition: all 0.3s ease;
+  display: block;
+  margin: 0 auto;
 }
 
 .dashboard-logo img:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 40px rgba(0, 170, 255, 0.5);
+  box-shadow: 0 6px 20px rgba(59,130,246,0.35);
 }
 
+/* ── Title ───────────────────────────────────────────────────── */
 .dashboard-title {
-  font-size: 2.8rem;
+  font-size: 2rem;
   font-weight: 700;
-  margin-bottom: 0.5rem;
-  background: linear-gradient(90deg, #ffffff, #c0c5d0);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  margin: 0 0 0.5rem;
+  color: #1e293b;
   letter-spacing: -0.5px;
+  word-break: break-word;
 }
 
+/* ── Description ─────────────────────────────────────────────── */
 .dashboard-description {
-  font-size: 1.15rem;
-  line-height: 1.8;
-  max-width: 680px;
-  margin: 0 auto 3rem;
-  color: rgba(200, 205, 215, 0.9);
-  font-weight: 300;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  max-width: 480px;
+  margin: 0 auto 1.75rem;
+  color: #64748b;
+  font-weight: 400;
 }
 
+/* ── Action buttons ──────────────────────────────────────────── */
 .dashboard-buttons {
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
-  margin-bottom: 3rem;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
   flex-wrap: wrap;
 }
 
-.btn-view, .btn-update, .btn-copy {
-  padding: 14px 32px;
-  border-radius: 12px;
+.btn-view,
+.btn-update {
+  padding: 12px 24px;
+  border-radius: 10px;
   border: none;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  letter-spacing: 0.5px;
-  position: relative;
-  overflow: hidden;
+  transition: all 0.2s ease;
+  letter-spacing: 0.3px;
   min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: 'Poppins', sans-serif;
 }
 
 .btn-view {
-  background: linear-gradient(135deg, #00aaff, #0088ff);
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
   color: white;
-  box-shadow: 0 4px 20px rgba(0, 153, 255, 0.3);
-}
-
-.btn-view::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  box-shadow: 0 2px 10px rgba(59,130,246,0.3);
 }
 
 .btn-view:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(0, 153, 255, 0.5);
-}
-
-.btn-view:hover::after {
-  opacity: 1;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(59,130,246,0.4);
 }
 
 .btn-update {
-  background: transparent;
-  color: #00aaff;
-  border: 1px solid rgba(0, 170, 255, 0.4);
-  backdrop-filter: blur(5px);
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
 }
 
 .btn-update:hover {
-  background: rgba(0, 170, 255, 0.1);
-  border-color: rgba(0, 170, 255, 0.7);
-  transform: translateY(-3px);
+  background: #e2e8f0;
+  transform: translateY(-2px);
 }
 
+/* ── Share section ───────────────────────────────────────────── */
 .dashboard-share-section {
-  background: rgba(255, 255, 255, 0.03);
-  padding: 2.5rem;
-  border-radius: 20px;
-  margin-top: 2.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all 0.3s ease;
-}
-
-.dashboard-share-section:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: transparent;
+  padding: 0;
+  border: none;
+  margin-top: 0;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
 }
 
 .share-title {
-  font-size: 1.6rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  margin-bottom: 0.75rem;
-  color: white;
+  margin: 0 0 0.3rem;
+  color: #1e293b;
 }
 
 .share-description {
-  font-size: 1rem;
-  color: rgba(180, 185, 200, 0.8);
-  margin-bottom: 1.75rem;
-  line-height: 1.6;
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin: 0 0 0.85rem;
+  line-height: 1.5;
 }
 
+/* ── Share link row ──────────────────────────────────────────── */
 .share-link-container {
   display: flex;
-  background: rgba(15, 17, 26, 0.6);
-  border-radius: 14px;
-  padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  flex-direction: row;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
   overflow: hidden;
-  transition: all 0.3s ease;
-  flex-wrap: wrap;
+  transition: border-color 0.2s ease;
 }
 
-.share-link-container:hover {
-  border-color: rgba(255, 255, 255, 0.15);
-}
+.share-link-container:hover { border-color: #cbd5e1; }
 
 .share-link-input {
-  flex-grow: 1;
+  flex: 1 1 0;
+  min-width: 0;
   background: transparent;
   border: none;
-  color: #f0f2f5;
-  font-size: 1rem;
-  padding: 16px 20px;
+  color: #475569;
+  font-size: 0.85rem;
+  padding: 12px 14px;
   outline: none;
-  font-family: 'Roboto Mono', monospace;
+  font-family: 'Poppins', monospace;
   min-height: 44px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .btn-copy {
-  background: linear-gradient(135deg, #00aaff, #0088ff);
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
   color: white;
-  padding: 16px 24px;
-  border-radius: 0 14px 14px 0;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 0 10px 10px 0;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 80px;
-}
-
-.btn-copy:hover {
-  background: linear-gradient(135deg, #0088ff, #0066cc);
-  transform: translateY(-1px);
-}
-
-.social-icons {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.social-icons .icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+  min-width: 70px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #f0f2f5;
+  font-family: 'Poppins', sans-serif;
+}
+
+.btn-copy:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transform: translateY(-1px);
+}
+
+/* ── Social icons ────────────────────────────────────────────── */
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-top: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.social-icons .icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
   text-decoration: none;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
 }
 
 .social-icons .icon:hover {
-  background: rgba(0, 170, 255, 0.2);
-  border-color: rgba(0, 170, 255, 0.5);
-  transform: translateY(-3px);
-  color: #00aaff;
+  background: #eff6ff;
+  border-color: #3b82f6;
+  transform: translateY(-2px);
+  color: #3b82f6;
 }
 
-/* Mobile Responsive Styles */
-@media (max-width: 1024px) {
-  .dashboard-container {
-    padding: 1.5rem;
-  }
-  
-  .dashboard-card {
-    padding: 3rem 2rem;
-  }
-  
-  .dashboard-title {
-    font-size: 2.4rem;
-  }
-  
-  .dashboard-description {
-    font-size: 1.1rem;
-  }
+/* ── Copied pulse ────────────────────────────────────────────── */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
 }
+.copied-animation { animation: pulse 0.5s ease-in-out; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
 
 @media (max-width: 768px) {
   .dashboard-container {
     padding: 1rem;
+    min-height: 100vh;
   }
-  
+
+  .dashboard-content {
+    margin-top: 70px;
+  }
+
   .dashboard-card {
     padding: 2rem 1.5rem;
-    border-radius: 20px;
+    border-radius: 16px;
   }
-  
-  .dashboard-logo img {
-    width: 100px;
-    height: 100px;
-  }
-  
-  .dashboard-title {
-    font-size: 2rem;
-    margin-bottom: 1rem;
-  }
-  
+
+  .dashboard-logo { margin-bottom: 0.75rem; }
+  .dashboard-logo img { width: 70px; height: 70px; }
+
+  .dashboard-title { font-size: 1.5rem; margin-bottom: 0.3rem; }
+
   .dashboard-description {
-    font-size: 1rem;
-    margin-bottom: 2rem;
-    padding: 0 0.5rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin-bottom: 1.25rem;
   }
-  
+
   .dashboard-buttons {
     flex-direction: column;
-    gap: 1rem;
     align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.25rem;
   }
-  
-  .btn-view, .btn-update, .btn-copy {
+
+  .btn-view,
+  .btn-update {
     width: 100%;
     max-width: 280px;
-    padding: 1rem 2rem;
-    font-size: 1rem;
-    min-height: 48px;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.88rem;
+    min-height: 42px;
   }
-  
-  .dashboard-share-section {
-    padding: 1.5rem;
-    margin-top: 2rem;
-  }
-  
-  .share-title {
-    font-size: 1.4rem;
-  }
-  
-  .share-description {
-    font-size: 0.95rem;
-    margin-bottom: 1.5rem;
-  }
-  
+
+  .share-title { font-size: 1rem; margin-bottom: 0.2rem; }
+  .share-description { font-size: 0.78rem; margin-bottom: 0.6rem; }
+
   .share-link-container {
     flex-direction: column;
-    border-radius: 12px;
+    border-radius: 10px;
   }
-  
+
   .share-link-input {
-    border-radius: 12px 12px 0 0;
-    padding: 1rem 1.2rem;
-    font-size: 16px; /* Prevents zoom on iOS */
-    min-height: 48px;
+    border-radius: 10px 10px 0 0;
+    padding: 0.7rem 0.9rem;
+    font-size: 14px;
+    min-height: 42px;
   }
-  
+
   .btn-copy {
-    border-radius: 0 0 12px 12px;
-    padding: 1rem 2rem;
-    min-height: 48px;
+    border-radius: 0 0 10px 10px;
+    width: 100%;
+    min-width: unset;
+    padding: 0.7rem;
+    min-height: 42px;
+    font-size: 0.88rem;
   }
-  
-  .social-icons {
-    gap: 0.8rem;
-    margin-top: 1.5rem;
-  }
-  
-  .social-icons .icon {
-    width: 45px;
-    height: 45px;
-  }
+
+  .social-icons { margin-top: 0.75rem; gap: 0.6rem; }
+  .social-icons .icon { width: 38px; height: 38px; }
 }
 
 @media (max-width: 480px) {
-  .dashboard-container {
-    padding: 0.8rem;
-  }
-  
+  .dashboard-container { padding: 0.6rem; }
+
   .dashboard-card {
     padding: 1.5rem 1rem;
-    border-radius: 16px;
+    border-radius: 14px;
   }
-  
-  .dashboard-logo img {
-    width: 80px;
-    height: 80px;
-  }
-  
-  .dashboard-title {
-    font-size: 1.8rem;
-  }
-  
+
+  .dashboard-logo img { width: 60px; height: 60px; }
+
+  .dashboard-title { font-size: 1.25rem; }
+
   .dashboard-description {
-    font-size: 0.95rem;
-    padding: 0;
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
-  
-  .btn-view, .btn-update, .btn-copy {
-    max-width: 260px;
-    padding: 0.9rem 1.8rem;
-    font-size: 0.95rem;
-    min-height: 44px;
+
+  .dashboard-buttons { gap: 0.5rem; margin-bottom: 1rem; }
+
+  .btn-view,
+  .btn-update {
+    max-width: 100%;
+    padding: 0.65rem 1rem;
+    font-size: 0.82rem;
+    min-height: 40px;
   }
-  
-  .dashboard-share-section {
-    padding: 1.2rem;
-    margin-top: 1.5rem;
-  }
-  
-  .share-title {
-    font-size: 1.3rem;
-  }
-  
-  .share-description {
-    font-size: 0.9rem;
-    margin-bottom: 1.2rem;
-  }
-  
+
+  .share-title { font-size: 0.9rem; }
+  .share-description { font-size: 0.72rem; margin-bottom: 0.5rem; }
+
   .share-link-input {
-    padding: 0.9rem 1.2rem;
-    font-size: 16px;
-    min-height: 44px;
+    padding: 0.6rem 0.75rem;
+    font-size: 13px;
+    min-height: 40px;
   }
-  
-  .btn-copy {
-    padding: 0.9rem 1.8rem;
-    min-height: 44px;
-  }
-  
-  .social-icons .icon {
-    width: 40px;
-    height: 40px;
-  }
+
+  .btn-copy { padding: 0.6rem; min-height: 40px; font-size: 0.82rem; }
+
+  .social-icons .icon { width: 34px; height: 34px; }
 }
 
 @media (max-width: 360px) {
-  .dashboard-card {
-    padding: 1rem 0.8rem;
-  }
-  
-  .dashboard-title {
-    font-size: 1.6rem;
-  }
-  
-  .dashboard-description {
-    font-size: 0.9rem;
-  }
-  
-  .btn-view, .btn-update, .btn-copy {
-    max-width: 240px;
-    padding: 0.8rem 1.5rem;
-    font-size: 0.9rem;
-  }
-  
-  .share-title {
-    font-size: 1.2rem;
-  }
-  
-  .share-description {
-    font-size: 0.85rem;
-  }
+  .dashboard-container { padding: 0.5rem; }
+  .dashboard-card { padding: 1.25rem 0.85rem; border-radius: 12px; }
+  .dashboard-logo img { width: 52px; height: 52px; }
+  .dashboard-title { font-size: 1.1rem; }
+  .dashboard-description { font-size: 0.75rem; margin-bottom: 0.75rem; }
+  .btn-view, .btn-update { font-size: 0.78rem; padding: 0.6rem 0.85rem; min-height: 38px; }
+  .share-title { font-size: 0.85rem; }
+  .share-description { font-size: 0.68rem; }
+  .btn-copy { font-size: 0.78rem; padding: 0.55rem; min-height: 38px; }
 }
 
-/* Touch-friendly improvements */
+@media (max-width: 768px) and (orientation: landscape) {
+  .dashboard-container { padding: 0.6rem 1.5rem; }
+  .dashboard-card { padding: 1rem 1.5rem; }
+  .dashboard-logo img { width: 52px; height: 52px; }
+  .dashboard-title { font-size: 1.2rem; }
+  .dashboard-description { font-size: 0.82rem; margin-bottom: 0.6rem; }
+  .dashboard-buttons {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+  }
+  .btn-view, .btn-update {
+    flex: 1 1 0;
+    max-width: none;
+    min-height: 38px;
+    font-size: 0.82rem;
+    padding: 0.6rem 0.85rem;
+  }
+  .share-link-container { flex-direction: row; }
+  .share-link-input { border-radius: 10px 0 0 10px; font-size: 14px; }
+  .btn-copy { border-radius: 0 10px 10px 0; width: auto; min-width: 70px; }
+}
+
 @media (hover: none) and (pointer: coarse) {
-  .dashboard-card:hover {
-    transform: none;
-  }
-  
-  .btn-view:hover, .btn-update:hover, .btn-copy:hover {
-    transform: none;
-  }
-  
-  .btn-view:active, .btn-update:active, .btn-copy:active {
-    transform: scale(0.98);
-  }
-  
-  .dashboard-logo img:hover {
-    transform: none;
-  }
-  
-  .social-icons .icon:hover {
-    transform: none;
-  }
-  
-  .social-icons .icon:active {
-    transform: scale(0.95);
-  }
+  .dashboard-card:hover,
+  .btn-view:hover,
+  .btn-update:hover,
+  .btn-copy:hover,
+  .dashboard-logo img:hover,
+  .social-icons .icon:hover { transform: none; }
+  .btn-view:active,
+  .btn-update:active,
+  .btn-copy:active { transform: scale(0.97); }
+  .social-icons .icon:active { transform: scale(0.95); }
 }
 
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-  .dashboard-card {
-    border: 2px solid rgba(255, 255, 255, 0.2);
-  }
-  
-  .btn-view, .btn-update, .btn-copy {
-    border: 2px solid currentColor;
-  }
-}
-
-/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .dashboard-card,
   .btn-view, .btn-update, .btn-copy,
   .dashboard-logo img,
-  .social-icons .icon {
-    transition: none;
-  }
-  
+  .social-icons .icon { transition: none; }
   .dashboard-card:hover,
   .btn-view:hover, .btn-update:hover, .btn-copy:hover,
   .dashboard-logo img:hover,
-  .social-icons .icon:hover {
-    transform: none;
-  }
-}
-
-/* Landscape orientation adjustments */
-@media (max-width: 768px) and (orientation: landscape) {
-  .dashboard-container {
-    padding: 1rem 2rem;
-  }
-  
-  .dashboard-card {
-    padding: 2rem 2.5rem;
-  }
-  
-  .dashboard-buttons {
-    flex-direction: row;
-    max-width: 600px;
-  }
-  
-  .btn-view, .btn-update, .btn-copy {
-    width: auto;
-    max-width: none;
-  }
-  
-  .share-link-container {
-    flex-direction: row;
-  }
-  
-  .share-link-input {
-    border-radius: 12px 0 0 12px;
-  }
-  
-  .btn-copy {
-    border-radius: 0 12px 12px 0;
-  }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-.copied-animation {
-  animation: pulse 0.5s ease-in-out;
+  .social-icons .icon:hover { transform: none; }
 }

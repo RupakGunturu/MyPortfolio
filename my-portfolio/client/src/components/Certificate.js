@@ -4,30 +4,37 @@ import { motion, AnimatePresence } from 'framer-motion';
 import AuthContext from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import { Document, Page, pdfjs } from 'react-pdf';
+import { DatePicker } from 'antd';
+import dayjs from 'dayjs';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-// Set up PDF.js worker with multiple fallbacks
+// Set up PDF.js worker
 if (typeof window !== 'undefined') {
-  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.js',
-    import.meta.url,
-  ).toString();
+  pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`;
 }
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
+const useWindowWidth = () => {
+  const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return width;
+};
 
 function Certificates({ viewOnly = false, theme = 'dark', userId }) {
   const authContext = useContext(AuthContext);
   const { user } = authContext || {};
   const effectiveUserId = userId || (user && user._id);
+  const windowWidth = useWindowWidth();
   const [certs, setCerts] = useState([]);
-  const [form, setForm] = useState({
-    title: '',
-    issuer: '',
-    date: '',
-    file: null,
-  });
+  const [form, setForm] = useState({ title: '', issuer: '', date: '', file: null });
   const [error, setError] = useState('');
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
@@ -39,30 +46,42 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
   const [pageNumber, setPageNumber] = useState(1);
   const [selectedCert, setSelectedCert] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [hoveredCard, setHoveredCard] = useState(null);
+  const [activeMenu, setActiveMenu] = useState(null);
+
+  const isMobile = windowWidth < 768;
+  const isSmall = windowWidth < 480;
+
+  // Close mobile menu on outside click
+  useEffect(() => {
+    if (activeMenu === null) return;
+    const close = () => setActiveMenu(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [activeMenu]);
 
   useEffect(() => {
-    if (effectiveUserId) {
-      fetchCertificates();
-    }
-  }, [effectiveUserId, fetchCertificates]);
+    if (!effectiveUserId) return;
+    const controller = new AbortController();
+    const fetchCertificates = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/certificates?userId=${effectiveUserId}`, {
+          signal: controller.signal,
+        });
+        setCerts(response.data);
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        console.error('Failed to fetch certificates:', err);
+        setError('Failed to load certificates. Please try again.');
+      }
+    };
+    fetchCertificates();
+    return () => controller.abort();
+  }, [effectiveUserId]);
 
-  const fetchCertificates = async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/api/certificates?userId=${effectiveUserId}`);
-      setCerts(response.data);
-    } catch (err) {
-      console.error('Failed to fetch certificates:', err);
-      setError('Failed to load certificates. Please try again.');
-    }
-  };
-
-  const handleFileChange = e => {
+  const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setForm(prev => ({
-      ...prev,
-      file: file
-    }));
-
+    setForm((prev) => ({ ...prev, file }));
     if (file && file.type.startsWith('image/')) {
       setFilePreview(URL.createObjectURL(file));
       setPdfPreview(null);
@@ -76,23 +95,14 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
     }
   };
 
-  const onSubmit = async e => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
     setIsSubmitting(true);
     setError('');
-
     try {
-      if (!form.title || !form.issuer || !form.date) {
-        throw new Error('All required fields must be filled');
-      }
-
-      console.log('Certificate upload - User object:', user);
-      console.log('Certificate upload - User ID:', effectiveUserId);
-
-      if (!effectiveUserId) {
-        throw new Error('User ID not available. Please try logging in again.');
-      }
+      if (!form.title || !form.issuer || !form.date) throw new Error('All required fields must be filled');
+      if (!effectiveUserId) throw new Error('User ID not available. Please try logging in again.');
 
       const formData = new FormData();
       formData.append('title', form.title);
@@ -101,7 +111,6 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
       formData.append('userId', effectiveUserId);
 
       if (form.file) {
-        // Accept both images and PDFs
         if (!form.file.type.match(/image\/(jpeg|png|gif|jpg)|application\/pdf/)) {
           throw new Error('Only images (JPEG, PNG, GIF) and PDF files are allowed');
         }
@@ -112,7 +121,7 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      setCerts(prev => [response.data.certificate, ...prev]);
+      setCerts((prev) => [response.data.certificate, ...prev]);
       toast.success('Certificate added successfully!');
       resetForm();
       setIsFormVisible(false);
@@ -124,9 +133,7 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
     }
   };
 
-  const onDocumentLoadSuccess = ({ numPages }) => {
-    setNumPages(numPages);
-  };
+  const onDocumentLoadSuccess = ({ numPages }) => setNumPages(numPages);
 
   const resetForm = () => {
     setForm({ title: '', issuer: '', date: '', file: null });
@@ -137,366 +144,495 @@ function Certificates({ viewOnly = false, theme = 'dark', userId }) {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const confirmDelete = (id) => {
-    setDeletingId(id);
-  };
+  const confirmDelete = (id) => setDeletingId(id);
+  const cancelDelete = () => setDeletingId(null);
 
-  const cancelDelete = () => {
-    setDeletingId(null);
-  };
-
-const deleteCertificate = async (id) => {
-  console.log('Attempting to delete:', id);
-  try {
-    const response = await axios.delete(`${API_BASE_URL}/api/certificates/${id}?userId=${effectiveUserId}`);
-    
-    if (response.data.success) {
-      setCerts(prev => prev.filter(cert => cert._id !== id));
-      setDeletingId(null);
-      toast.success('Certificate deleted successfully!');
-    } else {
-      throw new Error(response.data.message);
+  const deleteCertificate = async (id) => {
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/api/certificates/${id}?userId=${effectiveUserId}`);
+      if (response.data.success) {
+        setCerts((prev) => prev.filter((cert) => cert._id !== id));
+        setDeletingId(null);
+        toast.success('Certificate deleted successfully!');
+      } else {
+        throw new Error(response.data.message);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Delete failed. Please try again.');
     }
-  } catch (err) {
-    console.error('Delete failed:', {
-      error: err,
-      response: err.response?.data
-    });
-    setError(err.response?.data?.message || 'Delete failed. Please try again.');
-  }
-};
+  };
 
-  // Theme-aware styles
+  /** Resolve the file URL + isPdf from a cert object */
+  const resolveFileUrl = (cert) => {
+    let fileUrl = null;
+    let isPdf = false;
+    const check = (raw) => {
+      const url = raw.startsWith('http') ? raw : `${API_BASE_URL}${raw}`;
+      const pdf = cert.contentType === 'application/pdf' || raw.toLowerCase().includes('.pdf');
+      return { url, pdf };
+    };
+    if (cert.url) ({ url: fileUrl, pdf: isPdf } = check(cert.url));
+    else if (cert.image) ({ url: fileUrl, pdf: isPdf } = check(cert.image));
+    else if (cert.file) ({ url: fileUrl, pdf: isPdf } = check(cert.file));
+    else if (cert.filename) {
+      fileUrl = `${API_BASE_URL}/uploads/${cert.filename}`;
+      isPdf = cert.contentType === 'application/pdf' || cert.filename.toLowerCase().includes('.pdf');
+    }
+    return { fileUrl, isPdf };
+  };
+
+  // ─── Styles ────────────────────────────────────────────────────────────────
+  const dark = theme === 'dark';
+
   const styles = {
     container: {
       maxWidth: '100%',
       margin: '0 auto',
-      padding: '40px 20px',
-      fontFamily: "'Inter', system-ui, sans-serif",
-      background: theme === 'dark' 
-        ? 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)'
-        : '#FFFFFF',
+      padding: isSmall ? '16px 10px' : isMobile ? '24px 14px' : '32px 20px',
+      fontFamily: "'Poppins', system-ui, sans-serif",
+      background: dark ? 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)' : '#FFFFFF',
       minHeight: 'auto',
       width: '100%',
     },
+
     header: {
       display: 'flex',
+      flexDirection: isSmall ? 'column' : 'row',
+      alignItems: isSmall ? 'flex-start' : 'center',
       justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '3rem',
-      paddingBottom: '1rem',
-      borderBottom: 'none',
+      marginBottom: isSmall ? '1.5rem' : '2rem',
       maxWidth: '1400px',
-      margin: '0 auto 3rem auto',
+      margin: isSmall ? '0 auto 1.5rem auto' : '0 auto 2rem auto',
       width: '100%',
       flexWrap: 'wrap',
       gap: '1rem',
-      padding: '0 20px',
+      padding: isSmall ? '0 8px' : '0 20px',
     },
+
     heading: {
-      fontSize: 'clamp(2.5rem, 5vw, 3.5rem)',
+      fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
       fontWeight: '900',
-      color: theme === 'dark' ? '#F8FAFC' : '#1E293B',
       margin: 0,
       letterSpacing: '-1.5px',
-      background: theme === 'dark'
+      background: dark
         ? 'linear-gradient(135deg, #A78BFA 0%, #60A5FA 100%)'
         : 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
       WebkitBackgroundClip: 'text',
       WebkitTextFillColor: 'transparent',
     },
+
     subHeading: {
-      fontSize: '1.2rem',
-      color: theme === 'dark' ? '#94A3B8' : '#64748B',
+      fontSize: '0.9rem',
+      color: dark ? '#94A3B8' : '#64748B',
       margin: '0.25rem 0 0',
       fontWeight: '500',
-      letterSpacing: '0.5px',
     },
+
     addButton: {
       background: 'linear-gradient(135deg, #00BFFF 0%, #3B82F6 100%)',
-      color: theme === 'dark' ? '#0F172A' : '#FFFFFF',
+      color: dark ? '#0F172A' : '#FFFFFF',
       border: 'none',
-      padding: '0.75rem 1.5rem',
+      padding: '0.65rem 1.25rem',
       borderRadius: '0.5rem',
       cursor: 'pointer',
       fontWeight: '600',
+      fontSize: '0.9rem',
       transition: 'all 0.15s ease',
-      boxShadow: '0 4px 6px -1px rgba(0, 191, 255, 0.2)',
+      boxShadow: '0 4px 6px -1px rgba(0,191,255,0.2)',
       display: 'flex',
       alignItems: 'center',
-      gap: '0.5rem',
+      gap: '0.4rem',
+      whiteSpace: 'nowrap',
     },
+
     cancelButton: {
       background: 'linear-gradient(45deg, #ef4444, #f87171)',
-      color: theme === 'dark' ? '#0F172A' : '#FFFFFF',
+      color: '#FFFFFF',
       border: 'none',
-      padding: '0.75rem 1.5rem',
+      padding: '0.65rem 1.25rem',
       borderRadius: '0.5rem',
       cursor: 'pointer',
       fontWeight: '600',
-      transition: 'all 0.15s ease',
+      fontSize: '0.9rem',
       display: 'flex',
       alignItems: 'center',
-      gap: '0.5rem',
+      gap: '0.4rem',
+      whiteSpace: 'nowrap',
     },
+
     form: {
-      backgroundColor: theme === 'dark' ? '#1E293B' : '#FFFFFF',
+      backgroundColor: dark ? '#1E293B' : '#FFFFFF',
       borderRadius: '0.75rem',
-      marginBottom: '2rem',
-      padding: '1.5rem',
-      border: theme === 'dark' ? '1px solid #334155' : '1px solid #E2E8F0',
-      boxShadow: theme === 'dark' 
-        ? '0 4px 6px -1px rgba(0, 0, 0, 0.3)'
-        : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+      padding: isSmall ? '1rem' : '1.5rem',
+      border: dark ? '1px solid #334155' : '1px solid #E2E8F0',
+      boxShadow: dark ? '0 4px 6px -1px rgba(0,0,0,0.3)' : '0 4px 6px -1px rgba(0,0,0,0.1)',
       maxWidth: '1400px',
-      margin: '0 auto 2rem auto',
+      margin: isSmall ? '0 auto 1rem auto' : '0 auto 1.5rem auto',
       width: '100%',
     },
-    formGroup: {
-      marginBottom: '1.5rem',
-    },
+
+    formGroup: { marginBottom: '1.25rem' },
+
     label: {
       display: 'block',
-      marginBottom: '0.5rem',
+      marginBottom: '0.4rem',
       fontWeight: '500',
-      color: theme === 'dark' ? '#F8FAFC' : '#1E293B',
-      fontSize: '0.95rem',
+      color: dark ? '#F8FAFC' : '#1E293B',
+      fontSize: '0.9rem',
     },
+
     input: {
       width: '100%',
-      padding: '0.75rem',
-      border: theme === 'dark' ? '1px solid #334155' : '1px solid #E2E8F0',
+      padding: '0.7rem',
+      border: dark ? '1px solid #334155' : '1px solid #E2E8F0',
       borderRadius: '0.5rem',
-      fontSize: '1rem',
+      fontSize: '16px',
       transition: 'all 0.15s ease',
-      backgroundColor: theme === 'dark' ? '#0F172A' : '#F8FAFC',
-      color: theme === 'dark' ? '#F8FAFC' : '#1E293B',
+      backgroundColor: dark ? '#0F172A' : '#F8FAFC',
+      color: dark ? '#F8FAFC' : '#1E293B',
+      boxSizing: 'border-box',
     },
+
     fileHint: {
-      fontSize: '0.8rem',
-      color: theme === 'dark' ? '#94A3B8' : '#64748B',
+      fontSize: '0.75rem',
+      color: dark ? '#94A3B8' : '#64748B',
       marginTop: '0.25rem',
       fontStyle: 'italic',
     },
+
     formActions: {
       display: 'flex',
       justifyContent: 'flex-end',
-      gap: '1rem',
+      gap: '0.75rem',
+      marginTop: '0.5rem',
     },
+
     submitBtn: {
       background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-      color: theme === 'dark' ? '#0F172A' : '#FFFFFF',
+      color: dark ? '#0F172A' : '#FFFFFF',
       border: 'none',
-      padding: '0.75rem 1.5rem',
+      padding: '0.65rem 1.25rem',
       borderRadius: '0.5rem',
       cursor: 'pointer',
-      fontWeight: '600',
-      transition: 'opacity 0.15s ease',
-    },
-    formCancelBtn: {
-      backgroundColor: theme === 'dark' ? '#334155' : '#F1F5F9',
-      color: theme === 'dark' ? '#F8FAFC' : '#475569',
-      border: theme === 'dark' ? '1px solid #475569' : '1px solid #CBD5E1',
-      padding: '0.75rem 1.25rem',
-      borderRadius: '0.5rem',
-      cursor: 'pointer',
-      fontWeight: '600',
-      transition: 'background-color 0.15s ease',
-    },
-    error: {
-      marginTop: '1rem',
-      color: '#ef4444',
       fontWeight: '600',
       fontSize: '0.9rem',
-      textAlign: 'center',
+      transition: 'opacity 0.15s ease',
     },
-    emptyState: {
-      marginTop: '4rem',
-      textAlign: 'center',
-      color: theme === 'dark' ? '#94A3B8' : '#64748B',
+
+    formCancelBtn: {
+      backgroundColor: dark ? '#334155' : '#F1F5F9',
+      color: dark ? '#F8FAFC' : '#475569',
+      border: dark ? '1px solid #475569' : '1px solid #CBD5E1',
+      padding: '0.65rem 1.1rem',
+      borderRadius: '0.5rem',
+      cursor: 'pointer',
       fontWeight: '600',
-      fontSize: '1.2rem',
-      maxWidth: '1400px',
-      margin: '4rem auto 0 auto',
-      width: '100%',
+      fontSize: '0.9rem',
     },
-    emptyIcon: {
-      fontSize: '4rem',
-      marginBottom: '1rem',
-      opacity: '0.4',
+
+    errorText: {
+      marginTop: '0.75rem',
+      color: '#ef4444',
+      fontWeight: '600',
+      fontSize: '0.875rem',
+      textAlign: 'center',
     },
+
+    emptyState: {
+      textAlign: 'center',
+      color: dark ? '#94A3B8' : '#64748B',
+      fontWeight: '600',
+      fontSize: '1rem',
+      padding: '3rem 1rem',
+    },
+
+    // ── Card Grid ──────────────────────────────────────────────────────────
     grid: {
       display: 'grid',
-      gridTemplateColumns: 'repeat(4, 1fr)',
-      gap: '1.5rem',
+      gridTemplateColumns: isSmall
+        ? '1fr'
+        : isMobile
+        ? 'repeat(2, 1fr)'
+        : 'repeat(auto-fill, minmax(250px, 1fr))',
+      gap: isSmall ? '0.875rem' : '1rem',
       width: '100%',
       maxWidth: '1400px',
       margin: '0 auto',
-      padding: '0 20px',
+      padding: isSmall ? '0 8px' : isMobile ? '0 12px' : '0 20px',
     },
+
+    // ── Card ──────────────────────────────────────────────────────────────
     card: {
       position: 'relative',
-      backgroundColor: theme === 'dark' ? '#1E293B' : '#FFFFFF',
-      borderRadius: '1rem',
-      boxShadow: theme === 'dark' 
-        ? '0 8px 15px rgba(0,0,0,0.3)'
-        : '0 8px 15px rgba(0,0,0,0.07)',
+      backgroundColor: dark ? '#1E293B' : '#FFFFFF',
+      borderRadius: '0.75rem',
+      boxShadow: dark ? '0 4px 12px rgba(0,0,0,0.35)' : '0 4px 12px rgba(0,0,0,0.08)',
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
-      maxWidth: '350px',
-      minWidth: '320px',
-      width: '100%',
-      margin: '0 auto',
-    },
-    deleteBtn: {
-      background: '#ff4444',
-      color: 'white',
-      border: 'none',
-      borderRadius: '50%',
-      width: '25px',
-      height: '25px',
-      fontSize: '16px',
       cursor: 'pointer',
-      position: 'absolute',
-      top: '10px',
-      right: '10px',
-      zIndex: '10',
-      transition: 'all 0.15s ease',
+    },
+
+    // ── Square thumbnail (image slot) ─────────────────────────────────────
+    thumbnail: {
+      width: '100%',
+      aspectRatio: '1 / 1',
+      overflow: 'hidden',
+      backgroundColor: dark ? '#334155' : '#F1F5F9',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      flexShrink: 0,
     },
-    image: {
+
+    thumbnailImg: {
       width: '100%',
-      height: '200px',
+      height: '100%',
       objectFit: 'cover',
-      backgroundColor: theme === 'dark' ? '#334155' : '#F1F5F9',
+      display: 'block',
     },
-    noImagePlaceholder: {
-      width: '100%',
-      height: '200px',
-      backgroundColor: theme === 'dark' ? '#334155' : '#F1F5F9',
+
+    noThumb: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '0.4rem',
+      color: dark ? '#64748B' : '#94A3B8',
+      fontSize: '0.8rem',
+    },
+
+    // ── Card details strip ────────────────────────────────────────────────
+    details: {
+      padding: isSmall ? '0.6rem 0.75rem 0.75rem' : '0.75rem 0.875rem 0.875rem',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '0.15rem',
+    },
+
+    certTitle: {
+      color: dark ? '#F8FAFC' : '#1E293B',
+      fontSize: isSmall ? '0.8rem' : '0.875rem',
+      fontWeight: '700',
+      margin: 0,
+      lineHeight: 1.3,
+      overflow: 'hidden',
+      display: '-webkit-box',
+      WebkitLineClamp: 2,
+      WebkitBoxOrient: 'vertical',
+    },
+
+    certIssuer: {
+      color: dark ? '#94A3B8' : '#64748B',
+      fontSize: '0.75rem',
+      margin: 0,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    },
+
+    certDate: {
+      color: dark ? '#64748B' : '#94A3B8',
+      fontSize: '0.7rem',
+      margin: 0,
+    },
+
+    // ── Delete X button — top-right corner, subtle ────────────────────────
+    deleteBtn: {
+      position: 'absolute',
+      top: '6px',
+      right: '6px',
+      zIndex: 10,
+      width: '22px',
+      height: '22px',
+      borderRadius: '50%',
+      background: 'rgba(0,0,0,0.45)',
+      backdropFilter: 'blur(4px)',
+      WebkitBackdropFilter: 'blur(4px)',
+      color: '#fff',
+      border: 'none',
+      fontSize: '12px',
+      fontWeight: '600',
+      lineHeight: 1,
+      cursor: 'pointer',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      color: theme === 'dark' ? '#94A3B8' : '#64748B',
-      fontSize: '0.9rem',
+      opacity: 0,
+      transition: 'opacity 0.15s ease, background 0.12s ease',
     },
-    details: {
-      padding: '1rem',
-    },
-    title: {
-      color: theme === 'dark' ? '#F8FAFC' : '#1E293B',
-      fontSize: '1.125rem',
-      fontWeight: '600',
-      margin: '0 0 0.5rem 0',
-    },
-    issuer: {
-      color: theme === 'dark' ? '#94A3B8' : '#64748B',
-      fontSize: '0.9rem',
-      margin: '0 0 0.25rem 0',
-    },
-    date: {
-      color: theme === 'dark' ? '#94A3B8' : '#64748B',
-      fontSize: '0.8rem',
-      margin: '0',
-    },
+
+    // ── Delete confirm overlay (on card) ──────────────────────────────────
     deleteConfirmOverlay: {
       position: 'absolute',
-      top: '0',
-      left: '0',
-      right: '0',
-      bottom: '0',
-      backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.7)',
+      inset: 0,
+      backgroundColor: dark ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0.72)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: '20',
-    },
-    deleteConfirmBox: {
-      backgroundColor: theme === 'dark' ? '#1E293B' : '#FFFFFF',
-      padding: '1.5rem',
+      zIndex: 20,
       borderRadius: '0.75rem',
+    },
+
+    deleteConfirmBox: {
+      backgroundColor: dark ? '#1E293B' : '#FFFFFF',
+      padding: '1rem',
+      borderRadius: '0.625rem',
       textAlign: 'center',
-      maxWidth: '300px',
-      border: theme === 'dark' ? '1px solid #334155' : '1px solid #E2E8F0',
+      width: '85%',
+      border: dark ? '1px solid #334155' : '1px solid #E2E8F0',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
     },
+
     confirmText: {
-      color: theme === 'dark' ? '#F8FAFC' : '#1E293B',
-      marginBottom: '1rem',
-      fontSize: '0.95rem',
+      color: dark ? '#F8FAFC' : '#1E293B',
+      marginBottom: '0.875rem',
+      fontSize: '0.8rem',
+      lineHeight: 1.4,
     },
+
     confirmActions: {
       display: 'flex',
-      gap: '0.75rem',
+      gap: '0.5rem',
       justifyContent: 'center',
     },
+
     confirmDeleteBtn: {
       background: '#ef4444',
-      color: 'white',
+      color: '#fff',
       border: 'none',
-      padding: '0.5rem 1rem',
+      padding: '0.4rem 0.875rem',
       borderRadius: '0.375rem',
       cursor: 'pointer',
       fontWeight: '600',
-      fontSize: '0.875rem',
-      transition: 'background-color 0.15s ease',
+      fontSize: '0.8rem',
     },
+
+    confirmCancelBtn: {
+      backgroundColor: dark ? '#334155' : '#F1F5F9',
+      color: dark ? '#F8FAFC' : '#475569',
+      border: 'none',
+      padding: '0.4rem 0.875rem',
+      borderRadius: '0.375rem',
+      cursor: 'pointer',
+      fontWeight: '600',
+      fontSize: '0.8rem',
+    },
+
+    // ── PDF preview in form ───────────────────────────────────────────────
     pdfPreviewContainer: {
-      margin: '1rem 0',
-      border: '1px solid #ccc',
+      margin: '0.875rem 0',
+      border: `1px solid ${dark ? '#475569' : '#CBD5E1'}`,
       borderRadius: '8px',
-      padding: '1rem',
-      backgroundColor: theme === 'dark' ? '#334155' : '#F8FAFC',
+      padding: '0.875rem',
+      backgroundColor: dark ? '#334155' : '#F8FAFC',
       textAlign: 'center',
     },
-    pdfPreview: {
-      border: '1px solid #ddd',
-      borderRadius: '4px',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    },
+
     pdfControls: {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      gap: '1rem',
+      gap: '0.75rem',
       marginTop: '0.5rem',
     },
+
     pdfButton: {
-      padding: '0.25rem 0.5rem',
-      backgroundColor: theme === 'dark' ? '#475569' : '#E2E8F0',
-      color: theme === 'dark' ? '#F8FAFC' : '#1E293B',
+      padding: '0.25rem 0.6rem',
+      backgroundColor: dark ? '#475569' : '#E2E8F0',
+      color: dark ? '#F8FAFC' : '#1E293B',
       border: 'none',
       borderRadius: '4px',
       cursor: 'pointer',
-      fontSize: '0.875rem',
+      fontSize: '0.8rem',
       fontWeight: '500',
     },
+
     pdfInfo: {
-      color: theme === 'dark' ? '#94A3B8' : '#64748B',
-      fontSize: '0.875rem',
-      margin: '0',
+      color: dark ? '#94A3B8' : '#64748B',
+      fontSize: '0.8rem',
+      margin: 0,
     },
   };
 
+  // ─── Modal styles (responsive) ─────────────────────────────────────────────
+  const modalOverlay = {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(15,23,42,0.75)',
+    backdropFilter: 'blur(4px)',
+    WebkitBackdropFilter: 'blur(4px)',
+    display: 'flex',
+    alignItems: isMobile ? 'flex-end' : 'center',
+    justifyContent: 'center',
+    zIndex: 9999,
+    padding: isMobile ? '0' : '1rem',
+  };
+
+  const modalBox = {
+    background: dark ? '#1E293B' : '#FFFFFF',
+    borderRadius: isMobile ? '1.25rem 1.25rem 0 0' : '1rem',
+    padding: isMobile ? '1rem 1rem 1.5rem' : '1.5rem',
+    width: isMobile ? '100%' : 'min(560px, 92vw)',
+    maxHeight: isMobile ? '92vh' : '88vh',
+    overflowY: 'auto',
+    position: 'relative',
+    boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
+    border: dark ? '1px solid #334155' : '1px solid #E2E8F0',
+    paddingBottom: isMobile ? 'max(1.5rem, env(safe-area-inset-bottom))' : '1.5rem',
+  };
+
+  const modalCloseBtn = {
+    position: 'absolute',
+    top: '12px',
+    right: '12px',
+    width: '32px',
+    height: '32px',
+    borderRadius: '50%',
+    background: dark ? '#334155' : '#F1F5F9',
+    border: 'none',
+    fontSize: '18px',
+    fontWeight: '700',
+    color: dark ? '#94A3B8' : '#475569',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    lineHeight: 1,
+    transition: 'background 0.15s ease, color 0.15s ease',
+    flexShrink: 0,
+  };
+
+  // Drag handle (mobile sheet indicator)
+  const dragHandle = isMobile ? (
+    <div style={{
+      width: '36px',
+      height: '4px',
+      borderRadius: '2px',
+      background: dark ? '#475569' : '#CBD5E1',
+      margin: '0 auto 1rem auto',
+    }} />
+  ) : null;
+
+  // ─── Render ────────────────────────────────────────────────────────────────
   return (
     <section style={styles.container}>
+      {/* Header */}
       <div style={styles.header}>
         <div>
           <h2 style={styles.heading}>My Certificates</h2>
           <p style={styles.subHeading}>Manage your professional certifications</p>
         </div>
         {!viewOnly && (
-        <button
-          onClick={() => setIsFormVisible(!isFormVisible)}
+          <button
+            onClick={() => setIsFormVisible(!isFormVisible)}
             style={isFormVisible ? styles.cancelButton : styles.addButton}
-        >
-          {isFormVisible ? '✕ Close' : '＋ Add Certificate'}
-        </button>
+          >
+            {isFormVisible ? '✕ Close' : '＋ Add Certificate'}
+          </button>
         )}
       </div>
 
+      {/* Add form */}
       <AnimatePresence>
         {isFormVisible && !viewOnly && (
           <motion.form
@@ -511,7 +647,7 @@ const deleteCertificate = async (id) => {
               <label style={styles.label}>Certificate Title *</label>
               <input
                 value={form.title}
-                onChange={e => setForm({ ...form, title: e.target.value })}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
                 required
                 style={styles.input}
               />
@@ -521,7 +657,7 @@ const deleteCertificate = async (id) => {
               <label style={styles.label}>Issued By *</label>
               <input
                 value={form.issuer}
-                onChange={e => setForm({ ...form, issuer: e.target.value })}
+                onChange={(e) => setForm({ ...form, issuer: e.target.value })}
                 required
                 style={styles.input}
               />
@@ -529,12 +665,12 @@ const deleteCertificate = async (id) => {
 
             <div style={styles.formGroup}>
               <label style={styles.label}>Date Issued *</label>
-              <input
-                type="date"
-                value={form.date}
-                onChange={e => setForm({ ...form, date: e.target.value })}
-                required
-                style={styles.input}
+              <DatePicker
+                style={{ width: '100%', padding: '0.7rem', fontSize: '16px' }}
+                format="YYYY-MM-DD"
+                value={form.date ? dayjs(form.date) : null}
+                onChange={(date) => setForm({ ...form, date: date ? date.format('YYYY-MM-DD') : '' })}
+                placeholder="Select date"
               />
             </div>
 
@@ -545,17 +681,76 @@ const deleteCertificate = async (id) => {
                 type="file"
                 accept="image/*,.pdf"
                 onChange={handleFileChange}
-                style={styles.input}
+                style={{ display: 'none' }}
               />
-              <p style={styles.fileHint}>Supports JPG, PNG, GIF, or PDF files</p>
+              {!form.file ? (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    width: '100%',
+                    padding: '1.25rem',
+                    border: `2px dashed ${dark ? '#475569' : '#CBD5E1'}`,
+                    borderRadius: '0.75rem',
+                    background: dark ? 'rgba(15,23,42,0.5)' : '#F8FAFC',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    color: dark ? '#94A3B8' : '#64748B',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#3B82F6'; e.currentTarget.style.background = dark ? 'rgba(30,58,138,0.2)' : '#EFF6FF'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = dark ? '#475569' : '#CBD5E1'; e.currentTarget.style.background = dark ? 'rgba(15,23,42,0.5)' : '#F8FAFC'; }}
+                >
+                  <span style={{ fontSize: '2rem' }}>📎</span>
+                  <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>Click to upload</span>
+                  <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>JPG, PNG, GIF, or PDF</span>
+                </button>
+              ) : (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.75rem 1rem',
+                  border: `1px solid ${dark ? '#334155' : '#E2E8F0'}`,
+                  borderRadius: '0.5rem',
+                  background: dark ? '#0F172A' : '#F8FAFC',
+                }}>
+                  <span style={{ fontSize: '1.5rem' }}>
+                    {form.file.type === 'application/pdf' ? '📄' : '🖼'}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontWeight: '600', fontSize: '0.875rem', color: dark ? '#F8FAFC' : '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {form.file.name}
+                    </p>
+                    <p style={{ margin: '0.15rem 0 0', fontSize: '0.75rem', color: dark ? '#94A3B8' : '#64748B' }}>
+                      {(form.file.size / 1024).toFixed(1)} KB
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { resetForm(); fileInputRef.current.value = ''; }}
+                    style={{
+                      width: '28px', height: '28px', borderRadius: '50%',
+                      background: '#FEE2E2', border: 'none', color: '#EF4444',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '14px', fontWeight: '700', flexShrink: 0,
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#FECACA'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = '#FEE2E2'}
+                  >×</button>
+                </div>
+              )}
             </div>
 
             {filePreview && (
-              <div style={{ margin: '1rem 0' }}>
+              <div style={{ margin: '0.875rem 0' }}>
                 <img
                   src={filePreview}
                   alt="Preview"
-                  style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, border: '1px solid #ccc' }}
+                  style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, border: `1px solid ${dark ? '#475569' : '#CBD5E1'}` }}
                 />
               </div>
             )}
@@ -568,13 +763,11 @@ const deleteCertificate = async (id) => {
                   loading={<div style={styles.pdfInfo}>Loading PDF...</div>}
                   error={<div style={styles.pdfInfo}>Error loading PDF</div>}
                 >
-                  <Page 
-                    pageNumber={pageNumber} 
+                  <Page
+                    pageNumber={pageNumber}
                     width={Math.min(400, window.innerWidth - 100)}
                     renderTextLayer={false}
                     renderAnnotationLayer={false}
-                    className="pdf-page"
-                    style={styles.pdfPreview}
                   />
                 </Document>
                 {numPages && numPages > 1 && (
@@ -587,9 +780,7 @@ const deleteCertificate = async (id) => {
                     >
                       Previous
                     </button>
-                    <p style={styles.pdfInfo}>
-                      Page {pageNumber} of {numPages}
-                    </p>
+                    <p style={styles.pdfInfo}>Page {pageNumber} of {numPages}</p>
                     <button
                       type="button"
                       onClick={() => setPageNumber(Math.min(numPages, pageNumber + 1))}
@@ -604,292 +795,300 @@ const deleteCertificate = async (id) => {
             )}
 
             <div style={styles.formActions}>
-              <button
-                type="button"
-                onClick={() => setIsFormVisible(false)}
-                style={styles.formCancelBtn}
-              >
+              <button type="button" onClick={() => setIsFormVisible(false)} style={styles.formCancelBtn}>
                 Cancel
               </button>
               <button type="submit" style={styles.submitBtn} disabled={isSubmitting}>
                 {isSubmitting ? 'Saving...' : 'Save Certificate'}
               </button>
             </div>
-            {error && <div style={styles.error}>{error}</div>}
+            {error && <div style={styles.errorText}>{error}</div>}
           </motion.form>
         )}
       </AnimatePresence>
 
+      {/* Empty state */}
       {certs.length === 0 ? (
         <div style={styles.emptyState}>
-          <div style={styles.emptyIcon}>📄</div>
-          <p>No certificates yet. Add your first one!</p>
+          <div style={{ fontSize: '3rem', marginBottom: '0.75rem', opacity: 0.35 }}>📄</div>
+          <p style={{ margin: 0 }}>No certificates yet. Add your first one!</p>
         </div>
       ) : (
+        /* ── Grid ── */
         <div style={styles.grid}>
-          {certs.map(cert => {
-            console.log('Certificate data:', cert); // Debug log
-            
-            let fileUrl = null;
-            let isPdf = false;
-            
-            // Check different possible field names for the file URL
-            if (cert.url) {
-              fileUrl = cert.url.startsWith('http') ? cert.url : `${API_BASE_URL}${cert.url}`;
-              isPdf = cert.contentType === 'application/pdf' || cert.url.toLowerCase().includes('.pdf');
-            } else if (cert.image) {
-              fileUrl = cert.image.startsWith('http') ? cert.image : `${API_BASE_URL}${cert.image}`;
-              isPdf = cert.contentType === 'application/pdf' || cert.image.toLowerCase().includes('.pdf');
-            } else if (cert.file) {
-              fileUrl = cert.file.startsWith('http') ? cert.file : `${API_BASE_URL}${cert.file}`;
-              isPdf = cert.contentType === 'application/pdf' || cert.file.toLowerCase().includes('.pdf');
-            } else if (cert.filename) {
-              fileUrl = `${API_BASE_URL}/uploads/${cert.filename}`;
-              isPdf = cert.contentType === 'application/pdf' || cert.filename.toLowerCase().includes('.pdf');
-            }
-            
-            console.log('File URL:', fileUrl, 'isPDF:', isPdf, 'contentType:', cert.contentType); // Debug log
-            
+          {certs.map((cert) => {
+            const { fileUrl, isPdf } = resolveFileUrl(cert);
+
             return (
               <motion.div
                 key={cert._id}
                 style={styles.card}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ type: 'spring', stiffness: 600, damping: 30, mass: 0.5 }}
-                whileHover={{ 
-                  y: -8, 
-                  scale: 1.03,
-                  boxShadow: theme === 'dark'
-                    ? '0 12px 24px rgba(0,0,0,0.4)'
-                    : '0 12px 24px rgba(30, 41, 59, 0.15)'
-                }}
+                transition={{ type: 'spring', stiffness: 500, damping: 28, mass: 0.5 }}
+                whileHover={{ y: -5, boxShadow: dark ? '0 12px 28px rgba(0,0,0,0.5)' : '0 12px 28px rgba(30,41,59,0.14)' }}
+                onMouseEnter={() => setHoveredCard(cert._id)}
+                onMouseLeave={() => setHoveredCard(null)}
                 onClick={() => { setSelectedCert(cert); setShowModal(true); }}
               >
+                {/* ── Action button: ⋮ on mobile, X on desktop ── */}
                 {!viewOnly && (
-                <button
-                    style={styles.deleteBtn}
-    onClick={(e) => {
-                      e.stopPropagation();
-      confirmDelete(cert._id);
-    }}
-    aria-label="Delete Certificate"
-    title="Delete Certificate"
-  >
-    ×
-  </button>
-                )}
-
-                <div>
-                  {fileUrl ? (
-                    isPdf ? (
-                      <div style={{ width: '100%', height: '200px', overflow: 'hidden', backgroundColor: theme === 'dark' ? '#334155' : '#F1F5F9' }}>
-                        <Document
-                          file={fileUrl}
-                          options={{
-                            cMapUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/cmaps/',
-                            cMapPacked: true,
-                            standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/standard_fonts/',
-                          }}
-                          loading={
-                            <div style={styles.noImagePlaceholder}>
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                                <span style={{ fontSize: '2rem' }}>📄</span>
-                                <span>Loading PDF...</span>
-                              </div>
-                            </div>
-                          }
-                          error={
-                            <div style={styles.noImagePlaceholder}>
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                                <span style={{ fontSize: '2rem' }}>📄</span>
-                                <span style={{ fontSize: '0.875rem' }}>PDF Certificate</span>
-                                <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Preview not available</span>
-                              </div>
-                            </div>
-                          }
-                          onLoadError={(error) => {
-                            console.error('PDF Load Error:', error);
+                  isMobile ? (
+                    <div style={{ position: 'absolute', top: '6px', right: '6px', zIndex: 15 }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === cert._id ? null : cert._id); }}
+                        style={{
+                          background: 'none', border: 'none', color: dark ? '#94A3B8' : '#64748B',
+                          fontSize: '18px', fontWeight: '700', cursor: 'pointer', padding: '2px 4px',
+                          lineHeight: 1, letterSpacing: '2px',
+                        }}
+                        aria-label="More options"
+                      >⋮</button>
+                      {activeMenu === cert._id && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            position: 'absolute', top: '32px', right: 0,
+                            background: dark ? '#1E293B' : '#fff',
+                            border: `1px solid ${dark ? '#334155' : '#E2E8F0'}`,
+                            borderRadius: '8px', boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+                            minWidth: '120px', overflow: 'hidden', zIndex: 20,
                           }}
                         >
-                          <Page 
-                            pageNumber={1}
-                            width={320}
-                            renderTextLayer={false}
-                            renderAnnotationLayer={false}
-                            loading={
-                              <div style={styles.noImagePlaceholder}>
-                                <span>Loading page...</span>
-                              </div>
-                            }
-                            error={
-                              <div style={styles.noImagePlaceholder}>
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                                  <span style={{ fontSize: '2rem' }}>📄</span>
-                                  <span style={{ fontSize: '0.875rem' }}>PDF Certificate</span>
-                                </div>
-                              </div>
-                            }
-                          />
-                        </Document>
-                      </div>
+                          <button
+                            onClick={() => { confirmDelete(cert._id); setActiveMenu(null); }}
+                            style={{
+                              width: '100%', padding: '10px 14px', background: 'none', border: 'none',
+                              color: '#ef4444', fontWeight: '600', fontSize: '0.85rem', textAlign: 'left',
+                              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = dark ? '#334155' : '#FEE2E2'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                          >🗑 Delete</button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      style={{ ...styles.deleteBtn, opacity: hoveredCard === cert._id ? 1 : 0 }}
+                      onClick={(e) => { e.stopPropagation(); confirmDelete(cert._id); }}
+                      aria-label="Delete Certificate"
+                      onMouseEnter={(e) => { e.currentTarget.style.background = '#dc2626'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.45)'; }}
+                    >×</button>
+                  )
+                )}
+
+                {/* ── Square thumbnail ── */}
+                <div style={styles.thumbnail}>
+                  {fileUrl ? (
+                    isPdf ? (
+                      <Document
+                        file={fileUrl}
+                        options={{
+                          cMapUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/cmaps/',
+                          cMapPacked: true,
+                          standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/standard_fonts/',
+                        }}
+                        loading={
+                          <div style={styles.noThumb}>
+                            <span style={{ fontSize: '1.75rem' }}>📄</span>
+                            <span>Loading…</span>
+                          </div>
+                        }
+                        error={
+                          <div style={styles.noThumb}>
+                            <span style={{ fontSize: '1.75rem' }}>📄</span>
+                            <span>PDF</span>
+                          </div>
+                        }
+                      >
+                        <Page
+                          pageNumber={1}
+                          width={240}
+                          renderTextLayer={false}
+                          renderAnnotationLayer={false}
+                          loading={<div style={styles.noThumb}><span>Loading page…</span></div>}
+                          error={<div style={styles.noThumb}><span style={{ fontSize: '1.75rem' }}>📄</span></div>}
+                        />
+                      </Document>
                     ) : (
                       <img
                         src={fileUrl}
                         alt={`${cert.title} Certificate`}
-                        style={styles.image}
-                        onLoad={() => console.log('Image loaded successfully:', fileUrl)}
-                        onError={e => {
-                          console.error('Image failed to load:', fileUrl);
-                          // Instead of replacing innerHTML, show a fallback
+                        style={styles.thumbnailImg}
+                        onError={(e) => {
                           e.target.style.display = 'none';
-                          const fallbackDiv = document.createElement('div');
-                          fallbackDiv.style.cssText = `
-                            width: 100%; 
-                            height: 200px; 
-                            background-color: ${theme === 'dark' ? '#334155' : '#F1F5F9'}; 
-                            display: flex; 
-                            align-items: center; 
-                            justify-content: center; 
-                            color: ${theme === 'dark' ? '#94A3B8' : '#64748B'}; 
-                            font-size: 0.9rem;
-                            border-radius: 0.5rem;
-                          `;
-                          fallbackDiv.innerHTML = '<span>Image not available</span>';
-                          e.target.parentElement.appendChild(fallbackDiv);
+                          e.target.parentElement.innerHTML =
+                            `<div style="display:flex;flex-direction:column;align-items:center;gap:0.3rem;color:${dark ? '#64748B' : '#94A3B8'};font-size:0.75rem"><span style="font-size:1.75rem">🖼</span><span>No preview</span></div>`;
                         }}
                       />
                     )
                   ) : (
-                    <div style={styles.noImagePlaceholder}>
-                      <span>No Preview Available</span>
+                    <div style={styles.noThumb}>
+                      <span style={{ fontSize: '1.75rem' }}>📄</span>
+                      <span>No preview</span>
                     </div>
                   )}
                 </div>
 
+                {/* ── Details strip ── */}
                 <div style={styles.details}>
-                  <h3 style={styles.title}>{cert.title}</h3>
-                  <p style={styles.issuer}>{cert.issuer}</p>
-                  <p style={styles.date}>
-                    {new Date(cert.date).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    })}
+                  <h3 style={styles.certTitle}>{cert.title}</h3>
+                  <p style={styles.certIssuer}>{cert.issuer}</p>
+                  <p style={styles.certDate}>
+                    {new Date(cert.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}
                   </p>
+                </div>
 
-                  {deletingId === cert._id && !viewOnly && (
-                    <div style={styles.deleteConfirmOverlay}>
-                      <div style={styles.deleteConfirmBox}>
-                        <p style={styles.confirmText}>Are you sure you want to delete this certificate?</p>
-                        <div style={styles.confirmActions}>
-                          <button onClick={cancelDelete} style={styles.formCancelBtn}>
-                            Cancel
-                          </button>
-                          <button
-                            onClick={() => deleteCertificate(cert._id)}
-                            style={styles.confirmDeleteBtn}
-                          >
-                            Yes, Delete
-                          </button>
-                        </div>
+                {/* ── Delete confirm overlay ── */}
+                {deletingId === cert._id && !viewOnly && (
+                  <motion.div
+                    style={styles.deleteConfirmOverlay}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div style={styles.deleteConfirmBox}>
+                      <p style={styles.confirmText}>Delete this certificate?</p>
+                      <div style={styles.confirmActions}>
+                        <button onClick={cancelDelete} style={styles.confirmCancelBtn}>Cancel</button>
+                        <button onClick={() => deleteCertificate(cert._id)} style={styles.confirmDeleteBtn}>
+                          Delete
+                        </button>
                       </div>
                     </div>
-                  )}
-                </div>
+                  </motion.div>
+                )}
               </motion.div>
             );
           })}
         </div>
       )}
-      {/* Modal for certificate preview */}
-      {showModal && selectedCert && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-          background: 'rgba(30,41,59,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
-        }}
-          onClick={() => setShowModal(false)}
-        >
-          <div style={{
-            background: theme === 'dark' ? '#1E293B' : '#fff',
-            borderRadius: 12,
-            padding: '48px 24px 24px 24px', // extra top padding for the close button
-            maxWidth: 600,
-            width: '90vw',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            position: 'relative',
-            boxShadow: '0 8px 32px rgba(30,41,59,0.18)'
-          }}
-            onClick={e => e.stopPropagation()}
+
+      {/* ── Modal ── */}
+      <AnimatePresence>
+        {showModal && selectedCert && (
+          <motion.div
+            style={modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onClick={() => setShowModal(false)}
           >
-            <button
-              onClick={() => setShowModal(false)}
-              style={{
-                position: 'absolute',
-                top: 18,
-                right: 18,
-                background: theme === 'dark' ? 'rgba(30,41,59,0.85)' : 'rgba(255,255,255,0.85)',
-                border: 'none',
-                fontSize: 32,
-                color: theme === 'dark' ? '#64748B' : '#1E293B',
-                cursor: 'pointer',
-                fontWeight: 700,
-                transition: 'color 0.18s',
-                lineHeight: 1,
-                borderRadius: '50%',
-                width: 44,
-                height: 44,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(30,41,59,0.10)'
-              }}
-              onMouseEnter={e => e.target.style.color = '#ef4444'}
-              onMouseLeave={e => e.target.style.color = theme === 'dark' ? '#64748B' : '#1E293B'}
-              aria-label="Close"
-            >×</button>
-            {/* Show image or PDF */}
-            {(() => {
-              let fileUrl = null;
-              let isPdf = false;
-              if (selectedCert.url) {
-                fileUrl = selectedCert.url.startsWith('http') ? selectedCert.url : `${API_BASE_URL}${selectedCert.url}`;
-                isPdf = selectedCert.contentType === 'application/pdf' || selectedCert.url.toLowerCase().includes('.pdf');
-              } else if (selectedCert.image) {
-                fileUrl = selectedCert.image.startsWith('http') ? selectedCert.image : `${API_BASE_URL}${selectedCert.image}`;
-                isPdf = selectedCert.contentType === 'application/pdf' || selectedCert.image.toLowerCase().includes('.pdf');
-              } else if (selectedCert.file) {
-                fileUrl = selectedCert.file.startsWith('http') ? selectedCert.file : `${API_BASE_URL}${selectedCert.file}`;
-                isPdf = selectedCert.contentType === 'application/pdf' || selectedCert.file.toLowerCase().includes('.pdf');
-              } else if (selectedCert.filename) {
-                fileUrl = `${API_BASE_URL}/uploads/${selectedCert.filename}`;
-                isPdf = selectedCert.contentType === 'application/pdf' || selectedCert.filename.toLowerCase().includes('.pdf');
-              }
-              if (fileUrl) {
+            <motion.div
+              style={modalBox}
+              initial={isMobile ? { y: '100%' } : { scale: 0.93, opacity: 0 }}
+              animate={isMobile ? { y: 0 } : { scale: 1, opacity: 1 }}
+              exit={isMobile ? { y: '100%' } : { scale: 0.93, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Drag handle on mobile */}
+              {dragHandle}
+
+              {/* Close button */}
+              <button
+                onClick={() => setShowModal(false)}
+                style={modalCloseBtn}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#ef4444'; e.currentTarget.style.color = '#fff'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = dark ? '#334155' : '#F1F5F9'; e.currentTarget.style.color = dark ? '#94A3B8' : '#475569'; }}
+                aria-label="Close"
+              >
+                ×
+              </button>
+
+              {/* Certificate image / PDF */}
+              {(() => {
+                const { fileUrl, isPdf } = resolveFileUrl(selectedCert);
+                if (!fileUrl) return (
+                  <div style={{
+                    background: dark ? '#334155' : '#F1F5F9',
+                    borderRadius: '0.625rem',
+                    padding: '2rem',
+                    textAlign: 'center',
+                    color: dark ? '#64748B' : '#94A3B8',
+                    marginBottom: '1rem',
+                  }}>
+                    <span style={{ fontSize: '2.5rem' }}>📄</span>
+                    <p style={{ margin: '0.5rem 0 0', fontSize: '0.875rem' }}>No preview available</p>
+                  </div>
+                );
+
                 if (isPdf) {
                   return (
-                    <div style={{ width: '100%', minHeight: 400, background: theme === 'dark' ? '#334155' : '#F1F5F9', borderRadius: 8, marginBottom: 16 }}>
-                      <Document file={fileUrl} loading={<div style={{ color: '#64748B', textAlign: 'center', marginTop: 20 }}>Loading PDF...</div>}>
-                        <Page pageNumber={1} width={500} renderTextLayer={false} renderAnnotationLayer={false} />
+                    <div style={{
+                      borderRadius: '0.625rem',
+                      overflow: 'hidden',
+                      marginBottom: '1rem',
+                      background: dark ? '#334155' : '#F1F5F9',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      padding: '0.5rem',
+                    }}>
+                      <Document
+                        file={fileUrl}
+                        loading={<div style={{ padding: '2rem', color: '#64748B', textAlign: 'center' }}>Loading PDF…</div>}
+                      >
+                        <Page
+                          pageNumber={1}
+                          width={Math.min(500, windowWidth - (isMobile ? 48 : 96))}
+                          renderTextLayer={false}
+                          renderAnnotationLayer={false}
+                        />
                       </Document>
                     </div>
                   );
-                } else {
-                  return (
-                    <img src={fileUrl} alt={selectedCert.title} style={{ maxWidth: '100%', maxHeight: 500, borderRadius: 8, marginBottom: 16 }} />
-                  );
                 }
-              } else {
-                return <div style={{ color: '#64748B', textAlign: 'center', marginBottom: 16 }}>No Preview Available</div>;
-              }
-            })()}
-            <h3 style={{ color: theme === 'dark' ? '#F8FAFC' : '#1E293B', margin: '0 0 8px 0' }}>{selectedCert.title}</h3>
-            <p style={{ color: theme === 'dark' ? '#94A3B8' : '#64748B', margin: '0 0 4px 0' }}>{selectedCert.issuer}</p>
-            <p style={{ color: theme === 'dark' ? '#94A3B8' : '#64748B', margin: 0 }}>{new Date(selectedCert.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
-          </div>
-        </div>
-      )}
+
+                return (
+                  <div style={{
+                    borderRadius: '0.625rem',
+                    overflow: 'hidden',
+                    marginBottom: '1rem',
+                    background: dark ? '#0F172A' : '#F8FAFC',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    maxHeight: isMobile ? '55vw' : '400px',
+                  }}>
+                    <img
+                      src={fileUrl}
+                      alt={selectedCert.title}
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: isMobile ? '55vw' : '400px',
+                        objectFit: 'contain',
+                        display: 'block',
+                      }}
+                    />
+                  </div>
+                );
+              })()}
+
+              {/* Meta info */}
+              <div style={{ paddingTop: '0.25rem' }}>
+                <h3 style={{
+                  color: dark ? '#F8FAFC' : '#1E293B',
+                  margin: '0 0 0.35rem 0',
+                  fontSize: isMobile ? '1rem' : '1.15rem',
+                  fontWeight: '700',
+                  paddingRight: '2rem',
+                }}>
+                  {selectedCert.title}
+                </h3>
+                <p style={{ color: dark ? '#94A3B8' : '#64748B', margin: '0 0 0.2rem', fontSize: '0.875rem' }}>
+                  {selectedCert.issuer}
+                </p>
+                <p style={{ color: dark ? '#64748B' : '#94A3B8', margin: 0, fontSize: '0.8rem' }}>
+                  {new Date(selectedCert.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

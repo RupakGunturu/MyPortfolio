@@ -136,39 +136,39 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
     },
   };
 
-  // Fetch profile
-  const fetchProfile = async () => {
-    if (!userId) return;
-    try {
-      const res = await axios.get(`${API_BASE_URL}/api/user?userId=${userId}`);
-      const data = res.data || {};
-      setProfile({ 
-        fullname: data.fullname || data.name || "Your Name",
-        imageUrl: data.imageUrl || "/images/profile-placeholder.png",
-        githubUrl: data.githubUrl || "",
-        linkedinUrl: data.linkedinUrl || "",
-      });
-      setForm({
-        fullname: data.fullname || data.name || "Your Name",
-        imageUrl: data.imageUrl || "/images/profile-placeholder.png",
-        githubUrl: data.githubUrl || "",
-        linkedinUrl: data.linkedinUrl || "",
-      });
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      setProfile({ 
-        fullname: "Your Name", 
-        imageUrl: "/images/profile-placeholder.png",
-        githubUrl: "",
-        linkedinUrl: "",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
   useEffect(() => {
+    if (!userId) return;
+
+    const fetchProfile = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/user?userId=${userId}`);
+        const data = res.data || {};
+        setProfile({ 
+          fullname: data.fullname || data.name || "Your Name",
+          imageUrl: data.imageUrl || "/images/profile-placeholder.png",
+          githubUrl: data.githubUrl || "",
+          linkedinUrl: data.linkedinUrl || "",
+        });
+        setForm({
+          fullname: data.fullname || data.name || "Your Name",
+          imageUrl: data.imageUrl || "/images/profile-placeholder.png",
+          githubUrl: data.githubUrl || "",
+          linkedinUrl: data.linkedinUrl || "",
+        });
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        setProfile({ 
+          fullname: "Your Name", 
+          imageUrl: "/images/profile-placeholder.png",
+          githubUrl: "",
+          linkedinUrl: "",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchProfile();
-  }, [userId, fetchProfile]);
+  }, [userId]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -284,12 +284,10 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
         authContext.setUser({
           ...user,
           fullname: res.data.fullname || res.data.name || "Your Name",
-          // ...other fields if needed
         });
       }
 
-      await fetchProfile(); // Refresh profile data after update
-      setImageJustUpdated(true); // Mark that the image was just updated
+      setImageJustUpdated(true);
       setTimeout(() => setImageJustUpdated(false), 2000); // Reset after 2 seconds
     } catch (err) {
       console.error("Update failed:", err);
@@ -638,33 +636,15 @@ const Hero = ({ userId: propUserId, viewOnly = false }) => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -30, scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                zIndex: 10000,
-                background: 'white',
-                borderRadius: '16px',
-                padding: '24px',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                minWidth: 'clamp(280px, 80vw, 400px)',
-                maxWidth: '400px',
-              }}
+              className="edit-profile-modal-card"
             >
               <form
                 onSubmit={handleSubmit}
                 style={{
-                  background: 'white',
-                  borderRadius: '16px',
-                  padding: '24px',
-                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                  minWidth: 'clamp(280px, 80vw, 400px)',
-                  maxWidth: '400px',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '16px',
-                  position: 'relative', // Needed for loading overlay
+                  position: 'relative',
                 }}
               >
                 {isProcessing && (

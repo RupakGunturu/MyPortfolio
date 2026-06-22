@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaBriefcase, FaCode, FaGraduationCap, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
+import { DatePicker } from 'antd';
+import dayjs from 'dayjs';
 import './Experiences.css';
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
@@ -56,25 +58,32 @@ const Experience = ({ viewOnly = false, userId }) => {
   useEffect(() => {
     console.log('Experiences component - user object:', user);
     console.log('Experiences component - userId:', effectiveUserId);
-    if (effectiveUserId) {
-      fetchExperiences();
-    }
-  }, [effectiveUserId, fetchExperiences, user]);
+    if (!effectiveUserId) return;
 
-  const fetchExperiences = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await axios.get(`${API_BASE_URL}/api/experiences?userId=${effectiveUserId}`);
-      setExperiences(response.data);
-    } catch (error) {
-      console.error('Error fetching experiences:', error);
-      setError('Failed to load experiences. Please refresh the page.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    const controller = new AbortController();
+
+    const fetchExperiences = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await axios.get(`${API_BASE_URL}/api/experiences?userId=${effectiveUserId}`, {
+          signal: controller.signal
+        });
+        setExperiences(response.data);
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        console.error('Error fetching experiences:', error);
+        setError('Failed to load experiences. Please refresh the page.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExperiences();
+
+    return () => controller.abort();
+  }, [effectiveUserId]);
 
   const handleEditToggle = async () => {
     if (isEditing) {
@@ -264,12 +273,11 @@ const Experience = ({ viewOnly = false, userId }) => {
             </select>
           </div>
           <div className="timeline-content-edit">
-            <input
-              type="text"
-              value={exp.date}
-              onChange={(e) =>
-                handleInputChange(index, 'date', e.target.value)
-              }
+            <DatePicker
+              style={{ width: '100%' }}
+              format="YYYY-MM-DD"
+              value={exp.date ? dayjs(exp.date) : null}
+              onChange={(date) => handleInputChange(index, 'date', date ? date.format('YYYY-MM-DD') : '')}
               placeholder="Date/Time Period"
             />
             <input
@@ -300,7 +308,7 @@ const Experience = ({ viewOnly = false, userId }) => {
             className="remove-button"
             onClick={() => handleRemoveExperience(index)}
           >
-            <FaTimes />
+            ×
           </button>
         </motion.div>
       ))}
@@ -327,12 +335,11 @@ const Experience = ({ viewOnly = false, userId }) => {
             </select>
           </div>
           <div className="timeline-content-edit">
-            <input
-              type="text"
-              value={newExperience.date}
-              onChange={(e) =>
-                setNewExperience({ ...newExperience, date: e.target.value })
-              }
+            <DatePicker
+              style={{ width: '100%' }}
+              format="YYYY-MM-DD"
+              value={newExperience.date ? dayjs(newExperience.date) : null}
+              onChange={(date) => setNewExperience({ ...newExperience, date: date ? date.format('YYYY-MM-DD') : '' })}
               placeholder="Date/Time Period"
             />
             <input
@@ -370,7 +377,7 @@ const Experience = ({ viewOnly = false, userId }) => {
               className="cancel-button"
               onClick={() => setIsAdding(false)}
             >
-              <FaTimes /> Cancel
+              Cancel
             </button>
           </div>
         </motion.div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext, useMemo } from 'react';
 import { motion, useInView } from 'framer-motion';
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
@@ -19,139 +19,29 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
   const [, setLoading] = useState(true);
 
   useEffect(() => {
-    if (effectiveUserId) {
-      fetchSkills();
-    }
-  }, [effectiveUserId, fetchSkills]);
+    if (!effectiveUserId) return;
 
-  // Handle responsive styles
-  useEffect(() => {
-    const updateStyles = () => {
-      const isMobile = window.innerWidth <= 768;
-      const isSmallMobile = window.innerWidth <= 480;
-      
-      let mobileStyles = {};
-      
-      if (isSmallMobile) {
-        mobileStyles = {
-          section: { padding: '40px 15px' },
-          header: { 
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-            gap: '1rem',
-            paddingBottom: '1rem'
-          },
-          heading: { fontSize: '2rem' },
-          subHeading: { fontSize: '1rem' },
-          grid: { 
-            gridTemplateColumns: '1fr',
-            gap: '0.8rem'
-          },
-          card: { 
-            padding: '1.2rem'
-          },
-          form: { 
-            padding: '1.2rem',
-            marginBottom: '1.5rem'
-          },
-          input: { 
-            padding: '0.75rem 0.875rem',
-            fontSize: '16px'
-          },
-          levelSelect: { 
-            padding: '0.75rem',
-            fontSize: '16px'
-          },
-          submitButton: { 
-            padding: '0.75rem 1.2rem',
-            fontSize: '0.9rem',
-            minHeight: '44px'
-          },
-          cancelButton: { 
-            padding: '0.75rem 1.2rem',
-            fontSize: '0.9rem',
-            minHeight: '44px'
-          },
-          addButton: { 
-            padding: '0.6rem 1.2rem',
-            fontSize: '0.9rem',
-            minHeight: '44px'
-          }
-        };
-      } else if (isMobile) {
-        mobileStyles = {
-          section: { padding: '50px 20px' },
-          header: { 
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-            gap: '1rem',
-            paddingBottom: '1rem'
-          },
-          heading: { fontSize: '2.5rem' },
-          subHeading: { fontSize: '1.1rem' },
-          grid: { 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '0.9rem'
-          },
-          card: { 
-            padding: '1.3rem'
-          },
-          form: { 
-            padding: '1.3rem',
-            marginBottom: '1.8rem'
-          },
-          input: { 
-            padding: '0.8rem 0.9rem',
-            fontSize: '16px'
-          },
-          levelSelect: { 
-            padding: '0.8rem',
-            fontSize: '16px'
-          },
-          submitButton: { 
-            padding: '0.8rem 1.3rem',
-            fontSize: '0.95rem',
-            minHeight: '44px'
-          },
-          cancelButton: { 
-            padding: '0.8rem 1.3rem',
-            fontSize: '0.95rem',
-            minHeight: '44px'
-          },
-          addButton: { 
-            padding: '0.7rem 1.3rem',
-            fontSize: '0.95rem',
-            minHeight: '44px'
-          }
-        };
+    const controller = new AbortController();
+
+    const fetchSkills = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${API_BASE_URL}/api/skills?userId=${effectiveUserId}`, {
+          signal: controller.signal
+        });
+        setSkills(response.data);
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        console.error('Error fetching skills:', error);
+      } finally {
+        setLoading(false);
       }
-      
-      const responsiveStyles = { ...styles };
-      Object.keys(mobileStyles).forEach(key => {
-        if (responsiveStyles[key]) {
-          responsiveStyles[key] = { ...responsiveStyles[key], ...mobileStyles[key] };
-        }
-      });
-      
-      setCurrentStyles(responsiveStyles);
     };
 
-    updateStyles();
-    window.addEventListener('resize', updateStyles);
-    return () => window.removeEventListener('resize', updateStyles);
-  }, [styles]);
+    fetchSkills();
 
-  const fetchSkills = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/api/skills?userId=${effectiveUserId}`);
-      setSkills(response.data);
-    } catch (error) {
-      console.error('Error fetching skills:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    return () => controller.abort();
+  }, [effectiveUserId]);
 
   const showToast = (message) => {
     setToastMessage(message);
@@ -224,8 +114,7 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
     return colors[level] || '#3b82f6';
   };
 
-  // Updated styles with delete button and theme support
-  const styles = {
+  const styles = useMemo(() => ({
     section: {
       padding: '60px 20px',
       background: theme === 'dark' 
@@ -247,21 +136,21 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
       gap: '1rem',
     },
     heading: {
-      fontFamily: "'Montserrat', sans-serif",
-      fontSize: 'clamp(2.5rem, 5vw, 3.5rem)',
+      fontFamily: "'Poppins', sans-serif",
+      fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
       fontWeight: '900',
       margin: 0,
-      letterSpacing: '-2px',
-      background: 'linear-gradient(135deg, #34d399, #3b82f6)',
+      letterSpacing: '-1.5px',
+      background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
       WebkitBackgroundClip: 'text',
       WebkitTextFillColor: 'transparent',
     },
     subHeading: {
-      fontFamily: "'Montserrat', sans-serif",
-      fontSize: '1.2rem',
+      fontFamily: "'Poppins', sans-serif",
+      fontSize: '0.95rem',
       color: theme === 'dark' ? '#94A3B8' : '#64748B',
       margin: '0.25rem 0 0',
-      fontWeight: '700',
+      fontWeight: '500',
     },
     addButton: {
       display: 'flex',
@@ -287,7 +176,7 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
     },
     grid: {
       display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
       gap: '1rem',
       width: '100%',
       maxWidth: '1200px',
@@ -295,8 +184,8 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
     },
     card: {
       backgroundColor: theme === 'dark' ? '#1E293B' : '#FFFFFF',
-      borderRadius: '1rem',
-      padding: '1.5rem',
+      borderRadius: '0.75rem',
+      padding: '1.25rem',
       boxShadow: theme === 'dark' 
         ? '0 4px 6px -1px rgba(0, 0, 0, 0.3)'
         : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
@@ -305,13 +194,6 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
       cursor: 'pointer',
       transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
       transform: 'translateY(0)',
-      ':hover': {
-        transform: 'translateY(-8px) scale(1.02)',
-        boxShadow: theme === 'dark' 
-          ? '0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3)'
-          : '0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
-        borderColor: theme === 'dark' ? '#00BFFF' : '#00BFFF',
-      },
     },
     cardContent: {
       display: 'flex',
@@ -438,6 +320,7 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
       display: 'flex',
       gap: '0.75rem',
       justifyContent: 'flex-end',
+      flexWrap: 'wrap',
     },
     submitButton: {
       padding: '0.75rem 1.5rem',
@@ -469,7 +352,124 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
       '0%': { transform: 'rotate(0deg)' },
       '100%': { transform: 'rotate(360deg)' },
     },
-  };
+  }), [theme]);
+
+  // Handle responsive styles
+  useEffect(() => {
+    const updateStyles = () => {
+      const isMobile = window.innerWidth <= 768;
+      const isSmallMobile = window.innerWidth <= 480;
+      
+      let mobileStyles = {};
+      
+      if (isSmallMobile) {
+        mobileStyles = {
+          section: { padding: '40px 15px' },
+          header: { 
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            gap: '1rem',
+            paddingBottom: '1rem'
+          },
+          heading: { fontSize: '2rem' },
+          subHeading: { fontSize: '1rem' },
+          grid: { 
+            gridTemplateColumns: '1fr',
+            gap: '0.8rem'
+          },
+          card: { 
+            padding: '1.2rem'
+          },
+          form: { 
+            padding: '1.2rem',
+            marginBottom: '1.5rem'
+          },
+          input: { 
+            padding: '0.75rem 0.875rem',
+            fontSize: '16px'
+          },
+          levelSelect: { 
+            padding: '0.75rem',
+            fontSize: '16px'
+          },
+          submitButton: { 
+            padding: '0.75rem 1.2rem',
+            fontSize: '0.9rem',
+            minHeight: '44px'
+          },
+          cancelButton: { 
+            padding: '0.75rem 1.2rem',
+            fontSize: '0.9rem',
+            minHeight: '44px'
+          },
+          addButton: { 
+            padding: '0.6rem 1.2rem',
+            fontSize: '0.9rem',
+            minHeight: '44px'
+          }
+        };
+      } else if (isMobile) {
+        mobileStyles = {
+          section: { padding: '50px 20px' },
+          header: { 
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            gap: '1rem',
+            paddingBottom: '1rem'
+          },
+          heading: { fontSize: '2.5rem' },
+          subHeading: { fontSize: '1.1rem' },
+          grid: { 
+            gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+            gap: '0.9rem'
+          },
+          card: { 
+            padding: '1.3rem'
+          },
+          form: { 
+            padding: '1.3rem',
+            marginBottom: '1.8rem'
+          },
+          input: { 
+            padding: '0.8rem 0.9rem',
+            fontSize: '16px'
+          },
+          levelSelect: { 
+            padding: '0.8rem',
+            fontSize: '16px'
+          },
+          submitButton: { 
+            padding: '0.8rem 1.3rem',
+            fontSize: '0.95rem',
+            minHeight: '44px'
+          },
+          cancelButton: { 
+            padding: '0.8rem 1.3rem',
+            fontSize: '0.95rem',
+            minHeight: '44px'
+          },
+          addButton: { 
+            padding: '0.7rem 1.3rem',
+            fontSize: '0.95rem',
+            minHeight: '44px'
+          }
+        };
+      }
+      
+      const responsiveStyles = { ...styles };
+      Object.keys(mobileStyles).forEach(key => {
+        if (responsiveStyles[key]) {
+          responsiveStyles[key] = { ...responsiveStyles[key], ...mobileStyles[key] };
+        }
+      });
+      
+      setCurrentStyles(responsiveStyles);
+    };
+
+    updateStyles();
+    window.addEventListener('resize', updateStyles);
+    return () => window.removeEventListener('resize', updateStyles);
+  }, [styles]);
 
   // Mobile responsive styles
   const getMobileStyles = () => {
@@ -536,7 +536,7 @@ const Skill = ({ viewOnly = false, theme = 'dark', userId }) => {
         heading: { fontSize: '2.5rem' },
         subHeading: { fontSize: '1.1rem' },
         grid: { 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
           gap: '0.9rem'
         },
         card: { 

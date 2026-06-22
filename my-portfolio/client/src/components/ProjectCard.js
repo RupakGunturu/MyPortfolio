@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext, useCallback } from 'react';
 
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
@@ -57,19 +57,11 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
     };
   }, []);
 
-  useEffect(() => {
-    if (effectiveUserId) {
-      fetchProjects();
-    }
-  }, [effectiveUserId, fetchProjects]);
-
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
+    if (!effectiveUserId) return;
     try {
       setLoading(true);
-      console.log('Fetching projects for userId:', effectiveUserId);
-      console.log('API URL:', `${API_BASE_URL}/api/projects?userId=${effectiveUserId}`);
       const response = await axios.get(`${API_BASE_URL}/api/projects?userId=${effectiveUserId}`);
-      console.log('Projects response:', response.data);
       setProjects(response.data);
       setError(null);
     } catch (err) {
@@ -78,7 +70,11 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [effectiveUserId]);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
 
   const handleAddProject = () => {
     setFormData({ title: '', description: '', link: '', image: '' });
@@ -104,9 +100,7 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
     if (!editingProject) return;
 
     try {
-      console.log('Deleting project:', editingProject._id, 'for user:', effectiveUserId);
       const response = await axios.delete(`${API_BASE_URL}/api/projects/${editingProject._id}?userId=${effectiveUserId}`);
-      console.log('Delete response:', response.data);
       setProjects(projects.filter(project => project._id !== editingProject._id));
       closeModal();
       toast.success('Project deleted successfully!');
@@ -126,11 +120,9 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
         return;
       }
 
-      console.log('Selected image file:', file.name, 'Size:', file.size, 'Type:', file.type);
       setSelectedImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        console.log('Image converted to base64, length:', reader.result.length);
         setImagePreview(reader.result);
         setFormData(prev => ({ ...prev, image: reader.result }));
       };
@@ -163,12 +155,10 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
         setEditingProject(null);
       } else {
         // Add new project
-        console.log('Adding new project with data:', { ...formData, userId: effectiveUserId });
         const response = await axios.post(`${API_BASE_URL}/api/projects`, {
           ...formData,
           userId: effectiveUserId
         });
-        console.log('Project created:', response.data);
 
         setProjects([response.data, ...projects]);
         setShowAddModal(false);
@@ -277,8 +267,6 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
                   projectImageUrl = `${API_BASE_URL}${projectRawUrl.startsWith('/') ? '' : '/'}${projectRawUrl}`;
                 }
               }
-              
-              console.log('Project:', project.title, 'Image URL:', projectImageUrl);
               return (
                 <div 
                   key={project._id} 
@@ -291,11 +279,9 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
                         src={projectImageUrl}
                         alt={project.title}
                         onError={e => {
-                          console.log('Image failed to load:', projectImageUrl);
                           e.target.onerror = null;
                           e.target.src = "https://placehold.co/300x200?text=Project+Preview";
                         }}
-                        onLoad={() => console.log('Image loaded successfully:', projectImageUrl)}
                       />
                     ) : (
                       <div className="no-image-placeholder">
@@ -472,14 +458,14 @@ const ProjectCard = ({ viewOnly = false, userId }) => {
                 </div>
               </div>
               <div className="modal-actions">
-                <button type="button" onClick={handleDeleteProject} className="delete-btn">
-                  Delete Project
-                </button>
                 <button type="button" onClick={closeModal} className="cancel-btn">
                   Cancel
                 </button>
                 <button type="submit" className="submit-btn" disabled={isSubmitting}>
                   {isSubmitting ? 'Updating...' : 'Update Project'}
+                </button>
+                <button type="button" onClick={handleDeleteProject} className="delete-btn">
+                  Delete Project
                 </button>
               </div>
             </form>

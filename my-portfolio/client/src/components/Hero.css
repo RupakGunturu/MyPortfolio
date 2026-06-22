@@ -464,5 +464,15 @@
   flex-direction: column;
   gap: 18px;
   align-items: stretch;
+  position: relative;
+  overflow-y: auto;
+  max-height: 90dvh;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+.edit-profile-modal-card::-webkit-scrollbar {
+  display: none;
+}
+
+
 

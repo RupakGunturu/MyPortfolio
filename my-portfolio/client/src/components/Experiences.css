@@ -1,10 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@800&family=Poppins&display=swap');
 
 .experience-section {
-  padding: 80px 20px;
-  background: #f8f9fa;
+  padding: 60px 20px;
+  background: #FFFFFF;
   font-family: 'Poppins', sans-serif;
-  overflow-x: hidden;
 }
 
 .experience-header {
@@ -13,8 +12,8 @@
 }
 
 .experience-heading {
-  font-family: 'Playfair Display', serif;
-  font-size: 3.5rem;
+  font-family: 'Poppins', sans-serif;
+  font-size: 2.5rem;
   font-weight: 800;
   color: #2c3e50;
   margin-bottom: 1rem;
@@ -22,6 +21,9 @@
   display: inline-block;
   padding-bottom: 15px;
   letter-spacing: 1px;
+  background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .experience-heading::after {
@@ -30,10 +32,10 @@
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 80px;
-  height: 4px;
+  width: 60px;
+  height: 3px;
   border-radius: 2px;
-  background: linear-gradient(90deg, #84fab0, #8fd3f4);
+  background: linear-gradient(90deg, #3B82F6, #1D4ED8);
 }
 
 .edit-button {
@@ -188,6 +190,7 @@
   box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
   margin-bottom: 20px;
   border-left: 4px solid #6dd5ed;
+  position: relative;
 }
 
 .timeline-content-edit {
@@ -232,7 +235,7 @@
   opacity: 1;
 }
 
-.remove-button, .add-button, .save-button, .cancel-button {
+.add-button, .save-button, .cancel-button {
   padding: 10px 20px;
   border-radius: 8px;
   border: none;
@@ -246,12 +249,26 @@
 }
 
 .remove-button {
-  background-color: #ef4444;
-  color: white;
-  margin-left: auto; /* Pushes button to the right */
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: none;
+  color: #94a3b8;
+  border: none;
+  padding: 4px;
+  font-size: 1.5rem;
+  font-weight: 400;
+  cursor: pointer;
+  min-height: unset;
+  border-radius: 0;
+  box-shadow: none;
+  line-height: 1;
 }
 .remove-button:hover {
-  background-color: #dc2626;
+  color: #ef4444;
+  background: none;
+  transform: none;
+  box-shadow: none;
 }
 
 .add-button {
@@ -353,10 +370,51 @@
     padding: 10px 12px;
   }
 
-  .remove-button, .add-button, .save-button, .cancel-button {
+  .timeline-item.edit-mode {
+    padding: 20px;
+    margin-bottom: 20px;
+    border-left: 3px solid #6dd5ed;
+  }
+
+  .timeline-icon-edit {
+    margin-bottom: 10px;
+  }
+
+  .timeline-icon-edit select {
+    width: 100%;
+  }
+
+  .timeline-content-edit {
+    gap: 12px;
+  }
+
+  .timeline-content-edit input,
+  .timeline-content-edit textarea {
+    padding: 12px 14px;
+  }
+
+  .new-item-buttons {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .new-item-buttons button {
+    width: 100%;
+    justify-content: center;
+    min-height: 42px;
+  }
+
+  .add-button, .save-button, .cancel-button {
     padding: 8px 12px;
     font-size: 0.85rem;
     min-height: 36px;
+  }
+
+  .remove-button {
+    padding: 4px;
+    font-size: 1.5rem;
+    min-height: unset;
   }
 }
 
@@ -410,6 +468,16 @@
     padding: 8px 10px;
     font-size: 16px;
   }
+
+  .timeline-item.edit-mode {
+    padding: 12px;
+    margin-bottom: 12px;
+    border-left: 3px solid #6dd5ed;
+  }
+
+  .timeline-icon-edit {
+    margin-bottom: 6px;
+  }
   
 .timeline-item[data-type='education'] {
   position: relative;
@@ -457,10 +525,16 @@
   margin-left: -1px;
 }
 
-  .remove-button, .add-button, .save-button, .cancel-button {
+  .add-button, .save-button, .cancel-button {
     padding: 6px 10px;
     font-size: 0.8rem;
     min-height: 32px;
+  }
+
+  .remove-button {
+    padding: 4px;
+    font-size: 1.5rem;
+    min-height: unset;
   }
 }
 

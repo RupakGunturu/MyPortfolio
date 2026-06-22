@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -8,7 +8,6 @@ import PortfolioPage from './pages/PortfolioPage';
 import AuthState from './context/AuthState';
 import setAuthToken from './utils/setAuthToken';
 import PrivateRoute from './components/PrivateRoute';
-import AuthContext from './context/AuthContext';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 
 if (localStorage.token) {

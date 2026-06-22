@@ -6,7 +6,23 @@ import API_BASE_URL from "../utils/api";
 const LandingPage = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
+  const [navVisible, setNavVisible] = useState(true);
   const observerRef = useRef(null);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      if (currentY > lastScrollY.current && currentY > 60) {
+        setNavVisible(false);
+      } else {
+        setNavVisible(true);
+      }
+      lastScrollY.current = currentY;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
@@ -48,16 +64,11 @@ const LandingPage = () => {
     <div className="lp-root">
 
       {/* ── NAV ── */}
-      <nav className="lp-nav">
+      <nav className={`lp-nav${navVisible ? "" : " lp-nav-hidden"}`}>
         <div className="lp-nav-inner">
           <span className="lp-logo">
             <span className="lp-logo-icon">
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <rect x="3" y="3" width="7" height="7" rx="1.5" />
-                <rect x="14" y="3" width="7" height="7" rx="1.5" />
-                <rect x="3" y="14" width="7" height="7" rx="1.5" />
-                <rect x="14" y="14" width="7" height="7" rx="1.5" />
-              </svg>
+              <img src={process.env.PUBLIC_URL + "/logo192.png"} alt="DevDesk" />
             </span>
             DevDesk
           </span>

@@ -77,6 +77,10 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
+  transition: transform 0.3s ease;
+}
+.lp-nav-hidden {
+  transform: translateY(-100%);
 }
 .lp-nav-inner {
   max-width: 1120px;
@@ -105,8 +109,9 @@
   background: var(--blue);
   border-radius: 7px;
   color: white;
+  overflow: hidden;
 }
-.lp-logo-icon svg { width: 15px; height: 15px; fill: white; }
+.lp-logo-icon img { width: 18px; height: 18px; filter: brightness(0) invert(1); }
 .lp-nav-actions { display: flex; align-items: center; gap: 10px; }
 .lp-nav-login {
   background: none;
@@ -187,10 +192,10 @@
   color: var(--blue);
 }
 .lp-italic {
-  font-family: "Cormorant Garamond", Georgia, serif;
-  font-style: italic;
+  font-family: "Dancing Script", cursive;
   font-weight: 700;
   color: var(--blue);
+  letter-spacing: 2px;
 }
 .lp-underline-svg {
   position: absolute;
@@ -718,10 +723,27 @@
 }
 
 @media (max-width: 768px) {
+  .lp-nav-inner {
+    height: 52px;
+    padding: 0 16px;
+  }
+  .lp-logo { font-size: 15px; }
+  .lp-logo-icon { width: 24px; height: 24px; }
+  .lp-logo-icon img { width: 15px; height: 15px; }
+  .lp-nav-actions { gap: 6px; }
+  .lp-nav-login {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+  .lp-nav-cta {
+    font-size: 12px;
+    padding: 5px 12px;
+  }
+
   .lp-hero {
     grid-template-columns: 1fr;
     gap: 48px;
-    padding: 100px 20px 60px;
+    padding: 80px 20px 60px;
     text-align: center;
   }
   .lp-hero-content { align-items: center; }

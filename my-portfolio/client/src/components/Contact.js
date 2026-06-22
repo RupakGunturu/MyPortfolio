@@ -323,7 +323,7 @@ export default Contact;
 const styles = {
   section: {
     padding: '100px 20px',
-    background: 'linear-gradient(135deg, #F5F7FA 0%, #C3CFE2 100%)',
+    background: '#FFFFFF',
     minHeight: '100vh',
   },
   container: {
@@ -331,11 +331,13 @@ const styles = {
     margin: '0 auto',
     textAlign: 'center',
   },
-  heading: {
-    fontSize: '3.5rem',
-    color: '#1e293b',
-    marginBottom: '1rem',
-    fontWeight: '800',
+    heading: {
+      fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
+      fontFamily: "'Poppins', sans-serif",
+      background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      fontWeight: '800',
     letterSpacing: '-1px',
   },
   description: {

@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { check, validationResult } from 'express-validator';
 import RegisteredUser from '../models/registeredUser.js';
 import transporter from '../utils/mailer.js';
@@ -82,8 +83,12 @@ router.post('/login', async (req, res) => {
   if (!isMatch) {
     return res.status(400).json({ msg: 'Invalid credentials' });
   }
+  // JWT token
+  const payload = { user: { id: user._id } };
+  const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 3600 });
   res.json({
     msg: 'Login successful',
+    token,
     user: {
       _id: user._id,
       fullname: user.fullname,
@@ -93,61 +98,47 @@ router.post('/login', async (req, res) => {
   });
 });
 
-// --- OTP for Password Reset ---
-router.post('/auth/send-otp', async (req, res) => {
-  const { email } = req.body;
-  const user = await RegisteredUser.findOne({ email });
-  if (!user) return res.status(404).json({ message: 'User not found' });
+// Cooldown tracker to prevent rapid OTP re-sends
+const otpCooldowns = new Map();
 
-  try {
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    user.otp = otp;
-    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-    await user.save();
-
-    await transporter.sendMail({
-      from: `Portfolio App <${process.env.FROM_EMAIL}>`,
-      to: email,
-      subject: 'Password Reset OTP',
-      text: `Your OTP code for password reset is: ${otp}\n\nThis code will expire in 10 minutes.`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #dc2626;">Password Reset</h2>
-          <p>Your OTP code for password reset is:</p>
-          <h1 style="color: #059669; font-size: 32px; letter-spacing: 4px; text-align: center; padding: 20px; background: #f3f4f6; border-radius: 8px;">${otp}</h1>
-          <p><strong>This code will expire in 10 minutes.</strong></p>
-          <p>If you didn't request this code, please ignore this email.</p>
-        </div>
-      `
-    });
-
-    console.log(`Password reset OTP sent to ${email}: ${otp}`);
-    res.json({ message: 'OTP sent to email' });
-  } catch (error) {
-    console.error('Error sending password reset OTP:', error);
-    // Don't save OTP if email fails
-    user.otp = undefined;
-    user.otpExpires = undefined;
-    await user.save();
-    res.status(500).json({ message: 'Failed to send OTP. Please try again.' });
+function checkOtpCooldown(email) {
+  const last = otpCooldowns.get(email);
+  if (last && Date.now() - last < 30000) {
+    const remaining = Math.ceil((30000 - (Date.now() - last)) / 1000);
+    return remaining;
   }
-});
+  return 0;
+}
 
-// --- OTP for Password Reset (alias for forgot password) ---
+function sendEmailAsync(mailOptions) {
+  transporter.sendMail(mailOptions).catch(err => {
+    console.error('Background email send failed:', err.message);
+  });
+}
+
+// --- OTP for Password Reset ---
 router.post('/auth/send-forgot-otp', async (req, res) => {
   const { email } = req.body;
+  if (!email) return res.status(400).json({ message: 'Email is required' });
+
+  const cooldown = checkOtpCooldown(email);
+  if (cooldown > 0) {
+    return res.status(429).json({ message: `Please wait ${cooldown}s before requesting another OTP` });
+  }
+
   const user = await RegisteredUser.findOne({ email });
   if (!user) return res.status(404).json({ message: 'User not found' });
 
   try {
-    // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     user.otp = otp;
-    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
-    await transporter.sendMail({
+    otpCooldowns.set(email, Date.now());
+    res.json({ message: 'OTP sent to email' });
+
+    sendEmailAsync({
       from: `Portfolio App <${process.env.FROM_EMAIL}>`,
       to: email,
       subject: 'Password Reset OTP',
@@ -162,15 +153,11 @@ router.post('/auth/send-forgot-otp', async (req, res) => {
         </div>
       `
     });
-
-    console.log(`Forgot password OTP sent to ${email}: ${otp}`);
-    res.json({ message: 'OTP sent to email' });
   } catch (error) {
-    console.error('Error sending forgot password OTP:', error);
-    // Don't save OTP if email fails
+    console.error('Error saving password reset OTP:', error);
     user.otp = undefined;
     user.otpExpires = undefined;
-    await user.save();
+    await user.save().catch(() => {});
     res.status(500).json({ message: 'Failed to send OTP. Please try again.' });
   }
 });
@@ -206,54 +193,35 @@ router.post('/auth/reset-password', async (req, res) => {
 
 // --- Registration OTP ---
 router.post('/auth/register-send-otp', async (req, res) => {
-  try {
-    console.log('=== REGISTER SEND OTP REQUEST ===');
-    console.log('Request body:', req.body);
-    console.log('Environment check:', {
-      hasResendKey: !!process.env.RESEND_API_KEY,
-      fromEmail: process.env.FROM_EMAIL
-    });
-    
+  try {    
     const { email } = req.body;
     
-    // Check if email is provided
     if (!email) {
-      console.log('Error: Email not provided');
       return res.status(400).json({ message: 'Email is required' });
     }
-    
-    console.log('Processing OTP request for email:', email);
 
-    // Check if user already exists
-    try {
-      const existing = await RegisteredUser.findOne({ email });
-      if (existing) {
-        console.log('Email already registered:', email);
-        return res.status(400).json({ message: 'Email already registered' });
-      }
-    } catch (dbError) {
-      console.error('Database error checking existing user:', dbError);
-      return res.status(500).json({ message: 'Database error. Please try again.' });
+    const cooldown = checkOtpCooldown(email);
+    if (cooldown > 0) {
+      return res.status(429).json({ message: `Please wait ${cooldown}s before requesting another OTP` });
     }
 
-    // Check if Resend API key is set up
+    const existing = await RegisteredUser.findOne({ email });
+    if (existing) {
+      return res.status(400).json({ message: 'Email already registered' });
+    }
+
     if (!process.env.RESEND_API_KEY) {
-      console.error('RESEND_API_KEY missing. Please set RESEND_API_KEY environment variable.');
       return res.status(500).json({ message: 'Email service not configured. Please contact administrator.' });
     }
 
-    // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     global.registrationOtps = global.registrationOtps || new Map();
     global.registrationOtps.set(email, { otp, expires: Date.now() + 10 * 60 * 1000 });
 
-    console.log('Attempting to send email via Resend...');
-    console.log('Sender email (FROM_EMAIL):', process.env.FROM_EMAIL);
-    console.log('Recipient email:', email);
-    console.log('Generated OTP:', otp);
-    
-    // Send email
-    const emailResult = await transporter.sendMail({
+    otpCooldowns.set(email, Date.now());
+    res.json({ message: 'OTP sent to email' });
+
+    sendEmailAsync({
       from: `Portfolio App <${process.env.FROM_EMAIL}>`,
       to: email,
       subject: 'Your Registration OTP',
@@ -268,20 +236,7 @@ router.post('/auth/register-send-otp', async (req, res) => {
         </div>
       `
     });
-
-    console.log(`✅ OTP email successfully sent to ${email}`);
-    console.log(`📧 OTP Code: ${otp} (for testing purposes - check your email inbox)`);
-    
-    res.json({ 
-      message: 'OTP sent to email',
-      note: 'Please check your inbox and spam folder. Email delivery may take a few seconds.'
-    });
   } catch (error) {
-    console.error('=== ERROR IN REGISTER SEND OTP ===');
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    
     let errorMessage = 'Failed to send OTP. Please try again.';
     if (error.message) {
       errorMessage = `${error.message}`;
@@ -289,7 +244,6 @@ router.post('/auth/register-send-otp', async (req, res) => {
     
     res.status(500).json({ 
       message: errorMessage,
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -324,28 +278,21 @@ router.post('/auth/register-verify-otp', async (req, res) => {
     const user = new RegisteredUser({ fullname, username, email, password: hashedPassword });
     await user.save();
 
-    // Send welcome email
-    try {
-      await transporter.sendMail({
-        from: `Portfolio App <${process.env.FROM_EMAIL}>`,
-        to: email,
-        subject: 'Welcome to Portfolio App!',
-        text: `Welcome ${fullname}! Thank you for registering with Portfolio App. We're excited to have you on board.`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #2563eb;">Welcome to Portfolio App, ${fullname}!</h2>
-            <p>Thank you for registering with us. We're excited to have you on board!</p>
-            <p>You can now log in and start building your portfolio.</p>
-            <p>If you have any questions, feel free to reach out.</p>
-            <p>Best regards,<br>The Portfolio App Team</p>
-          </div>
-        `
-      });
-      console.log(`Welcome email sent to ${email}`);
-    } catch (emailError) {
-      console.error('Error sending welcome email:', emailError);
-      // Don't fail registration if email fails
-    }
+    sendEmailAsync({
+      from: `Portfolio App <${process.env.FROM_EMAIL}>`,
+      to: email,
+      subject: 'Welcome to Portfolio App!',
+      text: `Welcome ${fullname}! Thank you for registering with Portfolio App. We're excited to have you on board.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">Welcome to Portfolio App, ${fullname}!</h2>
+          <p>Thank you for registering with us. We're excited to have you on board!</p>
+          <p>You can now log in and start building your portfolio.</p>
+          <p>If you have any questions, please feel free to reach out.</p>
+          <p>Best regards,<br>The Portfolio App Team</p>
+        </div>
+      `
+    });
 
     console.log(`User registered successfully: ${email}`);
     res.json({ message: 'Registration successful' });
